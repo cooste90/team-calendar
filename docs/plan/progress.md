@@ -136,3 +136,20 @@ Append one entry per task, newest at the bottom. Keep entries short and factual.
 - **Forced colours:** Chromium's forced-colours emulation only switches the media query, not the real system colours. Check once on Windows with High Contrast on (T35).
 - **Bars:** the forced-colours "1px CanvasText border" rule should be added to grid bars as `forced-colors:` classes when T16 builds them, as LeaveChip does.
 **Questions for the product owner:** none.
+
+## T05 — Calendar dates, periods, half-day slots and formatting — 2026-11-13
+**Status:** done
+**Summary:**
+- `src/domain/dates.ts`: `CalendarDate` strings, `calendarDateSchema`, day numbers, week (Sun–Sat), month, year and period helpers, `nextSunday`, `todayIn` (tested across both 2026 clock changes and at 23:30 UTC in BST), `yearOptions`, `weekForMonthSelection`, and `toDbDate`/`fromDbDate`.
+- `src/domain/slots.ts`: the half-day slot model, plus `overlaps`, `intersect`, `subtract` (every relative position tested), `slotsOf`, `datesOf`, `isSingleDay` and `portionOf`.
+- `src/domain/format.ts`: every format example from the task, including range summaries and period titles.
+- 102 new table-driven tests; `src/domain` is at 100% lines, branches and functions.
+**Key files:** `src/domain/{dates,slots,format}.ts`, `src/domain/__tests__/{dates,slots,format}.test.ts`
+**Simplicity pass:** `format.ts` uses plain lists of day and month names instead of `Intl`. Intl's en-GB output changes between Node/ICU versions ("Sept" vs "Sep", optional commas), and the lists are easier to read. Replaced a nested ternary with a small lookup object. `todayIn` builds its result with `Object.fromEntries` (no optional chaining, so no untested branch).
+**Deviations from plan:**
+- `fromDayNumber` also uses `new Date(ms).toISOString()`. It's UTC-only, so time zones can't affect it. The alternative is a 10-line arithmetic algorithm a junior couldn't follow. So the full list of `new Date` uses in `src/domain` is `todayIn`, `toDbDate`, `fromDbDate` and `fromDayNumber`.
+- Tests use real 2026 dates, so the spec's illustrative "Thu 10 – Tue 15" is tested as "Tue 10 – Sun 15". The format is the same.
+- `portionOf` throws a plain `Error` for a multi-day range. It's a programming mistake, not a user error, so it doesn't need a domain error class.
+- Vitest 5's coverage table hides fully covered files. Use `--coverage.reporter=json-summary` to see them listed. The 100% threshold on `src/domain/**` is still enforced.
+**Follow-ups:** `type View = "week" | "month"` lives in `dates.ts`; T14's nuqs parsers should reuse it.
+**Questions for the product owner:** none.

@@ -60,7 +60,7 @@ Size key: **S** ≈ small, under 300 lines changed · **M** ≈ 300–800 · **L
 - [x] [T04](tasks/T04-design-foundation.md) Design tokens, Geist, next-themes, shadcn base components, dev gallery · **M**
 
 ### Phase 1 — Domain core (pure TypeScript)
-- [ ] [T05](tasks/T05-domain-dates-slots.md) Calendar dates, weeks, months, half-day slots, formatting · **M**
+- [x] [T05](tasks/T05-domain-dates-slots.md) Calendar dates, weeks, months, half-day slots, formatting · **M**
 - [ ] [T06](tasks/T06-domain-availability-counting.md) Working patterns, overrides, availability, day counting · **M**
 - [ ] [T07](tasks/T07-domain-booking-rules.md) Booking validation, conflicts, carving, time rules, permissions · **L**
 - [ ] [T08](tasks/T08-domain-public-holidays.md) Public holiday planning engine · **M**
