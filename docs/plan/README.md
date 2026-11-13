@@ -55,7 +55,7 @@ Size key: **S** ≈ small, under 300 lines changed · **M** ≈ 300–800 · **L
 
 ### Phase 0 — Foundation
 - [x] [T01](tasks/T01-tooling-baseline.md) Tooling baseline: TS strict, Biome, lefthook, env validation, scripts · **S**
-- [ ] [T02](tasks/T02-database-prisma.md) Local Postgres (Docker) and Prisma 7 bootstrap · **S**
+- [x] [T02](tasks/T02-database-prisma.md) Local Postgres (Docker) and Prisma 7 bootstrap · **S**
 - [ ] [T03](tasks/T03-test-ci-harness.md) Vitest, Playwright + axe, and the GitHub Actions pipeline · **M**
 - [ ] [T04](tasks/T04-design-foundation.md) Design tokens, Geist, next-themes, shadcn base components, dev gallery · **M**
 

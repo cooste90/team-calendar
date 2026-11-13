@@ -4,15 +4,24 @@ A team availability calendar showing who's in and who's off. The full plan is in
 
 ## Local development
 
-You need **Node 24** (see `.nvmrc`) and **pnpm 10** (`corepack enable` installs the right version).
+You need:
+- **Docker Desktop** (runs the local Postgres databases)
+- **Node 24** (see `.nvmrc`)
+- **pnpm 10** (`corepack enable` installs the right version)
+
+First run:
 
 ```bash
-pnpm install          # also installs the git hooks (lefthook)
+pnpm install          # also installs the git hooks and generates the Prisma client
 cp .env.example .env  # the defaults work locally
+pnpm db:up            # start Postgres (dev on :5432, test on :5433)
+pnpm db:migrate       # create the tables
 pnpm dev              # http://localhost:3000
 ```
 
-The database setup and seed data are added in later tasks.
+Check it works: http://localhost:3000/api/health should say `{"status":"ok","db":"ok"}`.
+
+Seed data is added in a later task.
 
 ## Scripts
 
@@ -25,5 +34,10 @@ The database setup and seed data are added in later tasks.
 | `pnpm typecheck` | Type-check the whole project |
 | `pnpm test` | Unit and component tests |
 | `pnpm check` | Lint, type-check and test: run before pushing |
+| `pnpm db:up` / `pnpm db:down` | Start or stop the local databases |
+| `pnpm db:migrate` | Apply schema changes (creates a migration if `schema.prisma` changed) |
+| `pnpm db:reset` | Wipe the dev database and re-run all migrations |
+| `pnpm db:studio` | Browse the database in Prisma Studio |
+| `pnpm db:generate` | Regenerate the Prisma client after a schema change |
 
 Git hooks: on commit, staged files are formatted and type-checked; on push, the tests run.

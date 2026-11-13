@@ -25,6 +25,8 @@ const envSchema = z.object({
   SSO_CLIENT_SECRET: z.string().optional(),
   SSO_SCOPES: z.string().default("openid profile email"),
   APP_TIME_ZONE: z.string().default("Europe/London"),
+  // Set to "query" to print every SQL query Prisma runs.
+  PRISMA_LOG: z.enum(["query"]).optional(),
 });
 
 const result = envSchema.safeParse(process.env);

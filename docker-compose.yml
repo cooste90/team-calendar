@@ -1,0 +1,39 @@
+# Local databases. Start with `pnpm db:up`, stop with `pnpm db:down`.
+services:
+  # Development database. Data is kept in the named volume between restarts.
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: westcal
+      POSTGRES_USER: westcal
+      POSTGRES_PASSWORD: westcal
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U westcal -d westcal"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  # Test database for integration and e2e tests. Kept in memory (tmpfs) for speed,
+  # so it starts empty every time.
+  db-test:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: westcal_test
+      POSTGRES_USER: westcal
+      POSTGRES_PASSWORD: westcal
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U westcal -d westcal_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  db-data:
