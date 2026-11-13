@@ -3,9 +3,12 @@ import {
   formatCount,
   formatDayHeader,
   formatLong,
+  formatLongRange,
   formatPeriodTitle,
   formatRangeSummary,
   formatShort,
+  formatWeekdayDayMonth,
+  formatWeekdayShort,
 } from "../format";
 import { rangeOf } from "../slots";
 
@@ -60,5 +63,20 @@ describe("formatPeriodTitle", () => {
     ["month", "2026-11-01", "2026-11-30", "November 2026"],
   ] as const)("%s %s to %s → %s", (view, from, to, expected) => {
     expect(formatPeriodTitle(view, { from, to })).toBe(expected);
+  });
+});
+
+describe("long dates for screen readers", () => {
+  it("formatWeekdayShort and formatWeekdayDayMonth", () => {
+    expect(formatWeekdayShort("2026-11-12")).toBe("Thu");
+    expect(formatWeekdayDayMonth("2026-11-12")).toBe("Thursday 12 November");
+  });
+
+  it.each([
+    ["2026-11-12", "2026-11-12", "Thursday 12 November"],
+    ["2026-11-09", "2026-11-11", "Monday 9 to Wednesday 11 November"],
+    ["2026-10-30", "2026-11-03", "Friday 30 October to Tuesday 3 November"],
+  ])("formatLongRange(%s, %s) → %s", (from, to, expected) => {
+    expect(formatLongRange(from, to)).toBe(expected);
   });
 });

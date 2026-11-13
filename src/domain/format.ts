@@ -40,9 +40,14 @@ function parts(date: CalendarDate) {
   return { year, monthIndex: month - 1, day };
 }
 
+// "Thu"
+export function formatWeekdayShort(date: CalendarDate): string {
+  return SHORT_DAYS[weekday(date)];
+}
+
 // "Thu 12"
 export function formatDayHeader(date: CalendarDate): string {
-  return `${SHORT_DAYS[weekday(date)]} ${parts(date).day}`;
+  return `${formatWeekdayShort(date)} ${parts(date).day}`;
 }
 
 // "Thu 12 Nov"
@@ -52,9 +57,28 @@ export function formatShort(date: CalendarDate): string {
 
 // "Thursday 12 November 2026"
 export function formatLong(date: CalendarDate): string {
-  const { year, monthIndex, day } = parts(date);
-  return `${LONG_DAYS[weekday(date)]} ${day} ${LONG_MONTHS[monthIndex]} ${year}`;
+  return `${formatWeekdayDayMonth(date)} ${parts(date).year}`;
 }
+
+// "Thursday 12 November": for screen-reader labels on the grid.
+export function formatWeekdayDayMonth(date: CalendarDate): string {
+  const { monthIndex, day } = parts(date);
+  return `${LONG_DAYS[weekday(date)]} ${day} ${LONG_MONTHS[monthIndex]}`;
+}
+
+// "Monday 9 to Wednesday 11 November", "Friday 30 October to Tuesday 3 November",
+// or just "Thursday 12 November" for a single date.
+export function formatLongRange(from: CalendarDate, to: CalendarDate): string {
+  if (from === to) return formatWeekdayDayMonth(from);
+  const sameMonth = from.slice(0, 7) === to.slice(0, 7);
+  const fromText = sameMonth
+    ? `${LONG_DAYS[weekday(from)]} ${parts(from).day}`
+    : formatWeekdayDayMonth(from);
+  return `${fromText} to ${formatWeekdayDayMonth(to)}`;
+}
+
+// Added after a single date to say which part of the day: "Thu 12 Nov, morning".
+export const PORTION_SUFFIX = { FULL: "", AM: ", morning", PM: ", afternoon" };
 
 // "1 day", "0.5 days", "3.5 days"
 export function formatCount(days: number): string {
@@ -68,7 +92,7 @@ export function formatRangeSummary(range: SlotRange, count: number): string {
   const end = fromSlot(range.end);
 
   if (isSingleDay(range)) {
-    const portionText = { FULL: "", AM: ", morning", PM: ", afternoon" }[portionOf(range)];
+    const portionText = PORTION_SUFFIX[portionOf(range)];
     return `${formatShort(start.date)}${portionText} · ${formatCount(count)}`;
   }
 

@@ -9,15 +9,31 @@ export type CalendarDate = string; // "YYYY-MM-DD"
 
 const MS_PER_DAY = 86_400_000;
 
+// The grid converts the same few dozen dates back and forth tens of thousands of
+// times, so both conversions remember their answers. There are only a few thousand
+// dates the app will ever see, so these stay small.
+const dayNumberCache = new Map<CalendarDate, number>();
+const dateCache = new Map<number, CalendarDate>();
+
 // Days since 1970-01-01. Date maths is done on these whole numbers.
 export function toDayNumber(date: CalendarDate): number {
-  const [year, month, day] = date.split("-").map(Number);
-  return Date.UTC(year, month - 1, day) / MS_PER_DAY;
+  let dayNumber = dayNumberCache.get(date);
+  if (dayNumber === undefined) {
+    const [year, month, day] = date.split("-").map(Number);
+    dayNumber = Date.UTC(year, month - 1, day) / MS_PER_DAY;
+    dayNumberCache.set(date, dayNumber);
+  }
+  return dayNumber;
 }
 
 export function fromDayNumber(dayNumber: number): CalendarDate {
-  // Pure UTC, so the result can't depend on the computer's time zone.
-  return new Date(dayNumber * MS_PER_DAY).toISOString().slice(0, 10);
+  let date = dateCache.get(dayNumber);
+  if (date === undefined) {
+    // Pure UTC, so the result can't depend on the computer's time zone.
+    date = new Date(dayNumber * MS_PER_DAY).toISOString().slice(0, 10);
+    dateCache.set(dayNumber, date);
+  }
+  return date;
 }
 
 function makeDate(year: number, month: number, day: number): CalendarDate {
