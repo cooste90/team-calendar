@@ -1,26 +1,289 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@custom-variant dark (&:is(.dark *));
+
+/*
+  WestCal design tokens (docs/plan/02-design-system.md).
+  Light values on :root, dark values on .dark. `.light` lets one part of a page
+  show the light theme (used by the dev gallery). The contrast test in
+  src/domain/__tests__/contrast.test.ts reads the hex values in these two blocks,
+  so keep each colour as a plain 6-digit hex on its own line.
+*/
+:root,
+.light {
+  --bg: #f6f6fa;
+  --surface: #ffffff;
+  --surface-2: #f2f2f8;
+  --border: #e2e2ec;
+  --border-soft: #ececf3;
+  --text: #17171f;
+  --text-muted: #5c5c6e;
+  --primary: #4f46e5;
+  --primary-solid: #4f46e5;
+  --on-primary: #ffffff;
+  --primary-soft: #ecebfe;
+  --focus: #4f46e5;
+  --today: #fff4ea;
+  --sunset: #c2410c;
+  --on-sunset: #ffffff;
+  --me: #f4f3ff;
+  --me-today: #ffe8d4;
+  --hatch: rgba(23, 23, 31, 0.1);
+  --bar-hatch: rgba(255, 255, 255, 0.65);
+  --destructive: #b42318;
+  --warning-bg: #fff4ea;
+  --warning-fg: #8a2f08;
+  --warning-border: #f6c9a4;
+  --popover-shadow: 0 16px 40px -12px rgba(23, 23, 31, 0.22), 0 2px 6px rgba(23, 23, 31, 0.06);
+  /* shadcn's --primary-foreground: text on a bg-primary fill. */
+  --primary-foreground: #ffffff;
+
+  --leave-al-bg: #d6e6ff;
+  --leave-al-fg: #173a6b;
+  --leave-fl-bg: #cdeedd;
+  --leave-fl-fg: #11492f;
+  --leave-sk-bg: #ffd9cf;
+  --leave-sk-fg: #6e2513;
+  --leave-sl-bg: #e6ddff;
+  --leave-sl-fg: #3c2a7d;
+  --leave-pl-bg: #ffd8ea;
+  --leave-pl-fg: #6e1d47;
+  --leave-wbd-bg: #f8eeb4;
+  --leave-wbd-fg: #574504;
+  --leave-ot-bg: #e7e5e0;
+  --leave-ot-fg: #3b3934;
+  --leave-wfh-bg: #c9eef0;
+  --leave-wfh-fg: #0e4a50;
+  --leave-ph-bg: #ffe3c2;
+  --leave-ph-fg: #6b3a07;
 }
 
+.dark {
+  --bg: #0d0d13;
+  --surface: #15151d;
+  --surface-2: #1b1b25;
+  --border: #2a2a37;
+  --border-soft: #21212c;
+  --text: #ededf4;
+  --text-muted: #a4a4b8;
+  --primary: #8f89ff;
+  --primary-solid: #5b52e8;
+  --on-primary: #ffffff;
+  --primary-soft: #232144;
+  --focus: #a5a0ff;
+  --today: #1c1814;
+  --sunset: #fdba74;
+  --on-sunset: #1f1306;
+  --me: #191830;
+  --me-today: #2b2124;
+  --hatch: rgba(255, 255, 255, 0.07);
+  --bar-hatch: rgba(0, 0, 0, 0.38);
+  --destructive: #ff8a80;
+  --warning-bg: #2a1d12;
+  --warning-fg: #fdc89a;
+  --warning-border: #5a3a1e;
+  --popover-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --primary-foreground: #0d0d13;
+
+  --leave-al-bg: #1e3456;
+  --leave-al-fg: #cfe0ff;
+  --leave-fl-bg: #173d2c;
+  --leave-fl-fg: #c4efd9;
+  --leave-sk-bg: #4a2219;
+  --leave-sk-fg: #ffd4c8;
+  --leave-sl-bg: #2f2754;
+  --leave-sl-fg: #e2d8ff;
+  --leave-pl-bg: #4a1e35;
+  --leave-pl-fg: #ffd3e7;
+  --leave-wbd-bg: #3d3613;
+  --leave-wbd-fg: #f6e9a6;
+  --leave-ot-bg: #2e2d2a;
+  --leave-ot-fg: #e4e1da;
+  --leave-wfh-bg: #153d41;
+  --leave-wfh-fg: #c3edef;
+  --leave-ph-bg: #46301a;
+  --leave-ph-fg: #ffdcb4;
+}
+
+/* The shadcn variable names, pointed at the WestCal tokens above (same in both themes). */
+:root,
+.light,
+.dark {
+  --background: var(--bg);
+  --foreground: var(--text);
+  --card: var(--surface);
+  --card-foreground: var(--text);
+  --popover: var(--surface);
+  --popover-foreground: var(--text);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--text);
+  --muted: var(--surface-2);
+  --muted-foreground: var(--text-muted);
+  --accent: var(--surface-2);
+  --accent-foreground: var(--text);
+  --input: var(--border);
+  --ring: var(--focus);
+  --radius: 0.625rem;
+  --cell-hover: color-mix(in srgb, var(--primary) 7%, transparent);
+  --hatch-pattern: repeating-linear-gradient(135deg, var(--hatch) 0 1.5px, transparent 1.5px 7px);
+}
+
+/* Tailwind utilities for the tokens, e.g. bg-surface, text-muted-foreground, bg-leave-al. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border-soft: var(--border-soft);
+  --color-primary-solid: var(--primary-solid);
+  --color-on-primary: var(--on-primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-today: var(--today);
+  --color-sunset: var(--sunset);
+  --color-on-sunset: var(--on-sunset);
+  --color-me: var(--me);
+  --color-me-today: var(--me-today);
+  --color-cell-hover: var(--cell-hover);
+  --color-warning-bg: var(--warning-bg);
+  --color-warning-fg: var(--warning-fg);
+  --color-warning-border: var(--warning-border);
+
+  --color-leave-al: var(--leave-al-bg);
+  --color-leave-al-fg: var(--leave-al-fg);
+  --color-leave-fl: var(--leave-fl-bg);
+  --color-leave-fl-fg: var(--leave-fl-fg);
+  --color-leave-sk: var(--leave-sk-bg);
+  --color-leave-sk-fg: var(--leave-sk-fg);
+  --color-leave-sl: var(--leave-sl-bg);
+  --color-leave-sl-fg: var(--leave-sl-fg);
+  --color-leave-pl: var(--leave-pl-bg);
+  --color-leave-pl-fg: var(--leave-pl-fg);
+  --color-leave-wbd: var(--leave-wbd-bg);
+  --color-leave-wbd-fg: var(--leave-wbd-fg);
+  --color-leave-ot: var(--leave-ot-bg);
+  --color-leave-ot-fg: var(--leave-ot-fg);
+  --color-leave-wfh: var(--leave-wfh-bg);
+  --color-leave-wfh-fg: var(--leave-wfh-fg);
+  --color-leave-ph: var(--leave-ph-bg);
+  --color-leave-ph-fg: var(--leave-ph-fg);
+
+  /* Radius scale: lg = controls 10px, xl = cards and popovers 14px (from --radius). */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-dialog: 1.25rem;
+  --radius-bar: 0.5625rem;
+  --radius-chip: 0.4375rem;
+
+  --shadow-popover: var(--popover-shadow);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Motion (design system §6): one easing curve, and the booking "grow" animation. */
+@theme {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-grow: grow 700ms var(--ease-out) both;
+
+  @keyframes grow {
+    from {
+      clip-path: inset(0 100% 0 0 round var(--radius-bar));
+    }
+    to {
+      clip-path: inset(0 0 0 0 round var(--radius-bar));
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Non-working days: whole cell, left half only (PM-only days) or right half only (AM-only days). */
+@utility bg-hatch {
+  background-image: var(--hatch-pattern);
 }
+@utility bg-hatch-left {
+  background-image: var(--hatch-pattern);
+  background-size: 50% 100%;
+  background-repeat: no-repeat;
+  background-position: left top;
+}
+@utility bg-hatch-right {
+  background-image: var(--hatch-pattern);
+  background-size: 50% 100%;
+  background-repeat: no-repeat;
+  background-position: right top;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background font-sans text-foreground;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/*
+  One focus style for everything: a 2px ring with a 2px gap (WCAG 2.4.7).
+  It's deliberately outside any @layer so it wins over component classes
+  such as `outline-none`.
+*/
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Windows High Contrast (design system §2.2): use system colours, never background alone. */
+@media (forced-colors: active) {
+  :root,
+  .light,
+  .dark {
+    --hatch: GrayText;
+  }
+  :focus-visible {
+    outline-color: Highlight;
+  }
+}
+
+/*
+  Reduced motion: switch off every animation and transition in one place.
+  !important is needed so this beats any component's own animation classes.
+*/
+/* biome-ignore-start lint/complexity/noImportantStyles: reduced motion must override everything */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+/* biome-ignore-end lint/complexity/noImportantStyles: reduced motion must override everything */

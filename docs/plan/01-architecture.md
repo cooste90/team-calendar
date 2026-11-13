@@ -445,7 +445,7 @@ Commands: `pnpm test` (unit + component), `pnpm test:int`, `pnpm test:e2e`, `pnp
 - **GitHub Actions** (`.github/workflows/ci.yml`) during development: Node 24, pnpm store cached by lockfile. Three jobs, so the setup steps aren't repeated six times:
   1. `checks`: `pnpm lint`, `pnpm typecheck`, `pnpm test:coverage` (domain coverage gate) and `pnpm build`, each a separate step
   2. `integration`: `pnpm test:int` with a `postgres:17` service
-  3. `e2e`: Playwright container + `postgres:17` service; `pnpm test:e2e` (nightly adds `--project=firefox`); uploads the report on failure
+  3. `e2e`: Playwright container + `postgres:17` service; `pnpm test:e2e` (nightly adds `--project=firefox`); uploads the report on failure. E2E always runs against `next dev`, because dev-only pages (dev sign-in, the design gallery) are off in production builds. The `checks` job covers the production build, and T36 adds a separate check that dev-only routes return 404 under `next start`.
 
   The pipeline fails on any axe violation.
 - **GitLab CI** after the production move: `docs/MOVING-TO-GITLAB.md` (T37) holds the equivalent `.gitlab-ci.yml`, which calls the same scripts. Don't commit both CI files at once.

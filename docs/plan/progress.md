@@ -108,3 +108,31 @@ Append one entry per task, newest at the bottom. Keep entries short and factual.
 **CI fix:** the first run failed in the e2e container: git rejected the checkout ("dubious ownership"), so `lefthook install` failed during `pnpm install`. Fixed with a `safe.directory` step, and confirmed by running the job locally in the same image (Chromium and Firefox pass).
 **Follow-ups:** T04 should keep `expectNoA11yViolations` working with next-themes (it emulates `prefers-color-scheme`, which the "system" theme follows). The e2e job will need `prisma migrate deploy` and a seed step once T13 exists. Keep the Playwright container tag in step with `@playwright/test`.
 **Questions for the product owner:** none.
+
+## T04 — Design foundation — 2026-11-13
+**Status:** done
+**Summary:**
+- shadcn 4.23 (Radix base, "nova" preset) with all 23 listed components. `globals.css` holds every light/dark token and the leave colours, mapped to shadcn names and Tailwind utilities (`bg-surface`, `bg-leave-al`, `text-leave-al-fg`, `rounded-dialog`, `shadow-popover`, `bg-hatch(-left/-right)`, `animate-grow`, `ease-out`).
+- Geist and Geist Mono via `next/font`; next-themes (`class`, system default) in the root layout with `TooltipProvider`; the theme persists across reloads (e2e test).
+- `Logo`, `Wordmark`, `LeaveChip` (code visible, full name for screen readers and in a tooltip), and `SegmentedControl` (one option always selected). `src/domain/leave-types.ts` is the single map of type → code, label, tally window and classes.
+- Contrast test: 19 colour pairs × 2 themes, read straight from `globals.css`, all ≥ 4.5:1.
+- `/dev/design-system` gallery (404 in production, checked with `next start`); axe passes in light and dark; forced-colours screenshot test attaches an image to the report.
+- One global reduced-motion rule; forced-colours rules for focus, hatching, chips and the segmented control.
+**Key files:** `src/app/globals.css`, `src/app/layout.tsx`, `src/domain/leave-types.ts`, `src/domain/__tests__/contrast.test.ts`, `src/components/{brand,leave-chip.tsx,segmented-control.tsx}`, `src/app/dev/design-system/*`
+**Simplicity pass:**
+- **One focus style:** a single global `:focus-visible` rule (2px ring, 2px gap, per design §2) replaces shadcn's per-component focus rings. I removed 42 `focus-visible:ring…` classes from `src/components/ui`.
+- **Removed:**
+  - shadcn's sidebar and chart tokens (unused);
+  - `src/lib/utils.ts` (shadcn now imports `cn` from the `cn` package directly, and `shadcn add` still works without it);
+  - `toggle-group`'s spacing override in `SegmentedControl`.
+- **`tallyWindow` only:** no separate `tallied` flag, because `tallyWindow: null` means "not counted".
+**Deviations from plan:**
+- **E2E always runs on `next dev`** (CI included). Dev sign-in (T11) and the gallery are off when `NODE_ENV=production`, so e2e can't run against a production build. The `checks` job still builds production. T36 should add a small separate run against `next start` for the "dev routes return 404" check.
+- **Primary buttons use `bg-primary-solid text-on-primary`.** shadcn's `--primary` is the design's text/link colour (lighter in dark mode), so `bg-primary` fills elsewhere (e.g. selected calendar days) get dark text in dark mode via `--primary-foreground`.
+- **Dependency placement:** `shadcn` moved to devDependencies (it's the CLI; its CSS is only needed at build time). All new dependencies are pinned exactly. `cn` is shadcn's official class-merging package (repo `shadcn-ui/cn`).
+- **Lint fixes in generated code:** in `field.tsx` and `input-group.tsx` I removed role="group" from plain wrappers and replaced `==` and an index key. A commented `biome-ignore` covers the input-group click-to-focus convenience.
+- **Gallery size:** `gallery.tsx` is ~230 lines (over the ~200 guide). It's a dev-only page of examples, so I didn't split it.
+**Follow-ups:**
+- **Forced colours:** Chromium's forced-colours emulation only switches the media query, not the real system colours. Check once on Windows with High Contrast on (T35).
+- **Bars:** the forced-colours "1px CanvasText border" rule should be added to grid bars as `forced-colors:` classes when T16 builds them, as LeaveChip does.
+**Questions for the product owner:** none.

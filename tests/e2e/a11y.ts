@@ -5,8 +5,10 @@ import { expect, type Page } from "@playwright/test";
 const wcagTags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 // Checks the current page in the given colour scheme and fails with the list of problems.
+// The app follows the system theme by default, so emulating the colour scheme switches it.
 export async function expectNoA11yViolations(page: Page, { theme }: { theme: "light" | "dark" }) {
   await page.emulateMedia({ colorScheme: theme });
+  await expect(page.locator("html")).toHaveClass(new RegExp(`\\b${theme}\\b`));
   const results = await new AxeBuilder({ page }).withTags(wcagTags).analyze();
   expect(results.violations).toEqual([]);
 }

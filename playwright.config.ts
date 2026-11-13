@@ -20,8 +20,9 @@ export default defineConfig({
     { name: "firefox", use: { ...devices["Desktop Firefox"] } },
   ],
   webServer: {
-    // CI tests the production build; locally the dev server starts faster.
-    command: isCI ? `pnpm build && pnpm start --port ${port}` : `pnpm dev --port ${port}`,
+    // Always the dev server: dev-only pages (dev sign-in, the design gallery) are switched
+    // off in production builds, and e2e needs them. The CI "checks" job tests the build.
+    command: `pnpm dev --port ${port}`,
     url: `http://localhost:${port}/api/health`,
     reuseExistingServer: !isCI,
     timeout: 180_000,
