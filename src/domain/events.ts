@@ -24,9 +24,18 @@ export type BookingInput = {
 };
 
 // A saved booking. publicHolidayId is set only on untouched public holiday copies.
-export type Booking = BookingInput & { id: string; publicHolidayId: string | null };
+// createdById is optional here because only splitting needs it (to keep the creator).
+export type Booking = BookingInput & {
+  id: string;
+  publicHolidayId: string | null;
+  createdById?: string | null;
+};
 
-export type NewBooking = BookingInput & { publicHolidayId: string | null };
+// A booking to create. When createdById is left out, the service uses the signed-in person.
+export type NewBooking = BookingInput & {
+  publicHolidayId: string | null;
+  createdById?: string | null;
+};
 
 // What a planner wants saved. saveBookingChanges (T12) writes it in one transaction.
 export type BookingChanges = {
@@ -122,21 +131,27 @@ export function halvesToFormPortion(
   };
 }
 
-// Cuts `cut` out of a booking. What's left (0, 1 or 2 pieces) becomes: remove the
-// booking, shorten it, or shorten it and create a second booking for the later piece.
-// Used by Replace, "Remove this day" and the public holiday planners.
+// Cuts `cut` out of a booking: remove it, shorten it, or split it in two.
+// Used by Replace and "Remove this day".
 export function carveBooking(booking: Booking, cut: SlotRange): BookingChanges {
+  return changesForPieces(booking, subtract(rangeOf(booking), cut));
+}
+
+// Turns what's left of a booking after carving into changes. No pieces: remove it.
+// Otherwise the first piece keeps the booking's id (it's shortened) and every later
+// piece becomes a new booking with the same details and original creator.
+export function changesForPieces(booking: Booking, pieces: SlotRange[]): BookingChanges {
   const changes = emptyChanges();
-  const [first, second] = subtract(rangeOf(booking), cut);
+  const [first, ...rest] = pieces;
 
   if (!first) {
     changes.remove.push(booking.id);
     return changes;
   }
   changes.update.push({ id: booking.id, range: first });
-  if (second) {
-    const start = fromSlot(second.start);
-    const end = fromSlot(second.end);
+  for (const piece of rest) {
+    const start = fromSlot(piece.start);
+    const end = fromSlot(piece.end);
     changes.create.push({
       userId: booking.userId,
       type: booking.type,
@@ -146,6 +161,7 @@ export function carveBooking(booking: Booking, cut: SlotRange): BookingChanges {
       endHalf: end.half,
       notes: booking.notes,
       publicHolidayId: booking.publicHolidayId,
+      createdById: booking.createdById,
     });
   }
   return changes;

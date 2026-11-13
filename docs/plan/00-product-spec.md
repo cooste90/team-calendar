@@ -147,7 +147,7 @@ The types are fixed and not admin-editable. Colours are in `02-design-system.md`
 
 ### 5.4 Time rules (apply to everyone, including admins)
 - **Past bookings cannot be edited or deleted.** "Past" means the dates are before today (Europe/London). Today is editable.
-- **Creating:** users can create bookings from today onwards. **Admins and super admins can also create up to 7 days in the past** (today − 7 up to yesterday). Once created, those past bookings are locked like any other.
+- **Creating:** users can create bookings from today onwards. **Admins and super admins can also create up to 7 days in the past** (today − 7 up to yesterday). Once created, those past bookings are locked like any other. The 7-day window is for creating only: nobody, admins included, can edit, delete or move a booking into the past.
 - **Ongoing bookings** (started before today, ending today or later):
   - The past days are locked.
   - The **end date and end half** can be changed (to today or later), and the notes can be edited.

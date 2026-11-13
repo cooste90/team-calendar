@@ -63,7 +63,7 @@ Size key: **S** ≈ small, under 300 lines changed · **M** ≈ 300–800 · **L
 - [x] [T05](tasks/T05-domain-dates-slots.md) Calendar dates, weeks, months, half-day slots, formatting · **M**
 - [x] [T06](tasks/T06-domain-availability-counting.md) Working patterns, overrides, availability, day counting · **M**
 - [x] [T07](tasks/T07-domain-booking-rules.md) Booking validation, conflicts, carving, time rules, permissions · **L**
-- [ ] [T08](tasks/T08-domain-public-holidays.md) Public holiday planning engine · **M**
+- [x] [T08](tasks/T08-domain-public-holidays.md) Public holiday planning engine · **M**
 - [ ] [T09](tasks/T09-domain-tallies-grid-model.md) Tallies and the grid view-model · **M**
 
 ### Phase 2 — Data and auth

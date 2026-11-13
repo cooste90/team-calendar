@@ -207,4 +207,35 @@ Append one entry per task, newest at the bottom. Keep entries short and factual.
 - **No moving into the past.** A future booking can't be moved to start before today, even by an admin (`validateUpdate` has no role). Admins' 7-day window applies to creating only. Flag if admins should also be able to move bookings up to 7 days back.
 - **Assumption:** a maximum booking span of 366 days. This is a sanity limit and isn't in the spec.
 **Follow-ups:** T08 should reuse `carveBooking` and `mergeChanges` from `events.ts`, and drop zero-working-day remainders for PH carving only (spec §6.2).
-**Questions for the product owner:** should admins be able to *move* an existing booking up to 7 days into the past (as they can when creating one)? It's currently not allowed.
+**Questions for the product owner:** answered 2026-11-13: admins can only *create* in the 7-day past window; they can't edit, delete or move bookings into the past. That matches the code; spec §5.4 updated.
+
+## T08 — Public holiday planning engine — 2026-11-13
+**Status:** done
+**Summary:**
+- `src/domain/public-holidays.ts` has:
+  - the types `PublicHoliday` and `PersonSnapshot` (an availability lookup, bookings and exclusion ids);
+  - `phSlotsFor`;
+  - `planPublicHolidayCreate`, `planPublicHolidayMove`, `planPublicHolidayDelete` and `planReconcileForPerson`;
+  - `planUserEditsPhCopy` and `planUserDeletesPhCopy`.
+- Rules covered:
+  - a PH goes on the halves the person works;
+  - parental leave is kept and gets no PH on its halves;
+  - other bookings are carved, and pieces left with no working days are dropped;
+  - untouched copies follow moves and deletes, and detached copies (exclusions) are left alone;
+  - people with no copy only because the old date was their day off count as untouched;
+  - reconcile replaces mismatched copies and creates newly working ones.
+- Every spec case is a named test (27 new tests); `src/domain` is still at 100%.
+**Key files:** `src/domain/public-holidays.ts`, `src/domain/__tests__/public-holidays.test.ts`, `src/domain/events.ts`
+**Simplicity pass:**
+- **One carving routine.** All four planners share one private `planHolidaysForPerson` (holiday ranges → carve → create PH bookings) and `holidayRange` (working halves minus parental leave).
+- **One pieces helper.** `events.ts` gained `changesForPieces(booking, pieces)`, which handles any number of leftover pieces. `carveBooking` now uses it too, so there's one copy of the "first piece updates, others are created" logic.
+- **No untested branches in sorting.** The sort comparators use `localeCompare`.
+- **No duplicate helpers.** `BookingChanges`, `emptyChanges` and `mergeChanges` already existed from T07 and are reused.
+**Deviations from plan:**
+- **All of a person's holidays are carved together.** The plan's per-holiday carving would produce clashing updates when two holidays fall inside one booking (e.g. Christmas and Boxing Day in a 2-week AL block). Tested.
+- **`PersonSnapshot` shape.** It takes `availability: AvailabilityLookup` (from T06) instead of an `availabilityOn` method, and `exclusions: string[]` instead of a `Set`.
+- **Split pieces keep their creator.** `Booking` and `NewBooking` gained an optional `createdById`, so pieces created by a split keep the original creator. `saveBookingChanges` (T12) should use `piece.createdById ?? actor.id`.
+- **Planner output order.** Output is ordered by userId, then booking start, then holiday date (people and holidays are sorted on the way in).
+- **"Delete a PH copy" for unlinked bookings.** On a booking that isn't linked to a holiday, `planUserDeletesPhCopy` just removes it (no exclusion), and `planUserEditsPhCopy` does nothing.
+**Follow-ups:** T12's `saveBookingChanges` writes `update` ranges (convert with `fromSlot`) and must apply `remove` before `create` within the same transaction.
+**Questions for the product owner:** none.
