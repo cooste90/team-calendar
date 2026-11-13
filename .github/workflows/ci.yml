@@ -73,6 +73,9 @@ jobs:
       HOME: /root
     steps:
       - uses: actions/checkout@v7
+      # In a container the checkout belongs to a different user, so git (used by
+      # `lefthook install` during pnpm install) refuses it unless it's marked safe.
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
