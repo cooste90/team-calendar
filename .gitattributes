@@ -1,0 +1,3 @@
+# Store and check out text files with LF endings on every OS, so Biome's formatter
+# (which expects LF) doesn't flag every file on Windows.
+* text=auto eol=lf

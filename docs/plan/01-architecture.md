@@ -443,7 +443,7 @@ Commands: `pnpm test` (unit + component), `pnpm test:int`, `pnpm test:e2e`, `pnp
   - `pre-push`: `pnpm test`.
 - **CI is a thin wrapper around `pnpm` scripts.** Every check is a script in `package.json`, and the CI file only installs and calls them. The same commands work locally, and moving CI means rewriting one small file.
 - **GitHub Actions** (`.github/workflows/ci.yml`) during development: Node 24, pnpm store cached by lockfile. The jobs:
-  1. `lint` (`pnpm lint` → `biome ci`)
+  1. `lint` (`pnpm lint` → `biome check`)
   2. `typecheck` (`pnpm typecheck`)
   3. `test` (`pnpm test:coverage`; domain coverage gate)
   4. `test:int` (`pnpm test:int` with a `postgres:17` service)

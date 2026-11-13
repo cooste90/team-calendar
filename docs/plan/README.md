@@ -54,7 +54,7 @@ Ideas that aren't for now go in [backlog.md](backlog.md), so they're not forgott
 Size key: **S** ≈ small, under 300 lines changed · **M** ≈ 300–800 · **L** ≈ 800–1500. Each task is scoped to fit one agent session.
 
 ### Phase 0 — Foundation
-- [ ] [T01](tasks/T01-tooling-baseline.md) Tooling baseline: TS strict, Biome, lefthook, env validation, scripts · **S**
+- [x] [T01](tasks/T01-tooling-baseline.md) Tooling baseline: TS strict, Biome, lefthook, env validation, scripts · **S**
 - [ ] [T02](tasks/T02-database-prisma.md) Local Postgres (Docker) and Prisma 7 bootstrap · **S**
 - [ ] [T03](tasks/T03-test-ci-harness.md) Vitest, Playwright + axe, and the GitHub Actions pipeline · **M**
 - [ ] [T04](tasks/T04-design-foundation.md) Design tokens, Geist, next-themes, shadcn base components, dev gallery · **M**
