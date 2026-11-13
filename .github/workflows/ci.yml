@@ -1,0 +1,88 @@
+# Every step calls a pnpm script, so the same checks run locally and this file stays
+# easy to move to GitLab later (see docs/plan/01-architecture.md §11).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 2 * * *" # nightly, adds Firefox to the e2e tests
+
+# Test-only values. These aren't real secrets and are never used in production.
+env:
+  DATABASE_URL: postgresql://westcal:westcal@localhost:5432/westcal
+  DATABASE_URL_TEST: postgresql://westcal:westcal@localhost:5433/westcal_test
+  BETTER_AUTH_SECRET: ci-only-test-value-not-a-real-secret-0000
+  BETTER_AUTH_URL: http://localhost:3000
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test:coverage
+      - run: pnpm build
+
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      db-test:
+        image: postgres:17
+        env:
+          POSTGRES_DB: westcal_test
+          POSTGRES_USER: westcal
+          POSTGRES_PASSWORD: westcal
+        ports: ["5433:5432"]
+        options: --health-cmd "pg_isready -U westcal" --health-interval 2s --health-retries 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:int
+
+  e2e:
+    runs-on: ubuntu-latest
+    # The official Playwright image has the browsers installed. Keep its version in
+    # step with @playwright/test in package.json.
+    container: mcr.microsoft.com/playwright:v1.65.0-noble
+    services:
+      db-test:
+        image: postgres:17
+        env:
+          POSTGRES_DB: westcal_test
+          POSTGRES_USER: westcal
+          POSTGRES_PASSWORD: westcal
+        options: --health-cmd "pg_isready -U westcal" --health-interval 2s --health-retries 15
+    env:
+      # Inside a container the database is reached by its service name.
+      DATABASE_URL_TEST: postgresql://westcal:westcal@db-test:5432/westcal_test
+      # Firefox refuses to start as root without this.
+      HOME: /root
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:e2e ${{ github.event_name == 'schedule' && '--project=firefox' || '' }}
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7

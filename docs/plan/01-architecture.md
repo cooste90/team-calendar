@@ -32,7 +32,7 @@ Read this together with `00-product-spec.md`. This file says **how** the app is 
 | Seed | `@faker-js/faker` (`en_GB`, fixed seed) | |
 | Lint / format | Biome 2.4 (incl. a11y rules, sorted Tailwind classes) | |
 | Git hooks | lefthook | pre-commit: Biome on staged files; pre-push: typecheck plus unit tests |
-| Tests | Vitest (unit, component, integration), Testing Library, `vitest-axe`; Playwright + `@axe-core/playwright` for e2e and a11y | |
+| Tests | Vitest (unit, component, integration), Testing Library, `axe-core` (called directly); Playwright + `@axe-core/playwright` for e2e and a11y | |
 | CI | GitHub Actions now; GitLab CI after the production move | §11 |
 
 ---
@@ -427,8 +427,8 @@ planReconcileForPerson(person, futureHolidays, fromDate): BookingChanges   // af
 | Layer | Tool | What |
 |---|---|---|
 | Domain | Vitest (node) | **100% branch coverage target** for `src/domain`. Table-driven tests for every spec example. |
-| Services / queries | Vitest + real Postgres (`DATABASE_URL_TEST`, port 5433) | Transactions, overlap check and locking, PH bulk changes, cascades. DB is reset per file with `prisma migrate reset --force` once per run plus truncation between tests. |
-| Components | Vitest + Testing Library + happy-dom + `vitest-axe` | Forms, grid, popovers, menus; keyboard behaviour; no axe violations. |
+| Services / queries | Vitest + real Postgres (`DATABASE_URL_TEST`, port 5433) | Transactions, overlap check and locking, PH bulk changes, cascades. `prisma migrate deploy` once per run (never `migrate reset`), plus truncation before every test. The setup refuses to run unless the database name ends in `_test`. Tests use the normal `db` client, which the integration project points at the test DB. |
+| Components | Vitest + Testing Library + happy-dom + `axe-core` (`expect((await axe.run(container)).violations).toEqual([])`) | Forms, grid, popovers, menus; keyboard behaviour; no axe violations. |
 | E2E | Playwright (Chromium; Firefox in CI nightly) + `@axe-core/playwright` | Sign in (dev), book, edit, conflict and replace, undo, filters, profile, admin, PDF download. Axe on every screen in light and dark. Zoom/reflow checks at 320×256. |
 
 Commands: `pnpm test` (unit + component), `pnpm test:int`, `pnpm test:e2e`, `pnpm check` (biome + tsc + test).
@@ -439,16 +439,13 @@ Commands: `pnpm test` (unit + component), `pnpm test:int`, `pnpm test:e2e`, `pnp
 
 - **Biome**: recommended rules plus the `a11y` group as errors, `noExplicitAny` error, sorted imports, `useSortedClasses` for Tailwind (with `cn`/`cva` functions configured), `noConsole` (allow `error`/`warn`). Biome is the formatter (2-space indent, double quotes, line width 100).
 - **lefthook**:
-  - `pre-commit`: `biome check --write --staged` (re-staging fixed files), plus `tsc --noEmit` when `.ts`/`.tsx` files are staged.
+  - `pre-commit`: `biome check --write --staged` (re-staging fixed files), plus `pnpm typecheck` when `.ts`/`.tsx` files are staged.
   - `pre-push`: `pnpm test`.
 - **CI is a thin wrapper around `pnpm` scripts.** Every check is a script in `package.json`, and the CI file only installs and calls them. The same commands work locally, and moving CI means rewriting one small file.
-- **GitHub Actions** (`.github/workflows/ci.yml`) during development: Node 24, pnpm store cached by lockfile. The jobs:
-  1. `lint` (`pnpm lint` → `biome check`)
-  2. `typecheck` (`pnpm typecheck`)
-  3. `test` (`pnpm test:coverage`; domain coverage gate)
-  4. `test:int` (`pnpm test:int` with a `postgres:17` service)
-  5. `build` (`pnpm build`)
-  6. `e2e` (Playwright container + `postgres:17` service; seed; `pnpm test:e2e`; upload the report on failure)
+- **GitHub Actions** (`.github/workflows/ci.yml`) during development: Node 24, pnpm store cached by lockfile. Three jobs, so the setup steps aren't repeated six times:
+  1. `checks`: `pnpm lint`, `pnpm typecheck`, `pnpm test:coverage` (domain coverage gate) and `pnpm build`, each a separate step
+  2. `integration`: `pnpm test:int` with a `postgres:17` service
+  3. `e2e`: Playwright container + `postgres:17` service; `pnpm test:e2e` (nightly adds `--project=firefox`); uploads the report on failure
 
   The pipeline fails on any axe violation.
 - **GitLab CI** after the production move: `docs/MOVING-TO-GITLAB.md` (T37) holds the equivalent `.gitlab-ci.yml`, which calls the same scripts. Don't commit both CI files at once.

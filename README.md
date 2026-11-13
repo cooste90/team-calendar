@@ -33,6 +33,10 @@ Seed data is added in a later task.
 | `pnpm format` | Fix formatting, imports and safe lint issues |
 | `pnpm typecheck` | Type-check the whole project |
 | `pnpm test` | Unit and component tests |
+| `pnpm test:watch` | Re-run unit and component tests as you edit |
+| `pnpm test:coverage` | Unit and component tests with a coverage report (`src/domain` must be 100%) |
+| `pnpm test:int` | Integration tests against the test database (run `pnpm db:up` first) |
+| `pnpm test:e2e` | Browser tests with accessibility checks (first time: `pnpm exec playwright install chromium`) |
 | `pnpm check` | Lint, type-check and test: run before pushing |
 | `pnpm db:up` / `pnpm db:down` | Start or stop the local databases |
 | `pnpm db:migrate` | Apply schema changes (creates a migration if `schema.prisma` changed) |
