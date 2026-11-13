@@ -173,3 +173,38 @@ Append one entry per task, newest at the bottom. Keep entries short and factual.
 - **No-change check includes pending versions.** `planPatternChange` compares against the pattern in force from next Sunday *including* any pending version. So changing back to the current pattern after saving a pending one still saves (it overwrites the pending version).
 **Follow-ups:** the Prisma `WorkingPattern` model stores `sun … sat` columns. T10 or T27 needs a tiny pair of converters (`[row.sun, row.mon, …]` and back) in the query or service layer, not in the domain.
 **Questions for the product owner:** none.
+
+## T07 — Booking validation, conflicts, carving, time rules and permissions — 2026-11-13
+**Status:** done
+**Summary:**
+- `src/domain/events.ts` covers:
+  - the types `BookingInput`, `Booking`, `NewBooking` and `BookingChanges`, plus `emptyChanges` and `mergeChanges`;
+  - `bookingInputSchema`, which rejects an end before the start (at half-day level) and a span over 366 days, and trims notes (≤ 500 characters, blank becomes undefined);
+  - the form helpers `formPortionToHalves` and `halvesToFormPortion`;
+  - `carveBooking`.
+- `src/domain/conflicts.ts`:
+  - `findConflicts`, which returns each clashing booking and the exact overlap;
+  - `describeConflict`, e.g. "You already have Working from home on Fri 13 Nov (full day)." or "Tom Okafor already has Annual leave from Thu 12 Nov (afternoon) to Tue 17 Nov.";
+  - `planReplace`, which throws `PastLockedError` for a past overlap and keeps zero-working-day remainders.
+- `src/domain/time-rules.ts`:
+  - `earliestCreatableDate`, `classifyBooking`, `canModify` and `allowedEdits`;
+  - `validateCreate` and `validateUpdate`;
+  - `planTrimRemaining` and `planRemoveDay`;
+  - `validateOverrideChange`.
+- `src/domain/permissions.ts`: every function in architecture §4, with plain `Actor` / `Subject` types.
+- `src/domain/errors.ts` (created early because these rules throw): `AppError` with a `code`, plus `ValidationError` and `PastLockedError`. T14 adds `ForbiddenError`, `NotFoundError` and `ConflictError`.
+- 95 new tests, including the full actor × subject matrix; `src/domain` is still at 100%.
+**Key files:** `src/domain/{errors,events,conflicts,time-rules,permissions}.ts` and their tests
+**Simplicity pass:**
+- **One carving helper.** `carveBooking(booking, cut)` is shared by Replace, "Remove this day" and (next) the public holiday planners, instead of each doing its own split logic.
+- **Fewer, simpler types.** `Booking` in the domain holds only what the rules need: no audit timestamps (the query layer adds those for the UI).
+- **No separate permission error.** `PermissionError` was dropped: services throw `ForbiddenError` (T14) when a `can…` function says no.
+**Deviations from plan:**
+- **Validate functions throw.** `validateCreate` / `validateUpdate` throw `PastLockedError` / `ValidationError` instead of returning error values (rule 11, "errors are boring"). The plan's codes map onto them:
+  - PAST_LOCKED and TOO_FAR_IN_PAST are both `PastLockedError` with different messages;
+  - FIELD_LOCKED is `ValidationError`.
+- **`validateCreate` takes a date.** Its signature is `validateCreate(startDate, role, today)` (a date, not a whole input), so day swaps can reuse it. `validateOverrideChange(date, today)` covers changing or removing an existing day swap.
+- **No moving into the past.** A future booking can't be moved to start before today, even by an admin (`validateUpdate` has no role). Admins' 7-day window applies to creating only. Flag if admins should also be able to move bookings up to 7 days back.
+- **Assumption:** a maximum booking span of 366 days. This is a sanity limit and isn't in the spec.
+**Follow-ups:** T08 should reuse `carveBooking` and `mergeChanges` from `events.ts`, and drop zero-working-day remainders for PH carving only (spec §6.2).
+**Questions for the product owner:** should admins be able to *move* an existing booking up to 7 days into the past (as they can when creating one)? It's currently not allowed.
