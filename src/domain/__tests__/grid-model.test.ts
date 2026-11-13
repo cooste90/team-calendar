@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { availabilityLookup } from "../availability";
 import { addDays, periodRange } from "../dates";
 import type { Booking } from "../events";
-import { buildGridModel, type GridInput, type GridPerson, type GridRow } from "../grid-model";
+import { buildGridModel } from "../grid-model";
+import type { GridInput, GridPerson, GridRow } from "../grid-model-types";
 import type { LeaveType } from "../leave-types";
 import type { HalfDay } from "../slots";
 

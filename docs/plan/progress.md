@@ -258,7 +258,7 @@ Append one entry per task, newest at the bottom. Keep entries short and factual.
   - `src/domain/display-name.ts`;
   - `formatWeekdayShort`, `formatWeekdayDayMonth`, `formatLongRange` and a shared `PORTION_SUFFIX` in `format.ts`.
 - 30 new tests; `src/domain` is still at 100%. Performance: 300 people × 31 days with 3,000 bookings builds in about 17ms cold and 9–14ms warm (target 25ms). The test allows 100ms for slow CI runners.
-**Key files:** `src/domain/{tallies,grid-model,display-name}.ts`, `src/domain/format.ts`, `src/domain/dates.ts`
+**Key files:** `src/domain/{tallies,grid-model,grid-model-types,display-name}.ts`, `src/domain/format.ts`, `src/domain/dates.ts`
 **Simplicity pass:**
 - **Data-driven tallies.** `computeTallies` / `historyGroups` are driven by the `tallyWindow` in `leave-types.ts` (no hard-coded type list), using a `flatMap` instead of type casts.
 - **No repeated work in the grid.** Each booking's range, day count and description is worked out once per row, and the day ranges and labels once per grid.
@@ -268,5 +268,5 @@ Append one entry per task, newest at the bottom. Keep entries short and factual.
 - **`computeTallies` returns a list.** It returns `Tally[]` in display order (`{ type, taken, booked? }`) instead of an object keyed by type, so the profile UI just maps over it.
 - **Cells have no per-date editability.** A cell's "View only." comes from `viewer.canEdit(person)`. Per-date editability (past dates) is left to T18/T25, which have the role and time rules to hand.
 - **`dates.ts` caches its two conversions.** `toDayNumber` and `fromDayNumber` now remember their answers (two small Maps). The grid converts the same ~60 dates tens of thousands of times, and this took the large grid from about 45ms to about 12ms.
-**Follow-ups:** `grid-model.ts` is ~230 lines (over the ~200 guide). It's one cohesive function with its types. If it grows in T16–T18, move the types into `grid-model-types.ts`.
+**Follow-ups:** none. (`grid-model.ts` was split after formatting: the input and output types live in `grid-model-types.ts`, so the builder is 200 lines.)
 **Questions for the product owner:** none.
