@@ -153,3 +153,23 @@ Append one entry per task, newest at the bottom. Keep entries short and factual.
 - Vitest 5's coverage table hides fully covered files. Use `--coverage.reporter=json-summary` to see them listed. The 100% threshold on `src/domain/**` is still enforced.
 **Follow-ups:** `type View = "week" | "month"` lives in `dates.ts`; T14's nuqs parsers should reuse it.
 **Questions for the product owner:** none.
+
+## T06 — Working patterns, overrides, availability and day counting — 2026-11-13
+**Status:** done
+**Summary:**
+- `src/domain/availability.ts` defines:
+  - the types `WorkDay`, `WeeklyPattern`, `PatternVersion` and `Override`;
+  - `DEFAULT_PATTERN` and `DEFAULT_PATTERN_EFFECTIVE_FROM`;
+  - `availabilityLookup(versions, overrides)`, where an override wins and otherwise the newest pattern on or before the date applies;
+  - `worksSlot`;
+  - `planPatternChange`, which starts a change from the next Sunday, replaces a pending one, and returns null when nothing would change.
+- `src/domain/counting.ts`: `countWorkingDays`, `workingSlots`, `nonWorkingSlots` and `describeExcludedDays`, which writes the hint, e.g. "Sat 14 and Sun 15 are not working days, so they are not counted." or "Wed 11 is a morning-only day."
+- Every spec example is a named test; 36 new tests; `src/domain` is still at 100%.
+**Key files:** `src/domain/{availability,counting}.ts`, `src/domain/__tests__/{availability,counting}.test.ts`
+**Simplicity pass:** merged the repeated "X is … / X and Y are …" sentence logic into one `sentence()` helper; one private `isWorkingSlot` is shared by all the slot functions.
+**Deviations from plan:**
+- **One lookup instead of two functions.** `resolveAvailability` and `availabilityForRange` are replaced by `availabilityLookup(versions, overrides)`. It sorts the history and indexes overrides once, then returns a `(date) => WorkDay` function. That's what `countWorkingDays`, tallies (T09) and the form hint (T24) all take, so there's one way to ask "does this person work on date X?" and it's cheap to call for every cell.
+- **A pattern is a plain list.** `WeeklyPattern` is a 7-item `WorkDay[]` (Sunday first) instead of `Record<0..6, WorkDay>`: it's simpler to read and write.
+- **No-change check includes pending versions.** `planPatternChange` compares against the pattern in force from next Sunday *including* any pending version. So changing back to the current pattern after saving a pending one still saves (it overwrites the pending version).
+**Follow-ups:** the Prisma `WorkingPattern` model stores `sun … sat` columns. T10 or T27 needs a tiny pair of converters (`[row.sun, row.mon, …]` and back) in the query or service layer, not in the domain.
+**Questions for the product owner:** none.
