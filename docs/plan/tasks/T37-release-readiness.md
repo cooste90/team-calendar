@@ -32,7 +32,8 @@ A release candidate the product owner can deploy to the internal Kubernetes and 
    - Run the whole test suite, a Lighthouse pass, and the large-seed performance checks.
    - Fix small issues. Log anything bigger in `progress.md`.
 8. Update the root `README.md` (project overview, setup, scripts, links to the docs).
+9. **`docs/MOVING-TO-GITLAB.md`** (short): steps to move the repo from GitHub to GitLab, plus a ready-to-paste `.gitlab-ci.yml` with the same jobs as `.github/workflows/ci.yml`. It uses `node:24` with corepack, caches the pnpm store by lockfile, adds a `postgres:17` service, runs e2e in the Playwright image and adds a scheduled nightly Firefox run. It calls the same `pnpm` scripts. Validate it with GitLab's CI Lint if a GitLab instance is available, and say in `progress.md` whether it was validated. Mention deleting `.github/` after the move.
 
 ## Acceptance criteria
 - The Docker image builds and runs locally against Postgres, and the health checks pass.
-- Every spec rule is ticked in `docs/qa-checklist.md`, and the GitLab pipeline is fully green on `main`.
+- Every spec rule is ticked in `docs/qa-checklist.md`, and the GitHub Actions pipeline is fully green on `main`.

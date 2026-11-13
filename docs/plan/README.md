@@ -10,6 +10,7 @@ WestCal is a team availability calendar for a business unit of about 50 people, 
 | [03-accessibility.md](03-accessibility.md) | The WCAG 2.2 AA rules, grid keyboard model and test checklist. |
 | [04-code-style.md](04-code-style.md) | **Keep it simple.** Code rules for a junior maintainer, and the libraries and patterns we deliberately avoid. |
 | [progress.md](progress.md) | Running hand-off log. Each agent appends an entry. |
+| [backlog.md](backlog.md) | Future feature ideas, **not** part of the current build. Agents don't work from it. |
 | [tasks/](tasks/) | One file per task, numbered in execution order. |
 
 ---
@@ -23,12 +24,28 @@ WestCal is a team availability calendar for a business unit of about 50 people, 
 5. **Domain logic lives in `src/domain`** as pure, tested functions. UI and services call it and never re-implement rules.
 6. **Accessibility is part of "done"**: semantic HTML, keyboard support, labels, contrast, no axe violations (see `03-accessibility.md`).
 7. **Tests are part of "done".** Write them alongside the code. `pnpm check` (Biome + typecheck + unit tests) must pass. Run `pnpm test:int` / `pnpm test:e2e` when your task touches services or flows.
-8. **Commit.** One or more commits on a branch `task/TXX-short-name`, with messages like `feat(T07): booking conflict detection`. Merge to `main` only when the task's acceptance criteria are met and the pipeline is green. (The product owner may choose to review merge requests in GitLab instead.)
+8. **Commit.** One or more commits on a branch `task/TXX-short-name`, with messages like `feat(T07): booking conflict detection`. Merge to `main` only when the task's acceptance criteria are met and the pipeline is green. (The product owner may choose to review pull requests on GitHub instead.)
 9. **Hand off.** Append an entry to `progress.md`: what you did, files of note, any deviations and why, the simplicity pass, follow-ups, and open questions. Tick the task in the index below.
 
 **Definition of done (every task):** acceptance criteria met · tests written and passing · `pnpm check` green · no new axe violations · **simplicity pass done (`04-code-style.md`): no repeated logic, no unused code, nothing a junior couldn't follow** · no `any`, no `@ts-ignore`, no disabled lint rules without a comment explaining why · `progress.md` updated.
 
 **Where task files and `04-code-style.md` disagree, the simpler option wins.** If a task asks for something that seems more complicated than it needs to be, build the simple version and explain why in `progress.md`.
+
+---
+
+## Changing the plan
+
+The product owner can change anything at any time. The plan is a living document, not a contract. Agents never change behaviour on their own (protocol step 4). Only the product owner decides, and then the plan is updated **before** code is written:
+
+1. **Update the spec first.** Change `00-product-spec.md` (and the design system or architecture if affected), so the spec stays the single source of truth.
+2. **Fix the tasks.**
+   - If the change affects a task that **hasn't started**, edit that task file.
+   - If it affects work that's **already done**, add a new task file. Number it after the current task with a letter suffix (for example `T17a-…`), and add it to the index below.
+   - A brand-new feature gets its own new task.
+3. **Log it.** Add a short `progress.md` entry saying what changed and why (like T00b and T00c).
+4. **Keep it small.** A change task follows the same protocol, tests and simplicity pass as any other task.
+
+Ideas that aren't for now go in [backlog.md](backlog.md), so they're not forgotten and don't creep into the current work.
 
 ---
 
@@ -39,7 +56,7 @@ Size key: **S** ≈ small, under 300 lines changed · **M** ≈ 300–800 · **L
 ### Phase 0 — Foundation
 - [ ] [T01](tasks/T01-tooling-baseline.md) Tooling baseline: TS strict, Biome, lefthook, env validation, scripts · **S**
 - [ ] [T02](tasks/T02-database-prisma.md) Local Postgres (Docker) and Prisma 7 bootstrap · **S**
-- [ ] [T03](tasks/T03-test-ci-harness.md) Vitest, Playwright + axe, and the GitLab CI pipeline · **M**
+- [ ] [T03](tasks/T03-test-ci-harness.md) Vitest, Playwright + axe, and the GitHub Actions pipeline · **M**
 - [ ] [T04](tasks/T04-design-foundation.md) Design tokens, Geist, next-themes, shadcn base components, dev gallery · **M**
 
 ### Phase 1 — Domain core (pure TypeScript)

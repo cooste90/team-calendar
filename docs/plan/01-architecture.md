@@ -33,7 +33,7 @@ Read this together with `00-product-spec.md`. This file says **how** the app is 
 | Lint / format | Biome 2.4 (incl. a11y rules, sorted Tailwind classes) | |
 | Git hooks | lefthook | pre-commit: Biome on staged files; pre-push: typecheck plus unit tests |
 | Tests | Vitest (unit, component, integration), Testing Library, `vitest-axe`; Playwright + `@axe-core/playwright` for e2e and a11y | |
-| CI | GitLab CI | §11 |
+| CI | GitHub Actions now; GitLab CI after the production move | §11 |
 
 ---
 
@@ -84,7 +84,8 @@ Read this together with `00-product-spec.md`. This file says **how** the app is 
 ├─ tests/
 │  ├─ integration/                            # Vitest + real Postgres (test DB)
 │  └─ e2e/                                    # Playwright
-├─ biome.json, lefthook.yml, .gitlab-ci.yml, vitest.config.ts, playwright.config.ts
+├─ .github/workflows/ci.yml
+├─ biome.json, lefthook.yml, vitest.config.ts, playwright.config.ts
 └─ docs/plan/
 ```
 
@@ -440,15 +441,17 @@ Commands: `pnpm test` (unit + component), `pnpm test:int`, `pnpm test:e2e`, `pnp
 - **lefthook**:
   - `pre-commit`: `biome check --write --staged` (re-staging fixed files), plus `tsc --noEmit` when `.ts`/`.tsx` files are staged.
   - `pre-push`: `pnpm test`.
-- **GitLab CI** (`.gitlab-ci.yml`), `node:24` image, pnpm store cached by lockfile:
-  1. `install`
-  2. `lint` (`biome ci`)
-  3. `typecheck`
-  4. `test` (Vitest with coverage; domain coverage gate)
-  5. `test:int` (service `postgres:17`)
-  6. `build` (`next build`)
-  7. `e2e` (Playwright image + `postgres:17` service; seed; run; upload report artifacts)
+- **CI is a thin wrapper around `pnpm` scripts.** Every check is a script in `package.json`, and the CI file only installs and calls them. The same commands work locally, and moving CI means rewriting one small file.
+- **GitHub Actions** (`.github/workflows/ci.yml`) during development: Node 24, pnpm store cached by lockfile. The jobs:
+  1. `lint` (`pnpm lint` → `biome ci`)
+  2. `typecheck` (`pnpm typecheck`)
+  3. `test` (`pnpm test:coverage`; domain coverage gate)
+  4. `test:int` (`pnpm test:int` with a `postgres:17` service)
+  5. `build` (`pnpm build`)
+  6. `e2e` (Playwright container + `postgres:17` service; seed; `pnpm test:e2e`; upload the report on failure)
+
   The pipeline fails on any axe violation.
+- **GitLab CI** after the production move: `docs/MOVING-TO-GITLAB.md` (T37) holds the equivalent `.gitlab-ci.yml`, which calls the same scripts. Don't commit both CI files at once.
 
 ---
 

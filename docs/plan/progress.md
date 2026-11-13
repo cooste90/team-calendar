@@ -34,3 +34,24 @@ Append one entry per task, newest at the bottom. Keep entries short and factual.
 **Deviations from plan:** this entry is the revision.
 **Follow-ups:** none.
 **Questions for the product owner:** none.
+
+## T00c — CI on GitHub for development — 2026-11-13
+**Status:** done
+**Summary:**
+- The product owner hosts the repo on GitHub during development and will move to GitLab for production.
+- T03 now builds `.github/workflows/ci.yml` (GitHub Actions). Every CI job only calls a `pnpm` script.
+- T37 writes `docs/MOVING-TO-GITLAB.md` with an equivalent `.gitlab-ci.yml` for the move. It isn't committed as a live file, so there's never a second, unused pipeline.
+**Key files:** `00-product-spec.md` (non-functional), `01-architecture.md` §1, §2, §11, `README.md`, tasks T03, T37.
+**Deviations from plan:** this entry is the change.
+**Follow-ups:** none.
+**Questions for the product owner:** none.
+
+## T00d — Mockup sign-off and change process — 2026-11-13
+**Status:** done
+**Summary:**
+- The product owner signed off the design mockup (https://claude.ai/artifact/Aq7zARQnJRuY8t9pV5QFo6). T04 can use it as the visual reference.
+- Added "Changing the plan" to `README.md` and an empty `backlog.md` for future ideas.
+**Key files:** `docs/plan/README.md`, `docs/plan/backlog.md`
+**Deviations from plan:** none.
+**Follow-ups:** none. T01 can start.
+**Questions for the product owner:** none.

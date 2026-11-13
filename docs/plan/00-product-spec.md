@@ -271,5 +271,5 @@ Admins act on the BU currently shown in the BU switcher. A plain ADMIN can only 
 - **Scale:** smooth with about 1,000 users across BUs, and a single BU with up to about 300 rows visible.
 - **Locale:** UK only. en-GB formatting, Europe/London time zone, weeks start on **Sunday** in the grid.
 - **Hosting:** the production target is the internal Kubernetes. The plan covers local development only, plus a production-ready build (standalone output, Dockerfile, health endpoint) and an SSO porting guide.
-- **Source control and CI:** GitLab, with a strict pipeline for lint, types, tests, accessibility checks and build.
+- **Source control and CI:** GitHub (GitHub Actions) during development, moving to GitLab for production. Either way there's a strict pipeline for lint, types, tests, accessibility checks and build. Each CI job only calls a `pnpm` script, so moving means rewriting one small YAML file.
 - **Not in scope:** leave allowances, approvals, email notifications, error monitoring, mobile layout, importing existing data, drag-to-create on the grid.
