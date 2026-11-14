@@ -12,8 +12,8 @@ Pure "planner" functions that work out what bookings must change when a public h
 ## Deliverables (`src/domain/public-holidays.ts`)
 **Types:**
 - `PublicHoliday { id, date, name }`
-- `PersonSnapshot { userId, availabilityOn(date): WorkDay, bookings: Booking[] /* overlapping the dates involved */, exclusions: Set<phId> }`
-- `BookingChanges`, as in architecture §8, plus `emptyChanges()` and `mergeChanges(a, b)` (planners build one per person and merge them).
+- `PersonSnapshot { userId, availability: AvailabilityLookup, bookings: Booking[] /* overlapping the dates involved */, exclusions: string[] }` (as built)
+- `BookingChanges`, `emptyChanges()`, `mergeChanges(list)`, `carveBooking` and `changesForPieces` live in `src/domain/events.ts` (created in T07) and are reused here.
 
 **Functions:**
 - `phSlotsFor(workDay, date)`: FULL → [AM, PM]; AM → [AM]; PM → [PM]; OFF → [].

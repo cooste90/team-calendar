@@ -10,18 +10,18 @@ Every kind of test the plan uses can be written and run locally and in CI from t
 - `node_modules/next/dist/docs/01-app/02-guides/testing/` (Vitest and Playwright guides)
 
 ## Deliverables
-1. **Vitest** (`vitest.config.ts`) using `projects`:
+1. **Vitest** (`vitest.config.mts`) using `projects`:
    - `unit`: node environment, `src/domain/**/*.test.ts`, `src/lib/**/*.test.ts`.
-   - `component`: happy-dom, `src/**/*.test.tsx`, setup file with `@testing-library/jest-dom` and `vitest-axe` matchers.
+   - `component`: happy-dom, `src/**/*.test.tsx`, setup file with `@testing-library/jest-dom` matchers. Accessibility checks call `axe-core` directly (as built: `vitest-axe` is unmaintained).
    - `integration`: node, `tests/integration/**/*.test.ts`, run serially, using `DATABASE_URL_TEST`.
    - Coverage (v8) with a **threshold of 100% branches/lines for `src/domain/**`** (enforced from T05 onwards; add the config now with an empty-safe glob).
    - `tsconfig` paths are resolved (`vite-tsconfig-paths` or native resolution).
 2. **Integration helpers** in `tests/integration/helpers/`:
-   - Global setup runs `prisma migrate reset --force --skip-seed` against the test DB once.
+   - Global setup runs `prisma migrate deploy` against the test DB once (as built: Prisma 7 has no `--skip-seed` and blocks `migrate reset` for AI agents), and refuses to run unless the database name ends in `_test`.
    - `resetDb()` truncates all tables (excluding `_prisma_migrations`) between tests.
-   - A `testDb` Prisma client.
+   - No separate `testDb` client (as built): the integration project points the normal `db` client at the test DB.
 3. **Playwright** (`playwright.config.ts`):
-   - `webServer` runs `pnpm build && pnpm start` in CI, or `pnpm dev` locally, against the test DB.
+   - `webServer` runs `pnpm dev` against the test DB, locally and in CI (changed in T04: dev-only pages are off in production builds, and e2e needs them; the CI `checks` job covers the production build).
    - Projects: `chromium` (default) and `firefox` (CI nightly).
    - Install `@axe-core/playwright` and add a helper `expectNoA11yViolations(page, { theme })` that runs the WCAG 2.2 AA tags (`wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa`).
    - A smoke test opens `/` and passes axe.

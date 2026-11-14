@@ -12,7 +12,7 @@ The small amount of plumbing every UI task uses: one helper for safe server acti
 - The nuqs v2 docs (Next app adapter, `createSearchParamsCache`, `parseAsArrayOf`, `parseAsStringLiteral`, the `shallow` and `history` options)
 
 ## Deliverables
-1. **`src/domain/errors.ts`:** a short list of error classes (`ForbiddenError`, `NotFoundError`, `PastLockedError`, `ConflictError` with details, `ValidationError`). They're shared by every service.
+1. **`src/domain/errors.ts`:** already exists (T07) with `AppError` (every error has a `code`), `ValidationError` and `PastLockedError`. Add `ForbiddenError`, `NotFoundError` and `ConflictError` (with details) in the same style. They're shared by every service.
 2. **`src/server/authed-action.ts`:** `authedAction(schema, handler)` (architecture §6.2). It's one function, about 40 lines:
    - `requireUser()` → zod parse → handler → `refresh()` → `{ ok: true, data }`;
    - maps the error classes above (and zod errors) to codes;
@@ -20,7 +20,7 @@ The small amount of plumbing every UI task uses: one helper for safe server acti
    - Role checks happen inside each service through the domain permission functions. Don't make separate `adminAction` / `superAdminAction` variants.
 3. **Read functions** in `src/server/queries/` (`server-only`), one file per area:
    - `business-units.ts`: `getVisibleBusinessUnits(actor)`, `getBusinessUnitBySlug(actor, slug)` (throws `NotFoundError` for hidden BUs the actor can't view);
-   - `calendar.ts`: `getCalendarData(actor, buId, from, to)`, returning the architecture §6.1 object. Use **at most 5 queries**, selecting only the columns needed. Resolve availability per person per day with T06.
+   - `calendar.ts`: `getCalendarData(actor, buId, from, to)`, returning the architecture §6.1 object. Use **at most 5 queries**, selecting only the columns needed. Give each person an `availabilityLookup(versions, overrides)` (T06), which is what `buildGridModel` expects.
 4. **nuqs:**
    - `NuqsAdapter` in the root layout.
    - `src/lib/search-params.ts`: the parsers from architecture §6.3, used by both `createSearchParamsCache` (server) and `useQueryStates` (client). Define them once.

@@ -30,13 +30,13 @@ Every booking rule in the spec, as pure, exhaustively tested functions that serv
 - `classifyBooking(booking, today)`: `"past" | "ongoing" | "future"` (ongoing means start < today ≤ end).
 - `canModify(booking, today)`: false for past bookings.
 - `allowedEdits(booking, today)`: future → all fields; ongoing → `{ endDate, endHalf, notes }` with new end ≥ today; past → none.
-- `validateCreate(input, role, today)` and `validateUpdate(before, after, today)` return typed errors such as `PAST_LOCKED`, `TOO_FAR_IN_PAST` and `FIELD_LOCKED`.
+- `validateCreate(startDate, role, today)` and `validateUpdate(before, after, today)` **throw** `PastLockedError` (past, or too far in the past) or `ValidationError` (a locked field changed). As built: they throw rather than return errors, and `validateCreate` takes just the date so day swaps can reuse it.
 - `planTrimRemaining(booking, today)`: for an ongoing booking, set the end to yesterday PM. "Delete the remaining days."
 - `planRemoveDay(booking, date, today)`: splits the booking into up to 2 bookings (date must be ≥ today). Removing an end day just shortens it.
 - The same rules apply to `AvailabilityOverride` (create, change or remove only for date ≥ earliest creatable; never for past dates once they exist).
 
 ### `src/domain/permissions.ts`
-As in architecture §4. Inputs are plain objects, never Prisma types. Export a `PermissionError` with a code.
+As in architecture §4. Inputs are plain objects, never Prisma types. (As built: no `PermissionError`; services throw `ForbiddenError` from `errors.ts` when a `can…` function says no.)
 
 ## Tests
 Table-driven. Must include:

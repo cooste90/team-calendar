@@ -15,11 +15,11 @@ Read this together with `00-product-spec.md`. This file says **how** the app is 
 | Framework | Next.js 16 App Router, Turbopack, **React Compiler on** (`reactCompiler: true`) | `proxy.ts`, not `middleware.ts` |
 | Language | TypeScript, `strict: true` | No extra strictness flags that produce confusing errors |
 | Styling | Tailwind CSS v4 (CSS-first `@theme`), `tw-animate-css` | Tokens in `02-design-system.md` |
-| Components | shadcn/ui (Radix primitives), lucide-react | Copy-in components live in `src/components/ui` |
+| Components | shadcn/ui 4.23 (Radix base, "nova" preset), lucide-react | Copy-in components live in `src/components/ui`; they import `cn` from shadcn's `cn` package. Focus styling is one global rule in `globals.css`, not per component |
 | Theme | next-themes (`attribute="class"`, light / dark / system) | Remembered in localStorage |
 | Animation | Plain CSS transitions and keyframes | No animation library. `motion-reduce:` / `prefers-reduced-motion` turns them off |
 | DB | PostgreSQL 17 (Docker locally) | No extensions |
-| ORM | **Prisma 7**: `prisma.config.ts`, `prisma-client` generator with `output`, driver adapter `@prisma/adapter-pg` | No Rust engine; env loaded explicitly |
+| ORM | **Prisma 7** (7.10.1; npm's `latest` tag points at an 8.0 release candidate, so pin 7.x): `prisma.config.ts`, `prisma-client` generator with `output`, driver adapter `@prisma/adapter-pg` | No Rust engine; env loaded explicitly |
 | Auth | Better Auth + Prisma adapter; `genericOAuth` plugin for corporate SSO; dev-only sign-in endpoint | §5 |
 | Validation | zod v4. One schema per input in `src/lib/schemas`, shared by forms and server actions | |
 | Forms | A plain `<form>` + `useState` for fields that change the UI + the shared zod schema + shadcn Field components | No form library |
@@ -61,16 +61,16 @@ Read this together with `00-product-spec.md`. This file says **how** the app is 
 │  │  ├─ dev/design-system/page.tsx           # dev-only component gallery
 │  │  ├─ layout.tsx, globals.css, error.tsx, not-found.tsx, forbidden.tsx
 │  ├─ components/ui/                          # shadcn
-│  ├─ components/                             # shared app components (brand, page-shell, live-region…)
+│  ├─ components/                             # shared app components (brand/, leave-chip, segmented-control, live-region…)
 │  ├─ features/
 │  │  ├─ calendar/   (header/, grid/, filters/, key/, event-form/, event-details/, calendar-store.ts)
 │  │  ├─ profile/
 │  │  ├─ admin/
 │  │  └─ export/     (pdf documents)
 │  ├─ domain/                                 # PURE TypeScript. No React, Prisma or Next imports.
-│  │  ├─ dates.ts, slots.ts, availability.ts, counting.ts, events.ts,
+│  │  ├─ dates.ts, slots.ts, format.ts, availability.ts, counting.ts, events.ts,
 │  │  ├─ conflicts.ts, permissions.ts, time-rules.ts, public-holidays.ts,
-│  │  ├─ tallies.ts, grid-model.ts, leave-types.ts, display-name.ts, errors.ts
+│  │  ├─ tallies.ts, grid-model.ts, grid-model-types.ts, leave-types.ts, display-name.ts, errors.ts
 │  │  └─ __tests__/
 │  ├─ server/                                 # `import "server-only"` in every file
 │  │  ├─ db.ts                                # Prisma client singleton (adapter-pg) + lockUsers()
@@ -79,7 +79,7 @@ Read this together with `00-product-spec.md`. This file says **how** the app is 
 │  │  ├─ services/                            # write logic, transactions, calls into domain/
 │  │  ├─ actions/                             # "use server" thin wrappers → services
 │  │  └─ authed-action.ts                     # authedAction() helper
-│  ├─ lib/        (env.ts, utils.ts, search-params.ts, schemas/)
+│  ├─ lib/        (env.ts, search-params.ts, schemas/)   # no utils.ts: shadcn imports `cn` from the `cn` package
 │  └─ generated/prisma/                       # Prisma output (gitignored)
 ├─ tests/
 │  ├─ integration/                            # Vitest + real Postgres (test DB)
@@ -279,9 +279,12 @@ canExport(actor, buId)                          // canManageBusinessUnit
 canSeeUnassigned(actor, buId)                   // canManageBusinessUnit
 
 // time-rules.ts (today = Europe/London date)
-earliestCreatableDate(actor, today)             // USER: today; ADMIN/SA: today-7
-canModifyEvent(event, today)                    // event.endDate >= today
-editableFields(event, today)                    // all | { endDate, endHalf, notes } | none
+earliestCreatableDate(role, today)              // USER: today; ADMIN/SA: today-7 (creating only)
+classifyBooking(booking, today)                 // "past" | "ongoing" | "future"
+canModify(booking, today)                       // not past
+allowedEdits(booking, today)                    // "all" | "end-and-notes" | "none"
+validateCreate(startDate, role, today)          // throws PastLockedError
+validateUpdate(before, after, today)            // throws PastLockedError / ValidationError
 ```
 
 A permission matrix test (T36) runs every server action against every role and relationship.
@@ -368,7 +371,8 @@ When the view changes, a small server action stores the `westcal-view` cookie fo
 ## 7. Dates
 
 - **`CalendarDate`** is just `type CalendarDate = string // "YYYY-MM-DD"`. Zod checks the format wherever a date comes in (URL, form, action). Date maths turns it into a `dayNumber` (whole days since 1970-01-01) and back. **Never** use `new Date()` for calendar dates in the domain, so time zones and daylight saving can't shift them.
-- `todayInLondon(now = new Date())` uses `Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London' })`. The server computes `today` and sends it to the client, so both agree.
+- `todayIn(env.APP_TIME_ZONE, now = new Date())` uses `Intl.DateTimeFormat` with that time zone (Europe/London). The server computes `today` and sends it to the client, so both agree.
+- `toDayNumber` / `fromDayNumber` remember their answers in two small Maps, because the grid converts the same few dozen dates tens of thousands of times.
 - Prisma `@db.Date` columns become `Date` at UTC midnight. Convert only where rows are read or written (`fromDbDate` / `toDbDate`).
 - Weeks run Sunday to Saturday. Month view covers the 1st to the last day of the month.
 - Formatting: `Thu 12`, `Thu 12 Nov`, `Thursday 12 November 2026`, and range summaries `Thu 10 – Tue 15 · 4 days` (en-GB, en-dash, middle dot).
@@ -377,7 +381,7 @@ When the view changes, a small server action stores the `westcal-view` cookie fo
 
 ## 8. Public holiday engine
 
-These are pure functions in `src/domain/public-holidays.ts`. Each one works out **what should change** and returns it as a plain object. One service function saves that object. This keeps the tricky rules testable without a database.
+These are pure functions in `src/domain/public-holidays.ts`. Each one works out **what should change** and returns it as a plain object (`BookingChanges`, defined in `src/domain/events.ts` with `emptyChanges`, `mergeChanges`, `carveBooking` and `changesForPieces`, and also returned by Replace and "Remove this day"). One service function saves that object. This keeps the tricky rules testable without a database.
 
 ```ts
 // The one shape every planner returns. Plain arrays, nothing clever.
@@ -397,8 +401,8 @@ planReconcileForPerson(person, futureHolidays, fromDate): BookingChanges   // af
 
 `saveBookingChanges(tx, changes)` in `src/server/services/save-booking-changes.ts` writes it: one `createMany`, one `deleteMany`, a loop of `update`s, one `createMany` for exclusions, and one `updateMany` to unlink. That's about 15 lines, used by bookings, public holidays, profile changes and the seed.
 
-- **PersonSnapshot** = the person's availability on the relevant dates, their events overlapping those dates, and their exclusions.
-- **Carving:** `carve(event, slotsToRemove)` returns 0, 1 or 2 remaining ranges. Remaining parts with **zero working days** are deleted. `PARENTAL` is never carved: those slots are skipped for the PH instead.
+- **PersonSnapshot** = `{ userId, availability: AvailabilityLookup, bookings, exclusions: string[] }`: their availability, their events overlapping the dates involved, and the ids of holidays they've detached from.
+- **Carving:** all of a person's holiday slots are cut out of each booking together (so two holidays inside one long booking split it correctly). The first remaining piece keeps the booking's id, and later pieces are created with the same details and original `createdById`. Remaining parts with **zero working days** are deleted (PH carving only; Replace keeps them). `PARENTAL` is never carved: those slots are skipped for the PH instead.
 - **"Untouched copy"** means an event with `publicHolidayId = ph.id`. When a user edits or moves a generated copy, the service **sets `publicHolidayId = null` and adds an exclusion** (detached). When a user deletes it, the service adds an exclusion.
 - **Generation condition** for person P on holiday H: P works on H's date (FULL/AM/PM), P has no exclusion for H, and P has no event linked to H.
 - **Scale:** at 1,000 users, creating a PH is about 1,000 inserts plus the carves. Do it in one transaction with batched writes, and target under 2 seconds locally.
@@ -407,15 +411,15 @@ planReconcileForPerson(person, futureHolidays, fromDate): BookingChanges   // af
 
 ## 9. Grid rendering model
 
-`buildGridModel(input) → GridModel` is a pure function in `src/domain/grid-model.ts`. React only maps the model to the DOM.
+`buildGridModel(input) → GridModel` is a pure function in `src/domain/grid-model.ts` (its input and output types are in `grid-model-types.ts`). React only maps the model to the DOM. Each person comes with an `availability` lookup (T06), not a per-day array, because a bar's "· 4 days" counts the whole booking, including days outside the visible period. It builds 300 people × 31 days with 3,000 bookings in about 12ms.
 
 - **Columns:** `days.length * 2` half-columns, after a fixed name column. Each day spans 2 tracks (AM, PM). CSS grid: `grid-template-columns: var(--name-col) repeat(N, minmax(0, 1fr))`.
 - **Rows:** team groups in their order (own team pinned first, Unassigned last if visible). Members sorted by surname. Collapsed groups have no member rows.
 - **Per person:**
-  - `cells[]` (one per day) with `{ date, availability, isToday, accessibleLabel, events: [...] }`.
-  - `bars[]` with `{ eventId, type, gridColumnStart, span, label, clippedStart, clippedEnd, isHalf }`.
-  - `offOverlays[]`: non-working slots inside multi-day bars.
-- **Accessible names** come from the model, for example: `"Thursday 12 November, Tom Okafor: Annual leave, Monday 9 to Wednesday 11 November, 3 days. Press Enter for options."`
+  - `cells[]` (one per day) with `{ date, gridColumn, availability, isToday, accessibleLabel, bookings: { bookingId, type, portion }[] }`.
+  - `bars[]` with `{ bookingId, type, code, gridColumn: "start / span n", label, clippedStart, clippedEnd, isHalf, isNarrow, title }`.
+  - `offOverlays[]`: one `{ gridColumn }` per non-working half-day inside a multi-day bar.
+- **Accessible names** come from the model, for example: `"Tuesday 10 November, Tom Okafor. Annual leave, Monday 9 to Wednesday 11 November, 3 days."`, plus ", not a working day" / ", morning only" and " View only." where they apply. T18 may append a short key hint.
 - **Bars are presentational** (`aria-hidden`) pointer targets layered over the cells. **Keyboard and screen-reader users work through the cells** (`role="gridcell"`, roving tabindex). See `03-accessibility.md §3`.
 - Any bar narrower than 24 CSS px, such as month-view half days, gets `pointer-events: none`, so the click lands on the cell (WCAG 2.5.8).
 - **Performance without virtualisation:** every row is rendered normally. Each team group gets the CSS `content-visibility: auto` (with `contain-intrinsic-size`), so the browser skips drawing groups that are off-screen. With the React Compiler on, that's enough for one BU (about 300 rows at most). The header row and name column are sticky with plain CSS `position: sticky`.

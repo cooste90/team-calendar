@@ -13,7 +13,7 @@ Put the WestCal design system from `02-design-system.md` into code: tokens, font
 
 ## Deliverables
 1. **shadcn init:**
-   - Tailwind v4, Radix-based, CSS variables, lucide icons, aliases matching `@/components/ui` and `@/lib/utils`.
+   - Tailwind v4, Radix-based, CSS variables, lucide icons, aliases matching `@/components/ui`. (As built: shadcn 4.23 imports `cn` from its own `cn` package, so there is no `src/lib/utils.ts`.)
    - Add these components: button, dialog, alert-dialog, popover, hover-card, dropdown-menu, select, command, tabs, tooltip, toggle-group, radio-group, calendar, label, input, textarea, field (or form), badge, avatar, sonner, skeleton, scroll-area, separator.
 2. **Tokens in `globals.css`:**
    - Every light and dark token from the design system, plus the leave colour tokens.

@@ -13,7 +13,7 @@ The header bar from the mockup, with working period navigation, the BU switcher 
 
 ## Deliverables
 1. **`(app)/layout.tsx`:**
-   - `requireUser()`, the Tooltip provider, skip link "Skip to calendar", `<header>` and `<main id="main">`.
+   - `requireUser()`, skip link (the theme and tooltip providers are already in the root layout from T04) "Skip to calendar", `<header>` and `<main id="main">`.
    - Call `useRefreshOnFocus()` (T14) once, in a small client component here.
 2. **`features/calendar/header/`:**
    - `Brand` (logo and wordmark, links to `/` with today's period).

@@ -25,7 +25,7 @@ Prove that no role can do anything the spec doesn't allow, and harden the HTTP s
    - A **static CSP**, written once in `next.config.ts`: `default-src 'self'`; `script-src 'self' 'unsafe-inline'` (Next.js and next-themes use small inline scripts; nonces would need extra proxy code and make every page dynamic, which isn't worth it for an internal app behind SSO. Write this reasoning in a comment); `style-src 'self' 'unsafe-inline'`; `img-src 'self' data:`; `connect-src 'self'` plus the SSO origin when configured; `frame-ancestors 'none'`.
    - Test in e2e that no CSP violations are reported (listen for `securitypolicyviolation`).
 4. **Server-only:** every `src/server/**` file starts with `import "server-only"`, which makes the build fail if client code imports it. Check by grepping during review; no custom script needed.
-5. **Dev-only surfaces:** `/dev-sign-in`, `/api/dev/*` and `/dev/*` all return 404 in a production build (e2e against `next start` with `NODE_ENV=production`).
+5. **Dev-only surfaces:** `/dev-sign-in`, `/api/dev/*` and `/dev/*` all return 404 in a production build. The normal e2e run uses `next dev` (it needs dev sign-in), so add a small separate check against `next start`: either a second Playwright project with its own `webServer`, or a short script that builds, starts and requests the routes. Run it in CI.
 6. **Dependency audit:** `pnpm audit --prod` in CI (allowed to warn, fails on critical).
 
 ## Acceptance criteria

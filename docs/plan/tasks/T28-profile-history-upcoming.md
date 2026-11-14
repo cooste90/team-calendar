@@ -7,7 +7,7 @@ The two read-only profile tabs: tallies with their supporting bookings, and the 
 
 ## Read first
 - `00-product-spec.md` §3, §7
-- T09 (`computeTallies`, `historyGroups`, `upcomingBookings`)
+- T09 (`computeTallies`, `historyGroups`, `upcomingBookings`). `computeTallies` returns a list in display order, `{ type, taken, booked? }[]`, so the cards just map over it.
 
 ## Deliverables
 1. **Query `getProfileLeave(actor, subjectId, today)`** in `src/server/queries/profile.ts`:

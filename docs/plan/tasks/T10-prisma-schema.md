@@ -23,7 +23,8 @@ The real database schema, including the Better Auth tables, kept as plain Prisma
    - on `Event`, the start must not be after the end: `"startDate" < "endDate" OR ("startDate" = "endDate" AND NOT ("startHalf" = 'PM' AND "endHalf" = 'AM'))`.
    - Preferred-name length is checked by zod, not the DB.
 4. **`lockUsers(tx, userIds)`** in `src/server/db.ts` (architecture §3.2): sort the ids, then one `tx.$executeRaw` `SELECT 1 FROM "User" WHERE id = ANY(${ids}) FOR UPDATE`. Add a two-line comment explaining why.
-5. **Mapping helpers** in `src/server/mappers.ts`: Prisma rows → domain types (`Booking`, `PatternVersion`, `Override`, `PublicHoliday`), using `fromDbDate` / `toDbDate` from T05. This is the **only** place Prisma types meet domain types.
+5. **Mapping helpers** in `src/server/mappers.ts`: Prisma rows → domain types (`Booking`, `PatternVersion`, `Override`, `PublicHoliday`), using `fromDbDate` / `toDbDate` from T05. This is the **only** place Prisma types meet domain types. A `WorkingPattern` row's `sun … sat` columns become the domain's 7-item `WeeklyPattern` list (`[row.sun, row.mon, …, row.sat]`), and back for writes.
+6. **Replace the T02 placeholder:** delete the `HealthCheck` model and the T02 `init` migration (nothing is deployed yet), and restart the in-memory test DB (`docker compose restart db-test`) so `migrate deploy` starts clean.
 
 ## Tests (integration)
 - `lockUsers`: two transactions locking the same user run one after the other (the second waits); different users don't block each other.

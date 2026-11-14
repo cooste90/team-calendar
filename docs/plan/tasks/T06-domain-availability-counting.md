@@ -11,12 +11,11 @@ Pure functions that answer "is this person working on this half-day?" and "how m
 
 ## Deliverables (`src/domain/availability.ts`, `src/domain/counting.ts`)
 - `type WorkDay = "FULL" | "AM" | "PM" | "OFF"`
-- `type WeeklyPattern = Record<0|1|2|3|4|5|6, WorkDay>` (index = weekday, 0 = Sunday)
+- `type WeeklyPattern = WorkDay[]`: 7 entries, index = weekday, 0 = Sunday (as built: a plain list instead of a `Record`)
 - `DEFAULT_PATTERN`: Sun OFF, Mon–Fri FULL, Sat OFF. `DEFAULT_PATTERN_EFFECTIVE_FROM = "2000-01-02"` (a Sunday).
 - `type PatternVersion = { effectiveFrom: CalendarDate; pattern: WeeklyPattern }`
 - `type Override = { date: CalendarDate; value: WorkDay }`
-- `resolveAvailability(date, versions, overrides): WorkDay`: the override if present, else the latest version with `effectiveFrom ≤ date`, else `DEFAULT_PATTERN`.
-- `availabilityForRange(from, to, versions, overrides): Map<CalendarDate, WorkDay>` (or an array aligned with the days). It must be efficient: sort the versions once.
+- `availabilityLookup(versions, overrides): (date) => WorkDay` (as built: replaces the planned `resolveAvailability` and `availabilityForRange`): the override if present, else the latest version with `effectiveFrom ≤ date`, else `DEFAULT_PATTERN`. It sorts the versions once, so it's cheap to call for every cell.
 - `worksSlot(workDay, half)`: FULL → both halves; AM → AM only; PM → PM only; OFF → neither.
 - `countWorkingDays(range: SlotRange, availabilityLookup): number`: 0.5 per working slot.
 - `workingSlots(range, lookup)` and `nonWorkingSlots(range, lookup)`, used for hatching inside bars and for "not counted" hints.

@@ -270,3 +270,32 @@ Append one entry per task, newest at the bottom. Keep entries short and factual.
 - **`dates.ts` caches its two conversions.** `toDayNumber` and `fromDayNumber` now remember their answers (two small Maps). The grid converts the same ~60 dates tens of thousands of times, and this took the large grid from about 45ms to about 12ms.
 **Follow-ups:** none. (`grid-model.ts` was split after formatting: the input and output types live in `grid-model-types.ts`, so the builder is 200 lines.)
 **Questions for the product owner:** none.
+
+## T09b — Documentation sync — 2026-11-14
+**Status:** done
+**Summary:**
+- **Product owner request:** check that all documentation matches what's actually built after T01–T09.
+- **Completed task files (T03, T04, T06–T09):** lines that described the original plan now say what was built, marked "as built".
+- **Upcoming task files:** updated wherever earlier work changed their starting point:
+  - T10: the `sun…sat` ↔ list converters, and removing the T02 placeholder and migration;
+  - T12: `saveBookingChanges` details (`fromSlot`, remove before create, `createdById ?? actor.id`);
+  - T14: `errors.ts` already exists, and each person gets an availability lookup;
+  - T15: providers are already in the root layout;
+  - T18: `nextCell` goes in its own file;
+  - T22: `validateCreate(startDate, …)`;
+  - T27: pattern column converters;
+  - T28: tallies come back as a list;
+  - T36: the dev-routes-404 check needs its own run against `next start`.
+- **`01-architecture.md`:**
+  - folder tree (format.ts, grid-model-types.ts, no lib/utils.ts);
+  - stack notes (shadcn 4.23 and `cn`, the global focus rule, Prisma 7.10.1 pinned);
+  - §4 time-rule function names;
+  - §7 `todayIn` and the date caches;
+  - §8 where `BookingChanges` lives and how carving works;
+  - §9 grid input and output shapes and measured speed.
+- **`02-design-system.md`:** a "Built so far" note covering the components, the single focus rule, primary buttons, theme preview classes, and the contrast test.
+- **Root `README.md`:** a project status table, the pages you can open today, and a folder guide.
+**Key files:** `README.md`, `docs/plan/01-architecture.md`, `docs/plan/02-design-system.md`, `docs/plan/tasks/T03–T36`
+**Deviations from plan:** none (docs only).
+**Follow-ups:** none.
+**Questions for the product owner:** none.

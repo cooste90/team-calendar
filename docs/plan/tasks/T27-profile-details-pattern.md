@@ -28,7 +28,7 @@
    - It shows the **current** pattern and, if a change is pending, a notice: "Your new pattern starts on Sunday 15 November", with a "Cancel pending change" action.
    - Save button text: "Save — applies from Sunday 15 November".
    - Server action `updateWorkingPattern(subjectId, pattern)`:
-     - `planPatternChange` → upsert the version;
+     - `planPatternChange` → upsert the version (convert the 7-item list to the row's `sun … sat` columns in `mappers.ts`);
      - then `planReconcileForPerson(person, futurePHs, effectiveFrom)` → `saveBookingChanges`;
      - all in one transaction, after `lockUsers(tx, [subjectId])`.
    - Cancelling the pending change deletes that version and reconciles again.

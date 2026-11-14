@@ -26,7 +26,7 @@ First-time users end up in the right BU's Unassigned group, with a default patte
    - The server action sets the BU, keeps the team null (Unassigned), and redirects to `/`.
    - If only one BU exists it assigns automatically and redirects (no page).
 5. **Unassigned state:** add `actor.isUnassigned` to the session actor. The calendar banner itself is built in T17. Here, just expose the flag and add a test.
-6. **Shared service** `saveBookingChanges(tx, changes)` in `src/server/services/save-booking-changes.ts` (architecture §8): writes a `BookingChanges` object with one Prisma call per array (`createMany`, `deleteMany`, a loop of `update`s, `createMany` for exclusions, `updateMany` to unlink). It should be about 15 lines. T13, T22, T23, T27 and T31 reuse it.
+6. **Shared service** `saveBookingChanges(tx, changes)` in `src/server/services/save-booking-changes.ts` (architecture §8): writes a `BookingChanges` object with one Prisma call per array (`createMany`, `deleteMany`, a loop of `update`s, `createMany` for exclusions, `updateMany` to unlink). It should be about 15 lines. T13, T22, T23, T27 and T31 reuse it. Details from the domain (T07/T08): `update` entries hold a `SlotRange`, so convert with `fromSlot` to dates and halves; apply `remove` before `create`; new bookings use `createdById ?? actor.id` (split pieces keep their original creator).
 
 ## Tests
 - Integration:

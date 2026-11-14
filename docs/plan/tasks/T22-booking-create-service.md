@@ -14,7 +14,7 @@ A server-side create flow that enforces every rule, gives the UI exact conflict 
 1. **`src/server/services/bookings.ts` → `createBooking(actor, input, { replace: boolean }, today)`**, in one transaction:
    1. Load the subject user (BU and team).
    2. `canEditBookingsFor(actor, subject)` → FORBIDDEN otherwise. Unassigned actors are rejected.
-   3. Validate with `validateCreate(input, actor.role, today)` (the time window).
+   3. Validate with `validateCreate(input.startDate, actor.role, today)` (the time window; it throws `PastLockedError`).
    4. `lockUsers(tx, [subjectId])` (architecture §3.2).
    5. Load the subject's bookings that overlap the candidate dates, then run `findConflicts`.
    6. If there are conflicts and `!replace`: throw `ConflictError` with `{ conflicts: [{ bookingId, type, startDate, startHalf, endDate, endHalf, message }] }`, using `describeConflict`.

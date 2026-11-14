@@ -1,6 +1,32 @@
 # WestCal
 
-A team availability calendar showing who's in and who's off. The full plan is in [docs/plan](docs/plan/README.md).
+A team availability calendar showing who's in and who's off. The full plan is in [docs/plan](docs/plan/README.md), and [progress.md](docs/plan/progress.md) logs what each task built and why.
+
+## Where things are up to
+
+| Phase | Tasks | Status |
+|---|---|---|
+| 0 · Foundation | T01–T04: tooling, database, tests and CI, design system | Done |
+| 1 · Domain logic | T05–T09: dates, half days, working patterns, booking rules, permissions, public holidays, tallies, grid model | Done |
+| 2 · Data and auth | T10–T14 | Next: T10, the Prisma schema |
+| 3–8 | Calendar UI, bookings, profile, admin, export, hardening | Not started |
+
+There's no calendar screen yet. What you can open today:
+- http://localhost:3000/dev/design-system: every colour, leave chip and component, in light and dark (dev only)
+- http://localhost:3000/api/health: checks the app can reach the database
+
+## Where the code lives
+
+| Folder | What's in it |
+|---|---|
+| `src/domain/` | All the business rules as plain, fully tested TypeScript (no React or database). Start here to understand how the app thinks. |
+| `src/components/` | Shared React components; `ui/` holds the shadcn components |
+| `src/app/` | Next.js pages and API routes |
+| `src/server/` | Server-only code: the database client (more arrives in Phase 2) |
+| `src/lib/` | Small shared helpers, e.g. `env.ts`, which checks the settings in `.env` |
+| `prisma/` | The database schema and migrations |
+| `tests/` | Integration tests (real database) and end-to-end browser tests |
+| `docs/plan/` | The plan, the code style rules, and the progress log |
 
 ## Local development
 

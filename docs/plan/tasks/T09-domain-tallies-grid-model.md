@@ -16,7 +16,7 @@ Pure functions for profile tallies and for turning raw calendar data into exactl
 - `tallyWindows(today)`:
   - AL: `{ from: startOfYear(today), to: endOfYear }`
   - rolling: `{ from: addDays(addMonths(today, −12), 1), to: today }`
-- `computeTallies(bookings, availabilityLookup, today)` returns:
+- `computeTallies(bookings, availabilityLookup, today)` returns a list in display order, `{ type, taken, booked? }[]` (as built), with:
   - `ANNUAL: { taken, booked }`, where taken = days on dates ≤ today within the year and booked = days after today until 31 Dec;
   - `SPECIAL`, `PARENTAL`, `WELLBEING`, `PUBLIC_HOLIDAY`: `{ taken }` over the rolling window.
   - Untallied types (FL, SK, OT, WFH) are excluded.
@@ -29,7 +29,7 @@ Pure functions for profile tallies and for turning raw calendar data into exactl
   - `view`, `range` (from T05), `today`
   - `viewer { id, teamId, canSeeUnassigned, canEdit(subject) }`
   - `teams[] { id, name, sortOrder }`
-  - `people[] { id, firstName, preferredName, surname, teamId, availability: WorkDay[] }` (one per day in range)
+  - `people[] { id, firstName, preferredName, surname, teamId, availability: AvailabilityLookup }` (as built: a lookup, because bar counts cover days outside the visible period). The input and output types are in `src/domain/grid-model-types.ts`.
   - `bookings[]`, `publicHolidays[]`
   - `collapsedTeamIds`, `filters { teamIds[], personIds[] }`
 - **Output `GridModel`:**
