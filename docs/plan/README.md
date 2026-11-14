@@ -67,7 +67,7 @@ Size key: **S** ≈ small, under 300 lines changed · **M** ≈ 300–800 · **L
 - [x] [T09](tasks/T09-domain-tallies-grid-model.md) Tallies and the grid view-model · **M**
 
 ### Phase 2 — Data and auth
-- [ ] [T10](tasks/T10-prisma-schema.md) Prisma schema and migrations · **M**
+- [x] [T10](tasks/T10-prisma-schema.md) Prisma schema and migrations · **M**
 - [ ] [T11](tasks/T11-auth.md) Better Auth, SSO profile sync, roles, dev sign-in, session guard · **L**
 - [ ] [T12](tasks/T12-onboarding.md) Sign-in page BU dropdown, welcome page, new-user provisioning · **M**
 - [ ] [T13](tasks/T13-seed.md) Seed data (faker), dev SSO profiles, large seed · **M**

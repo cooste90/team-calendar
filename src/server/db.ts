@@ -1,6 +1,6 @@
 import "server-only";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@/generated/prisma/client";
+import { type Prisma, PrismaClient } from "@/generated/prisma/client";
 import { env } from "@/lib/env";
 
 // The one Prisma client for the whole app.
@@ -20,4 +20,12 @@ export const db = globalForPrisma.prisma ?? createClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = db;
+}
+
+// Call this first inside any transaction that changes someone's bookings (architecture
+// §3.2). It locks their User rows until the transaction ends, so a second save for the
+// same person waits instead of racing the first one. ORDER BY makes every transaction
+// lock rows in the same order, so two of them can never deadlock.
+export async function lockUsers(tx: Prisma.TransactionClient, userIds: string[]) {
+  await tx.$executeRaw`SELECT 1 FROM "User" WHERE id = ANY(${userIds}) ORDER BY id FOR UPDATE`;
 }

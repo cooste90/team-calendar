@@ -74,6 +74,7 @@ Read this together with `00-product-spec.md`. This file says **how** the app is 
 │  │  └─ __tests__/
 │  ├─ server/                                 # `import "server-only"` in every file
 │  │  ├─ db.ts                                # Prisma client singleton (adapter-pg) + lockUsers()
+│  │  ├─ mappers.ts                           # Prisma rows → domain types (the only place they meet)
 │  │  ├─ auth.ts, auth-sync.ts, session.ts    # Better Auth instance, syncSsoProfile, requireUser()
 │  │  ├─ queries/                             # read functions, scoped by visibility
 │  │  ├─ services/                            # write logic, transactions, calls into domain/
@@ -93,9 +94,9 @@ Read this together with `00-product-spec.md`. This file says **how** the app is 
 
 ---
 
-## 3. Data model (Prisma 7, draft)
+## 3. Data model (Prisma 7)
 
-The agent doing T10 makes this final. Better Auth's `user`, `session`, `account` and `verification` tables are generated with the Better Auth CLI and then extended. The `User` model below **is** the Better Auth user (additional fields).
+**As built (T10):** `prisma/schema.prisma` is now the source of truth, with a `///` comment on every model. It matches the sketch below. `Session`, `Account` and `Verification` were generated with the Better Auth CLI (`npx auth generate`, 1.7.23). Their lower-case `@@map` table names were dropped so every table is PascalCase like the rest. Two `CHECK`s are added by hand in the `checks` migration: a `WorkingPattern` starts on a Sunday, and an `Event` doesn't end before it starts. `src/server/mappers.ts` is the only place Prisma rows become domain types. The `User` model **is** the Better Auth user (additional fields).
 
 ```prisma
 generator client {
@@ -248,7 +249,7 @@ Every date has two **slots**: `slot = dayNumber * 2 + (AM ? 0 : 1)`, where `dayN
 
 ### 3.2 No overlapping bookings
 Every write that touches someone's bookings follows the same three steps inside one `prisma.$transaction`:
-1. **Lock the person:** `await lockUsers(tx, [userId])`. This is a single helper in `src/server/db.ts`: one `SELECT … FOR UPDATE` on their `User` rows, with ids sorted so two locks never deadlock. A second save for the same person waits until the first one finishes. It's one line of SQL, explained in a comment.
+1. **Lock the person:** `await lockUsers(tx, [userId])`. This is a single helper in `src/server/db.ts`: one `SELECT … ORDER BY id FOR UPDATE` on their `User` rows. The `ORDER BY` makes every transaction lock rows in the same order, so two locks never deadlock. A second save for the same person waits until the first one finishes. It's one line of SQL, explained in a comment.
 2. **Check:** load their bookings whose dates overlap the new range (a plain Prisma `where: { startDate: { lte: end }, endDate: { gte: start } }`), then call the domain function `findConflicts` for half-day precision. If anything clashes, throw `ConflictError` with the details (§6.2 turns it into `CONFLICT`).
 3. **Write.**
 

@@ -47,8 +47,13 @@ export default defineConfig({
           include: ["tests/integration/**/*.test.ts"],
           // Tests share one database, so run the files one at a time.
           fileParallelism: false,
-          // Point the app's database client at the test database.
-          env: { DATABASE_URL: process.env.DATABASE_URL_TEST ?? "" },
+          env: {
+            // Point the app's database client at the test database.
+            DATABASE_URL: process.env.DATABASE_URL_TEST ?? "",
+            // Run in the app's time zone (CI runs in UTC), so the date tests would
+            // catch a calendar date shifting through local time.
+            TZ: "Europe/London",
+          },
           globalSetup: ["tests/integration/helpers/global-setup.ts"],
           setupFiles: ["tests/integration/helpers/reset-db.ts"],
         },

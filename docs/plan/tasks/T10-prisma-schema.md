@@ -26,6 +26,11 @@ The real database schema, including the Better Auth tables, kept as plain Prisma
 5. **Mapping helpers** in `src/server/mappers.ts`: Prisma rows → domain types (`Booking`, `PatternVersion`, `Override`, `PublicHoliday`), using `fromDbDate` / `toDbDate` from T05. This is the **only** place Prisma types meet domain types. A `WorkingPattern` row's `sun … sat` columns become the domain's 7-item `WeeklyPattern` list (`[row.sun, row.mon, …, row.sat]`), and back for writes.
 6. **Replace the T02 placeholder:** delete the `HealthCheck` model and the T02 `init` migration (nothing is deployed yet), and restart the in-memory test DB (`docker compose restart db-test`) so `migrate deploy` starts clean.
 
+**As built:**
+- The Better Auth CLI is now the `auth` package: `npx auth generate` (1.7.23). `@better-auth/cli` is deprecated. Its lower-case `@@map` table names were dropped.
+- `lockUsers` uses `ORDER BY id` in the SQL instead of sorting in JavaScript. Postgres locks rows in the order it reads them, not in the order of the array, so only `ORDER BY` guarantees the same lock order.
+- Migrations were made against the in-memory test DB, so the dev DB was never reset by an agent.
+
 ## Tests (integration)
 - `lockUsers`: two transactions locking the same user run one after the other (the second waits); different users don't block each other.
 - The `Event` start/end check rejects a backwards range.

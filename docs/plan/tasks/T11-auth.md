@@ -15,6 +15,7 @@ Authentication that behaves exactly like production SSO in role and profile hand
 1. **`src/server/auth.ts`:** the Better Auth instance.
    - Prisma adapter.
    - `user.additionalFields` for the custom columns (`input: false` for anything clients must not set).
+   - The Better Auth tables already exist from T10 (generated with `npx auth generate`, 1.7.23, then merged into `prisma/schema.prisma` with PascalCase table names). Pin `better-auth` at the same version. If its CLI output ever changes, re-run it in a scratch folder and merge by hand. Don't let it overwrite the schema.
    - Session `expiresIn` 12 hours, `updateAge` 1 hour.
    - Email/password **disabled**.
    - `genericOAuth` plugin registered **only when** the `SSO_*` env vars are present, with `getUserInfo` / `mapProfileToUser` calling `mapSsoClaims` (`src/server/sso-claims.ts`).

@@ -8,7 +8,7 @@ A team availability calendar showing who's in and who's off. The full plan is in
 |---|---|---|
 | 0 · Foundation | T01–T04: tooling, database, tests and CI, design system | Done |
 | 1 · Domain logic | T05–T09: dates, half days, working patterns, booking rules, permissions, public holidays, tallies, grid model | Done |
-| 2 · Data and auth | T10–T14 | Next: T10, the Prisma schema |
+| 2 · Data and auth | T10–T14: database schema and migrations (T10 done) | Next: T11, authentication |
 | 3–8 | Calendar UI, bookings, profile, admin, export, hardening | Not started |
 
 There's no calendar screen yet. What you can open today:

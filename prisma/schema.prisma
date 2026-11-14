@@ -1,3 +1,7 @@
+// The WestCal database. Architecture §3 explains the model; every calendar date is a
+// Postgres `date` (@db.Date) and is converted only in src/server/mappers.ts.
+// Two CHECK rules live in the "checks" migration, because Prisma can't express them.
+
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -8,7 +12,237 @@ datasource db {
   provider = "postgresql"
 }
 
-// Placeholder so the first migration has something to create. Removed in T10.
-model HealthCheck {
-  id Int @id @default(autoincrement())
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+/// What a person works on a day. OFF = not working.
+enum WorkDay {
+  FULL
+  AM
+  PM
+  OFF
+}
+
+enum HalfDay {
+  AM
+  PM
+}
+
+/// Must match LeaveType in src/domain/leave-types.ts.
+enum LeaveType {
+  ANNUAL
+  FLEXI
+  SICKNESS
+  SPECIAL
+  PARENTAL
+  WELLBEING
+  OTHER
+  WFH
+  PUBLIC_HOLIDAY
+}
+
+/// A business unit (BU): a separate calendar with its own teams and people.
+model BusinessUnit {
+  id        String   @id @default(uuid(7))
+  name      String   @unique
+  slug      String   @unique
+  /// Hidden BUs aren't offered on the sign-in page.
+  hidden    Boolean  @default(false)
+  teams     Team[]
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// A team inside a BU. Teams are shown in sortOrder on the calendar.
+model Team {
+  id             String       @id @default(uuid(7))
+  businessUnitId String
+  businessUnit   BusinessUnit @relation(fields: [businessUnitId], references: [id], onDelete: Restrict)
+  name           String
+  sortOrder      Int
+  members        User[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([businessUnitId, name])
+  @@index([businessUnitId, sortOrder])
+}
+
+/// A person. This is also Better Auth's user table, extended with WestCal's fields.
+model User {
+  /// Set by Better Auth.
+  id               String                   @id
+  ssoId            String                   @unique
+  employeeNumber   String                   @unique
+  email            String                   @unique
+  /// SSO has already verified the email.
+  emailVerified    Boolean                  @default(true)
+  /// Required by Better Auth: "firstName surname".
+  name             String
+  image            String?
+  firstName        String
+  surname          String
+  preferredName    String?
+  role             Role                     @default(USER)
+  /// Null until the person picks their BU on the welcome page.
+  businessUnitId   String?
+  businessUnit     BusinessUnit?            @relation(fields: [businessUnitId], references: [id], onDelete: Restrict)
+  /// Null means Unassigned.
+  teamId           String?
+  team             Team?                    @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  /// Team groups this person collapsed on the grid. May include the "unassigned" sentinel.
+  collapsedTeamIds String[]                 @default([])
+  lastSignInAt     DateTime?
+  patterns         WorkingPattern[]
+  overrides        AvailabilityOverride[]
+  events           Event[]                  @relation("EventSubject")
+  createdEvents    Event[]                  @relation("EventCreatedBy")
+  updatedEvents    Event[]                  @relation("EventUpdatedBy")
+  phExclusions     PublicHolidayExclusion[]
+  sessions         Session[]
+  accounts         Account[]
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  @@index([businessUnitId, teamId])
+  @@index([surname])
+}
+
+/// One version of a person's weekly working pattern, in force from effectiveFrom
+/// until the next version starts.
+model WorkingPattern {
+  id            String   @id @default(uuid(7))
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Always a Sunday (checked by the database). The default pattern starts 2000-01-02.
+  effectiveFrom DateTime @db.Date
+  sun           WorkDay
+  mon           WorkDay
+  tue           WorkDay
+  wed           WorkDay
+  thu           WorkDay
+  fri           WorkDay
+  sat           WorkDay
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, effectiveFrom])
+}
+
+/// A one-day change to a person's pattern (a "day swap").
+model AvailabilityOverride {
+  id     String   @id @default(uuid(7))
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date   DateTime @db.Date
+  /// FULL, AM or PM = working; OFF = not working.
+  value  WorkDay
+
+  @@unique([userId, date])
+}
+
+/// A public holiday. Everyone gets a PUBLIC_HOLIDAY booking copy on the halves they work.
+model PublicHoliday {
+  id         String                   @id @default(uuid(7))
+  date       DateTime                 @unique @db.Date
+  name       String
+  events     Event[]
+  exclusions PublicHolidayExclusion[]
+  createdAt  DateTime                 @default(now())
+  updatedAt  DateTime                 @updatedAt
+}
+
+/// This person deliberately deleted or moved their copy of this public holiday,
+/// so it must not be recreated or moved for them.
+model PublicHolidayExclusion {
+  userId          String
+  publicHolidayId String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publicHoliday   PublicHoliday @relation(fields: [publicHolidayId], references: [id], onDelete: Cascade)
+
+  @@id([userId, publicHolidayId])
+}
+
+/// A booking: leave, working from home or a public holiday copy. The start must not be
+/// after the end (checked by the database). Overlaps are checked by the services.
+model Event {
+  id              String         @id @default(uuid(7))
+  /// The person whose calendar this is on.
+  userId          String
+  user            User           @relation("EventSubject", fields: [userId], references: [id], onDelete: Cascade)
+  type            LeaveType
+  startDate       DateTime       @db.Date
+  /// AM = from the morning, PM = afternoon only.
+  startHalf       HalfDay
+  endDate         DateTime       @db.Date
+  /// PM = to the end of the day, AM = morning only.
+  endHalf         HalfDay
+  notes           String?        @db.VarChar(500)
+  /// Set only on untouched public holiday copies.
+  publicHolidayId String?
+  publicHoliday   PublicHoliday? @relation(fields: [publicHolidayId], references: [id], onDelete: SetNull)
+  /// Null when the person who created it has been deleted.
+  createdById     String?
+  createdBy       User?          @relation("EventCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById     String?
+  updatedBy       User?          @relation("EventUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([userId, startDate, endDate])
+  @@index([startDate, endDate])
+  @@index([publicHolidayId])
+}
+
+// The three models below are generated by the Better Auth CLI (`npx auth generate`,
+// 1.7.23). Keep their field names: Better Auth reads and writes them directly.
+
+/// A signed-in browser session.
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// A sign-in provider (SSO) linked to a user.
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+/// Short-lived values Better Auth uses during sign-in (for example OAuth state).
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
 }
