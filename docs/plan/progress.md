@@ -393,3 +393,58 @@ Append one entry per task, newest at the bottom. Keep entries short and factual.
 - **T15:** the header will need the display name; add `firstName` / `preferredName` / `surname` to `additionalFields` (or load them) then.
 - **T37:** check the real SSO flow by hand, including that `accountSubject` (the default `id` / `sub` claim) is stable.
 **Questions for the product owner:** none blocking. Two decisions above are worth a look: 12-hour sessions with no refresh, and the SSO sync timing.
+
+## T12 — Sign-in BU choice, welcome page and new-user provisioning — 2026-11-14
+**Status:** done
+**Summary:**
+- **`/sign-in`** now has:
+  - the brand (logo, name, tagline "See who's in, at a glance.") and a centred card;
+  - with more than one BU, a labelled select "First time here? Which business unit do you belong to?" (all BUs, hidden ones included) with the hint "Only used the first time you sign in.";
+  - "Sign in with SSO" and, in dev, a "Developer sign-in" button. Both save the choice first.
+- **The choice cookie** (`src/server/business-unit-choice.ts`):
+  - `westcal-requested-bu`: httpOnly, `sameSite=lax`, 10 minutes, `secure` when `BETTER_AUTH_URL` is https;
+  - the value is the BU id plus an expiry, HMAC-signed with `BETTER_AUTH_SECRET`;
+  - `takeBusinessUnitChoice()` reads it, verifies it and clears it. The SSO path (`mapProfileToUser`) and the dev sign-in actions pass it to `syncSsoProfile`, which only uses it for a new user;
+  - in dev, the choice beats the listed profile's own BU.
+- **`provisionNewUser`** (`src/server/services/provision-new-user.ts`): the default pattern, plus a PH copy of every public holiday dated today or later. Copies come from `planPublicHolidayCreate` for a one-person snapshot and are saved with `saveBookingChanges`, all inside the sign-up transaction.
+- **`saveBookingChanges(tx, changes, actorId)`** (`src/server/services/save-booking-changes.ts`):
+  - writes, in this order: remove → create (`createdById ?? actorId`) → shortened updates (`fromSlot`, `updatedById`) → exclusions → unlink;
+  - new bookings go through a new `toEventData` mapper.
+- **`/welcome`** (replaces the T11 placeholder):
+  - radio buttons with no default (a wrong pick can only be undone by a super admin) and Continue;
+  - joins the only BU automatically if there's just one;
+  - shows a message when there are no BUs;
+  - sends people who already have a BU to `/`;
+  - `joinFirstBusinessUnit` never changes an existing BU.
+- **Tests:**
+  - **Integration:** 10 new, 46 in total. They cover:
+    - a valid cookie gives that BU;
+    - missing, unsigned, BU-swapped, tampered and expired cookies are ignored;
+    - a returning user's BU is unchanged;
+    - future PHs follow the pattern (none on a Saturday PH, none in the past) and aren't given twice;
+    - one `saveBookingChanges` case covering every array.
+  - **E2E:** 4 new, 14 in total:
+    - no choice with 2 BUs → `/welcome` → pick → `/`;
+    - a choice on `/sign-in` → dev sign-in → straight to `/`;
+    - axe on `/welcome` and on `/sign-in` with the select (light and dark).
+**Key files:** `src/server/{business-unit-choice,auth-sync,mappers}.ts`, `src/server/services/{provision-new-user,save-booking-changes}.ts`, `src/server/queries/business-units.ts`, `src/server/actions/{sign-in,join-business-unit}.ts`, `src/app/{sign-in,welcome}/page.tsx`, `tests/integration/{business-unit-choice,provision-new-user,save-booking-changes}.test.ts`, `tests/e2e/{onboarding.spec,test-db}.ts`, `next.config.ts`
+**Simplicity pass:**
+- **Plain HTML controls.** A native `<select>` and native radio buttons (labelled, keyboard-accessible, and they submit with the form) instead of the Radix Select and RadioGroup.
+- **No new endpoints.** The pages use plain forms posting to server actions.
+- **One BU list.** `listBusinessUnits()` is shared by both pages.
+- **One test helper.** The e2e BU insert became `ensureBusinessUnits()` instead of two copies.
+- **Testable cookie checks.** The sign/verify functions are pure, so the cookie rules are tested without a browser.
+**Deviations from plan:**
+- **No `actor.isUnassigned`.** `Actor.teamId === null` already means Unassigned (its type comment says so), and the permission tests already cover the unassigned USER. A second field would hold the same fact twice. T17's banner uses `actor.teamId === null` (its task file is updated).
+- **`provisionNewUser(tx, userId)` doesn't take the BU.** The BU is set when the user row is created, in the same transaction, using the choice logic T11 added. The result is the same.
+- **`saveBookingChanges` takes `actorId`** (for `createdById ?? actorId` and `updatedById`), and is about 30 lines rather than 15.
+- **Dev-server fix: `experimental.turbopackFileSystemCacheForDev: false` in `next.config.ts`.**
+  - **Symptom:** pages with server actions (`/sign-in`, `/dev-sign-in`, `/welcome`, or any page with a form action) could reload endlessly in `next dev`. The hot-reload server kept sending "HMR hash mismatch" and a Turbopack "restart".
+  - **How I found it:** a clean checkout of the T11 commit does it too, so it was already there. T11's e2e tests passed by luck of timing.
+  - **What it isn't:** it happens with a do-nothing action, and it isn't the proxy, the React Compiler, typed routes or the dev log file. Webpack dev doesn't do it.
+  - **What fixes it:** turning off Turbopack's on-disk dev cache, which is new in Next 16. It's explained in a comment; the only cost is slower dev restarts. Seen on Windows; CI (Linux) never failed. Try removing it after a Next.js upgrade.
+- **Brand look from the design system doc.** I didn't open the mockup canvas (it's private to you); the page follows `02-design-system.md` §1.
+**Follow-ups:**
+- **T13:** the seed creates the BUs. The e2e `ensureBusinessUnits` helper can then go (or stay for test-specific data).
+- **Real SSO:** the cookie is read inside Better Auth's callback, which can only be checked by hand with a real identity provider (T37).
+**Questions for the product owner:** none.

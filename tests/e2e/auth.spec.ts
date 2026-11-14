@@ -1,17 +1,10 @@
 import { expect, test } from "@playwright/test";
-import pg from "pg";
+import { ensureBusinessUnits } from "./test-db";
 
 // Tom Okafor is the dev profile in the CALENDAR_ADMIN group. As a new user he joins
-// his profile's BU, "Finance", so make sure it exists. (The seed does this from T13.)
+// his profile's BU, "Finance", so make sure it exists.
 test.beforeAll(async () => {
-  const client = new pg.Client(process.env.DATABASE_URL_TEST);
-  await client.connect();
-  await client.query(
-    `INSERT INTO "BusinessUnit" (id, name, slug, "updatedAt")
-     VALUES (gen_random_uuid()::text, 'Finance', 'finance', now())
-     ON CONFLICT DO NOTHING`,
-  );
-  await client.end();
+  await ensureBusinessUnits("Finance");
 });
 
 test("an admin signs in on the dev page, lands on the calendar, then signs out", async ({

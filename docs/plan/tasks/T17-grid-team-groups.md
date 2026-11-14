@@ -23,7 +23,7 @@ Complete the left-hand structure of the grid as described in spec §2.3 and §1.
 4. **Admin name links:** when `viewer.canManage` for that person's BU, the name renders as a link that sets `?person=<id>` (keeping the other params). T27 builds the dialog; until then the param does nothing, which is fine.
    - For regular users the name is plain text, not focusable.
 5. **Unassigned viewer banner:**
-   - If `actor.isUnassigned`, show a dismissible-for-session info banner above the grid: "An admin needs to add you to a team before you can book."
+   - If the actor is Unassigned (`actor.teamId === null`; T12 didn't add a separate `isUnassigned` flag), show a dismissible-for-session info banner above the grid: "An admin needs to add you to a team before you can book."
    - The viewer's own row isn't shown (spec §1.4). The cell-click booking entry point is disabled for them (enforced in T25).
 6. **Empty states:**
    - A BU with no teams yet shows a friendly message (with an admin hint linking to Admin › Teams if the viewer is an admin).

@@ -1,9 +1,9 @@
-// Turns Prisma rows into the plain domain types in src/domain (and pattern lists back
-// into columns). This is the only file where Prisma types meet domain types.
+// Turns Prisma rows into the plain domain types in src/domain, and domain values back
+// into row data for saving. This is the only file where Prisma types meet domain types.
 import "server-only";
 import type { Override, PatternVersion, WeeklyPattern } from "@/domain/availability";
-import { fromDbDate } from "@/domain/dates";
-import type { Booking } from "@/domain/events";
+import { fromDbDate, toDbDate } from "@/domain/dates";
+import type { Booking, NewBooking } from "@/domain/events";
 import type { PublicHoliday } from "@/domain/public-holidays";
 import type {
   Event as EventRow,
@@ -25,6 +25,21 @@ export function toBooking(row: EventRow): Booking {
     notes: row.notes ?? undefined,
     publicHolidayId: row.publicHolidayId,
     createdById: row.createdById,
+  };
+}
+
+// The reverse of toBooking, for saving a new booking.
+export function toEventData(booking: NewBooking) {
+  return {
+    userId: booking.userId,
+    type: booking.type,
+    startDate: toDbDate(booking.startDate),
+    startHalf: booking.startHalf,
+    endDate: toDbDate(booking.endDate),
+    endHalf: booking.endHalf,
+    notes: booking.notes ?? null,
+    publicHolidayId: booking.publicHolidayId,
+    createdById: booking.createdById ?? null,
   };
 }
 

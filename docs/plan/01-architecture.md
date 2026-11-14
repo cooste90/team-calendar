@@ -407,7 +407,7 @@ planPublicHolidayDelete(holiday, people): BookingChanges                   // un
 planReconcileForPerson(person, futureHolidays, fromDate): BookingChanges   // after a pattern/override change
 ```
 
-`saveBookingChanges(tx, changes)` in `src/server/services/save-booking-changes.ts` writes it: one `createMany`, one `deleteMany`, a loop of `update`s, one `createMany` for exclusions, and one `updateMany` to unlink. That's about 15 lines, used by bookings, public holidays, profile changes and the seed.
+`saveBookingChanges(tx, changes, actorId)` in `src/server/services/save-booking-changes.ts` writes it (new bookings get `createdById ?? actorId`; shortened ones get `updatedById = actorId`): one `createMany`, one `deleteMany`, a loop of `update`s, one `createMany` for exclusions, and one `updateMany` to unlink. That's about 15 lines, used by bookings, public holidays, profile changes and the seed.
 
 - **PersonSnapshot** = `{ userId, availability: AvailabilityLookup, bookings, exclusions: string[] }`: their availability, their events overlapping the dates involved, and the ids of holidays they've detached from.
 - **Carving:** all of a person's holiday slots are cut out of each booking together (so two holidays inside one long booking split it correctly). The first remaining piece keeps the booking's id, and later pieces are created with the same details and original `createdById`. Remaining parts with **zero working days** are deleted (PH carving only; Replace keeps them). `PARENTAL` is never carved: those slots are skipped for the PH instead.

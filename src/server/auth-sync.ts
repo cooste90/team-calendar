@@ -2,14 +2,12 @@
 // SSO sign-in and the dev sign-in call syncSsoProfile, so they behave the same.
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { DEFAULT_PATTERN, DEFAULT_PATTERN_EFFECTIVE_FROM } from "@/domain/availability";
-import { toDbDate } from "@/domain/dates";
 import { computeRole } from "@/domain/roles";
 import type { Prisma } from "@/generated/prisma/client";
 import { env } from "@/lib/env";
 import type { SsoProfile } from "@/lib/schemas/sso-profile";
 import { db } from "./db";
-import { toPatternColumns } from "./mappers";
+import { provisionNewUser } from "./services/provision-new-user";
 
 type SyncOptions = { requestedBusinessUnitId?: string };
 
@@ -42,7 +40,7 @@ export async function syncSsoProfile(profile: SsoProfile, options: SyncOptions =
 }
 
 // A new user joins the BU they asked for if it exists, otherwise the only BU if there
-// is just one. Otherwise they have no BU yet and pick one on the welcome page (T12).
+// is just one. Otherwise they have no BU yet and pick one on the welcome page.
 async function chooseBusinessUnit(tx: Prisma.TransactionClient, requestedId?: string) {
   if (requestedId) {
     const requested = await tx.businessUnit.findUnique({ where: { id: requestedId } });
@@ -53,13 +51,12 @@ async function chooseBusinessUnit(tx: Prisma.TransactionClient, requestedId?: st
   return null;
 }
 
-// Everything a brand-new user starts with. T12 adds their future public holidays.
-async function provisionNewUser(tx: Prisma.TransactionClient, userId: string) {
-  await tx.workingPattern.create({
-    data: {
-      userId,
-      effectiveFrom: toDbDate(DEFAULT_PATTERN_EFFECTIVE_FROM),
-      ...toPatternColumns(DEFAULT_PATTERN),
-    },
+// The welcome page: a user without a BU picks their first one. Only a super admin can
+// move someone who already has a BU (spec §1.3), so this never changes an existing one.
+// They start Unassigned (no team).
+export async function joinFirstBusinessUnit(userId: string, businessUnitId: string) {
+  await db.user.updateMany({
+    where: { id: userId, businessUnitId: null },
+    data: { businessUnitId },
   });
 }

@@ -34,6 +34,12 @@ First-time users end up in the right BU's Unassigned group, with a default patte
 - The dev sign-in page already requests each listed profile's BU (looked up by name).
 - `/welcome` exists as a placeholder page (protected, with a sign-out button). Replace its content.
 
+**As built (T12):** see the T12 entry in `progress.md`. In short:
+- The cookie lives in `src/server/business-unit-choice.ts`.
+- `provisionNewUser(tx, userId)` is in `src/server/services/provision-new-user.ts`. The BU is still set when the user row is created.
+- There is no `isUnassigned` flag: `actor.teamId === null` already means Unassigned.
+- `saveBookingChanges(tx, changes, actorId)`.
+
 ## Tests
 - Integration:
   - a new user with a valid cookie gets that BU;

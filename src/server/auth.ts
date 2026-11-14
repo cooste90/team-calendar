@@ -7,6 +7,7 @@ import { nextCookies } from "better-auth/next-js";
 import { genericOAuth } from "better-auth/plugins";
 import { env, ssoConfigured } from "@/lib/env";
 import { syncSsoProfile } from "./auth-sync";
+import { takeBusinessUnitChoice } from "./business-unit-choice";
 import { db } from "./db";
 import { devSignInPlugin } from "./dev-sign-in-plugin";
 import { mapSsoClaims } from "./sso-claims";
@@ -55,7 +56,9 @@ function ssoPlugin() {
         // Runs on every SSO sign-in, before the session is created: refresh the user
         // (and their role) from the claims, then tell Better Auth who they are.
         mapProfileToUser: async (claims) => {
-          const user = await syncSsoProfile(mapSsoClaims(claims));
+          const user = await syncSsoProfile(mapSsoClaims(claims), {
+            requestedBusinessUnitId: await takeBusinessUnitChoice(),
+          });
           return { name: user.name, email: user.email, emailVerified: true };
         },
       },

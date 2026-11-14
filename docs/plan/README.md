@@ -69,7 +69,7 @@ Size key: **S** ≈ small, under 300 lines changed · **M** ≈ 300–800 · **L
 ### Phase 2 — Data and auth
 - [x] [T10](tasks/T10-prisma-schema.md) Prisma schema and migrations · **M**
 - [x] [T11](tasks/T11-auth.md) Better Auth, SSO profile sync, roles, dev sign-in, session guard · **L**
-- [ ] [T12](tasks/T12-onboarding.md) Sign-in page BU dropdown, welcome page, new-user provisioning · **M**
+- [x] [T12](tasks/T12-onboarding.md) Sign-in page BU dropdown, welcome page, new-user provisioning · **M**
 - [ ] [T13](tasks/T13-seed.md) Seed data (faker), dev SSO profiles, large seed · **M**
 - [ ] [T14](tasks/T14-action-query-infrastructure.md) Server action helper, data loading, URL state (nuqs) · **M**
 
