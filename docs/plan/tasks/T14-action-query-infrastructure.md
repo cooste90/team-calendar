@@ -12,7 +12,7 @@ The small amount of plumbing every UI task uses: one helper for safe server acti
 - The nuqs v2 docs (Next app adapter, `createSearchParamsCache`, `parseAsArrayOf`, `parseAsStringLiteral`, the `shallow` and `history` options)
 
 ## Deliverables
-1. **`src/domain/errors.ts`:** already exists (T07) with `AppError` (every error has a `code`), `ValidationError` and `PastLockedError`. Add `ForbiddenError`, `NotFoundError` and `ConflictError` (with details) in the same style. They're shared by every service.
+1. **`src/domain/errors.ts`:** already exists (T07) with `AppError` (every error has a `code`), `ValidationError` and `PastLockedError`. `ForbiddenError` was added in T11 (`requireRole` throws it). Add `NotFoundError` and `ConflictError` (with details) in the same style. They're shared by every service.
 2. **`src/server/authed-action.ts`:** `authedAction(schema, handler)` (architecture §6.2). It's one function, about 40 lines:
    - `requireUser()` → zod parse → handler → `refresh()` → `{ ok: true, data }`;
    - maps the error classes above (and zod errors) to codes;

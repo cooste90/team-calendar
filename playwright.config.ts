@@ -8,6 +8,7 @@ const port = 3100;
 
 export default defineConfig({
   testDir: "tests/e2e",
+  globalSetup: "tests/migrate-test-db.ts",
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
   reporter: isCI ? [["list"], ["html", { open: "never" }]] : "list",
@@ -26,6 +27,10 @@ export default defineConfig({
     url: `http://localhost:${port}/api/health`,
     reuseExistingServer: !isCI,
     timeout: 180_000,
-    env: { DATABASE_URL: process.env.DATABASE_URL_TEST ?? "" },
+    env: {
+      DATABASE_URL: process.env.DATABASE_URL_TEST ?? "",
+      BETTER_AUTH_URL: `http://localhost:${port}`,
+      DEV_SIGN_IN_ENABLED: "true",
+    },
   },
 });

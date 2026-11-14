@@ -39,6 +39,12 @@ Authentication that behaves exactly like production SSO in role and profile hand
 7. **Sign-out:** a server action that calls Better Auth's signOut and redirects to `/sign-in`.
 8. **Minimal `/sign-in` page:** a "Sign in with SSO" button (disabled with an explanatory note when SSO isn't configured) and a "Developer sign-in" link (dev only). T12 adds the BU dropdown.
 
+**As built:** see architecture §5.5 and the T11 entry in `progress.md`. The main differences:
+- SSO sync runs in `mapProfileToUser`, not an after-hook.
+- Sessions are never refreshed (no `updateAge`).
+- Dev sign-in is a plugin endpoint at `/api/auth/dev-sign-in`.
+- `/welcome` is protected and is a placeholder until T12.
+
 ## Tests
 - Unit: `computeRole` covers group / no group / allowlist / both / a case-sensitivity decision (exact match on group name, trimmed employee numbers).
 - Unit: the dev sign-in guard returns 404 when `NODE_ENV=production` even if the flag is true.

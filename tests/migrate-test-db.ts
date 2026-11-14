@@ -1,7 +1,7 @@
 import { execSync } from "node:child_process";
 
-// Runs once before all integration tests: bring the test database up to the latest
-// migration. Data is cleared between tests by reset-db.ts.
+// Runs once before the integration and e2e tests: bring the test database up to the
+// latest migration. Integration tests also clear the data before each test (reset-db.ts).
 export default function setup() {
   const url = process.env.DATABASE_URL_TEST ?? "";
 

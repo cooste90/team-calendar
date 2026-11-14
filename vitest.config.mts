@@ -53,8 +53,11 @@ export default defineConfig({
             // Run in the app's time zone (CI runs in UTC), so the date tests would
             // catch a calendar date shifting through local time.
             TZ: "Europe/London",
+            // Fixed role settings, so the sign-in tests don't depend on your .env file.
+            ADMIN_GROUP_NAME: "CALENDAR_ADMIN",
+            SUPER_ADMIN_EMPLOYEE_NUMBERS: "100001",
           },
-          globalSetup: ["tests/integration/helpers/global-setup.ts"],
+          globalSetup: ["tests/migrate-test-db.ts"],
           setupFiles: ["tests/integration/helpers/reset-db.ts"],
         },
       },

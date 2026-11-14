@@ -318,6 +318,13 @@ It is called from the Better Auth sign-in hook (OAuth path) **and** from the dev
 - `proxy.ts` only does an **optimistic** redirect to `/sign-in` when there is no session cookie. Real checks happen in `requireUser()`, which every page, query and action calls, following `node_modules/next/dist/docs/01-app/02-guides/authentication.md`.
 - `requireUser()` also redirects users with no BU to `/welcome`.
 
+### 5.5 As built (T11)
+- **SSO sync happens before the session exists.** `genericOAuth`'s `mapProfileToUser` calls `mapSsoClaims` and then `syncSsoProfile`, so the user row (with every required column) exists before Better Auth looks for it. Better Auth then links the SSO account to that user (`trustedProviders: ["sso"]`). An after-sign-in hook can't work here: Better Auth would first try to create the user itself without `ssoId`, `employeeNumber` and so on.
+- **Sessions are never extended.** `expiresIn` is 12 hours with `disableSessionRefresh: true`. There is no `updateAge`, because a refreshing session could outlive a working day and keep an old role.
+- **Dev sign-in is a Better Auth plugin endpoint**, `POST /api/auth/dev-sign-in` (`src/server/dev-sign-in-plugin.ts`). It uses Better Auth's `internalAdapter.createSession` and `setSessionCookie`, and throws a 404 unless `devSignInEnabled` (`src/lib/env.ts`). The `/dev-sign-in` page calls it through server actions in `src/server/actions/sign-in.ts`, and `nextCookies()` sets the cookie.
+- **`proxy.ts` answers API calls with 401** (pages get a redirect to `/sign-in`) when there's no session cookie. Public paths: `/sign-in`, `/dev-sign-in`, `/dev/*` (the gallery), `/api/auth`, `/api/health`, and Next's static files.
+- `getCurrentUser()` reads `role`, `businessUnitId` and `teamId` from the Better Auth session (`user.additionalFields`), so there's no extra query. `requireRole()` throws `ForbiddenError`.
+
 ---
 
 ## 6. Data flow

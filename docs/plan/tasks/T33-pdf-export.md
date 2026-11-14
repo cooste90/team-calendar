@@ -14,6 +14,7 @@ Admins download a clean, print-ready attendance sheet for Today, This week or Ne
 ## Deliverables
 1. **Route `GET /api/export/attendance?bu=<slug>&range=today|this-week|next-week`:**
    - `requireUser` plus `canExport(actor, bu)`; anyone else gets 403.
+   - Without a session cookie, `proxy.ts` already answers 401 (T11, tested in `tests/e2e/auth.spec.ts`). The route must still check the session itself, because the proxy only checks that a cookie exists.
    - Computes the dates server-side with `todayIn(APP_TIME_ZONE)`: today, or the Sun–Sat week (this or next).
    - Loads the whole BU (teams in admin order, then people by surname; **excluding Unassigned**; **ignoring filters**), with availability and bookings for the range.
    - Responds with `Content-Type: application/pdf`, `Content-Disposition: attachment; filename="westcal-attendance-west-operations-2026-11-08.pdf"`, and `Cache-Control: no-store`.

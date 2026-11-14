@@ -31,6 +31,7 @@ Realistic, deterministic data that makes every feature demo-able and testable, p
 5. **`prisma/seed/dev-sso-profiles.ts`:** exported fake SSO profiles that match seeded users (same `ssoId`, `employeeNumber`, `formalGroups`):
    - at least: a regular user in a team, an unassigned user, an ADMIN per BU (`CALENDAR_ADMIN` group), a SUPER_ADMIN (employee number in `.env.example`), a member of the hidden BU, and a brand-new profile that doesn't exist yet (to test onboarding).
    - `.env.example` lists the matching `SUPER_ADMIN_EMPLOYEE_NUMBERS`.
+   - The file already exists from T11 with 4 sample profiles. Each item is `{ profile: SsoProfile, businessUnit: <BU name>, team: <team name> | null }`. The dev sign-in page groups by `businessUnit` and requests that BU (by name) for new users, so use the seeded BU names.
 6. **Large size:** about 1,000 users across 6 BUs (the largest about 300), with proportionally more bookings. It must finish in under 60 seconds locally. Use `createMany` (through `saveBookingChanges`).
 7. **README:** a "Seeded accounts" table (dev sign-in names and roles) and the commands `pnpm db:seed` / `pnpm db:seed:large`.
 

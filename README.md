@@ -8,10 +8,12 @@ A team availability calendar showing who's in and who's off. The full plan is in
 |---|---|---|
 | 0 · Foundation | T01–T04: tooling, database, tests and CI, design system | Done |
 | 1 · Domain logic | T05–T09: dates, half days, working patterns, booking rules, permissions, public holidays, tallies, grid model | Done |
-| 2 · Data and auth | T10–T14: database schema and migrations (T10 done) | Next: T11, authentication |
+| 2 · Data and auth | T10–T14: database schema and migrations, sign-in (T10–T11 done) | Next: T12, first-time sign-in |
 | 3–8 | Calendar UI, bookings, profile, admin, export, hardening | Not started |
 
 There's no calendar screen yet. What you can open today:
+- http://localhost:3000/dev-sign-in: sign in as a fake person (dev only). Create a business unit called "Finance" first (e.g. in `pnpm db:studio`), or new people land on the welcome page. The seed (T13) will do this for you.
+- http://localhost:3000/: a placeholder home page with a Sign out button. It sends you to `/sign-in` if you're not signed in.
 - http://localhost:3000/dev/design-system: every colour, leave chip and component, in light and dark (dev only)
 - http://localhost:3000/api/health: checks the app can reach the database
 
@@ -22,7 +24,7 @@ There's no calendar screen yet. What you can open today:
 | `src/domain/` | All the business rules as plain, fully tested TypeScript (no React or database). Start here to understand how the app thinks. |
 | `src/components/` | Shared React components; `ui/` holds the shadcn components |
 | `src/app/` | Next.js pages and API routes |
-| `src/server/` | Server-only code: the database client (more arrives in Phase 2) |
+| `src/server/` | Server-only code: the database client, sign-in (`auth.ts`, `auth-sync.ts`, `session.ts`), and server actions |
 | `src/lib/` | Small shared helpers, e.g. `env.ts`, which checks the settings in `.env` |
 | `prisma/` | The database schema and migrations |
 | `tests/` | Integration tests (real database) and end-to-end browser tests |

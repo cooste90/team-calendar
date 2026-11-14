@@ -335,3 +335,61 @@ Append one entry per task, newest at the bottom. Keep entries short and factual.
 - **T12/T22:** writing a booking (`NewBooking` → Prisma data with `toDbDate`) belongs in `mappers.ts` too.
 - **T27:** `toPatternColumns` is ready for saving patterns.
 **Questions for the product owner:** none.
+
+## T11 — Better Auth, SSO profile sync, roles, dev sign-in and session guard — 2026-11-14
+**Status:** done
+**Summary:**
+- **Better Auth 1.7.23** (pinned to match the T10 tables) in `src/server/auth.ts`:
+  - Prisma adapter; email/password off;
+  - `role`, `businessUnitId` and `teamId` as `additionalFields` (`input: false`);
+  - 12-hour sessions;
+  - `genericOAuth` only when all three `SSO_*` variables are set (`ssoConfigured` in `env.ts`);
+  - `nextCookies()` last. Mounted at `/api/auth/[...all]`.
+- **Shared pieces:**
+  - `computeRole` in `src/domain/roles.ts`;
+  - `mapSsoClaims` in `src/server/sso-claims.ts`;
+  - `ssoProfileSchema` in `src/lib/schemas/sso-profile.ts`.
+- **`syncSsoProfile`** in `src/server/auth-sync.ts`:
+  - refreshes the name, email, employee number and role at every sign-in;
+  - a new user gets the requested BU if it exists, else the only BU, else none;
+  - plus the default pattern (`provisionNewUser`, a private stub that T12 extends).
+- **Dev sign-in** is a Better Auth plugin endpoint, `POST /api/auth/dev-sign-in` (404 unless `devSignInEnabled`).
+  - The `/dev-sign-in` page lists `prisma/seed/dev-sso-profiles.ts` (4 samples) grouped by BU, with role badges and a custom-profile form.
+- **Session guard:**
+  - `src/server/session.ts`: `getCurrentUser()` (React `cache`), `requireUser()` (redirects to `/sign-in` / `/welcome`) and `requireRole()` (throws `ForbiddenError`, which is now in `errors.ts`);
+  - `src/proxy.ts`: an optimistic cookie check;
+  - a sign-out server action and `SignOutButton`;
+  - a minimal `/sign-in` page.
+- **Tests:**
+  - **Unit:** 6 role rules, the dev sign-in guard (off in production even when the flag is true), and `ForbiddenError`. 342 unit tests in total.
+  - **Integration:** 11 new tests (sync create/update, promote/demote, SUPER_ADMIN, default pattern, BU choice ×4, claims mapping ×3).
+  - **E2E:** dev sign-in as admin → `/` → sign out → `/sign-in`; and without a cookie, `/` redirects and `/api/export/attendance` returns 401. The sign-in pages also pass axe in light and dark.
+- **Checked by hand on a production build** (`next start` with `DEV_SIGN_IN_ENABLED=true`):
+  - `/dev-sign-in` → 404;
+  - `POST /api/auth/dev-sign-in` → 404;
+  - `/` → 307 to `/sign-in`;
+  - `/api/export/attendance` → 401.
+**Key files:** `src/server/{auth,auth-sync,dev-sign-in-plugin,session,sso-claims}.ts`, `src/server/actions/{sign-in,sign-out}.ts`, `src/proxy.ts`, `src/domain/roles.ts`, `src/lib/{env.ts,schemas/sso-profile.ts}`, `src/app/{sign-in,dev-sign-in,welcome}/`, `prisma/seed/dev-sso-profiles.ts`, `tests/e2e/auth.spec.ts`, `tests/integration/{auth-sync,sso-claims}.test.ts`, `tests/migrate-test-db.ts`
+**Simplicity pass:**
+- **One guard flag.** `devSignInEnabled` and `ssoConfigured` are worked out once in `env.ts` and used by the plugin, the pages and the auth config, instead of repeating the conditions.
+- **No extra query for the session.** `getCurrentUser` reads role, BU and team straight from Better Auth's session (`additionalFields`).
+- **One test-DB setup.** The migrate step is shared by the integration tests and Playwright (moved to `tests/migrate-test-db.ts`).
+- **Plain types.** I replaced a `Parameters<typeof …>` type with the plain `SsoProfile`, and spelled out `requireUser`'s return fields instead of spreading and overriding.
+**Deviations from plan:**
+- **SSO sync runs in `mapProfileToUser`, not an after-sign-in hook.** Better Auth creates the user *before* an after-hook runs, and that insert would fail: `ssoId`, `employeeNumber`, `firstName` and `surname` are required columns it doesn't know. Syncing first creates or refreshes the user with everything, and Better Auth then links the SSO account to it (`trustedProviders: ["sso"]`). The role is still recomputed at every sign-in, before the session is created. **The real SSO path is untested** until there's an identity provider to point at (T37's porting guide should include a manual check).
+- **No sliding sessions.** The task said `updateAge` 1 hour. With Better Auth that keeps pushing the expiry forward, so an active session never ends and the role is never recomputed, which breaks spec §1.2's "bounded lifetime". I used `disableSessionRefresh: true`, so everyone signs in again 12 hours after their last sign-in.
+- **Dev sign-in is at `/api/auth/dev-sign-in`** (a Better Auth plugin endpoint, which the task allows), so the proxy doesn't need an `/api/dev` exception.
+- **`/welcome` is protected, and is a placeholder page.** `requireUser` must redirect there, and typed routes reject a redirect to a page that doesn't exist. It needs a session anyway, so the proxy doesn't exclude it. The gallery (`/dev/*`) is excluded instead, so its e2e tests keep working.
+- **BU choice for new users is in T11.** Architecture §5.2 step 3 (requested BU, else the only BU) is in `syncSsoProfile` now, because the dev sign-in body takes `requestedBusinessUnitId`, and the e2e test needs the admin to land on `/`. T12 still adds the cookie, the public holidays and the welcome form (its task file is updated).
+- **The proxy returns 401 for `/api/*`** without a cookie, and redirects pages. That's how the acceptance check on `/api/export/attendance` passes before T33 builds the route.
+- **`/sign-in` renders per request** (`connection()`). Otherwise the build would bake in whether SSO is configured.
+- **Removed `src/app/page.test.tsx`.** The home page is now an async server component that needs a session; the e2e test covers it. The smoke e2e test now checks `/sign-in` and `/dev-sign-in` for axe violations instead of `/`.
+- **Integration tests fix `ADMIN_GROUP_NAME` and `SUPER_ADMIN_EMPLOYEE_NUMBERS`** in `vitest.config.mts`, so they don't depend on a developer's `.env` (CI doesn't set them).
+- **The auth e2e test inserts the "Finance" BU** with plain `pg` before signing in (seeding is T13).
+**Follow-ups:**
+- **Product owner:** to try dev sign-in locally, run `pnpm db:reset` first (see T10), then create a "Finance" business unit (e.g. in `pnpm db:studio`) until the seed exists.
+- **T12:** pass the cookie's BU into `syncSsoProfile`, extend `provisionNewUser`, and replace `/welcome`.
+- **T13:** keep the `dev-sso-profiles.ts` shape; the e2e test's BU insert can go once e2e seeds.
+- **T15:** the header will need the display name; add `firstName` / `preferredName` / `surname` to `additionalFields` (or load them) then.
+- **T37:** check the real SSO flow by hand, including that `accountSubject` (the default `id` / `sub` claim) is stable.
+**Questions for the product owner:** none blocking. Two decisions above are worth a look: 12-hour sessions with no refresh, and the SSO sync timing.

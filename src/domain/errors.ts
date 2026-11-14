@@ -13,6 +13,13 @@ export class AppError extends Error {
   }
 }
 
+// The signed-in person isn't allowed to do this.
+export class ForbiddenError extends AppError {
+  constructor(message: string) {
+    super("FORBIDDEN", message);
+  }
+}
+
 // Something about the input breaks a rule, e.g. changing the type of a booking that has started.
 export class ValidationError extends AppError {
   constructor(message: string) {

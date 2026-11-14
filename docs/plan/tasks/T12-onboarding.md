@@ -28,6 +28,12 @@ First-time users end up in the right BU's Unassigned group, with a default patte
 5. **Unassigned state:** add `actor.isUnassigned` to the session actor. The calendar banner itself is built in T17. Here, just expose the flag and add a test.
 6. **Shared service** `saveBookingChanges(tx, changes)` in `src/server/services/save-booking-changes.ts` (architecture §8): writes a `BookingChanges` object with one Prisma call per array (`createMany`, `deleteMany`, a loop of `update`s, `createMany` for exclusions, `updateMany` to unlink). It should be about 15 lines. T13, T22, T23, T27 and T31 reuse it. Details from the domain (T07/T08): `update` entries hold a `SlotRange`, so convert with `fromSlot` to dates and halves; apply `remove` before `create`; new bookings use `createdById ?? actor.id` (split pieces keep their original creator).
 
+**Already in place from T11** (`src/server/auth-sync.ts`):
+- `syncSsoProfile(profile, { requestedBusinessUnitId })` already picks a new user's BU: the requested one if it exists, else the only BU, else null. Integration tests cover all three and "returning user unchanged". T12 only needs to read the cookie and pass its value in.
+- `provisionNewUser(tx, userId)` is a private function there that creates the default pattern. Add the public holidays to it.
+- The dev sign-in page already requests each listed profile's BU (looked up by name).
+- `/welcome` exists as a placeholder page (protected, with a sign-out button). Replace its content.
+
 ## Tests
 - Integration:
   - a new user with a valid cookie gets that BU;

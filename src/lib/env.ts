@@ -38,3 +38,11 @@ if (!result.success) {
 }
 
 export const env = result.data;
+
+// The fake sign-in is never available in a production build, even if the flag is set.
+export const devSignInEnabled = env.DEV_SIGN_IN_ENABLED && process.env.NODE_ENV !== "production";
+
+// SSO is switched on by setting all three variables (see docs/PORTING-SSO.md).
+export const ssoConfigured = Boolean(
+  env.SSO_DISCOVERY_URL && env.SSO_CLIENT_ID && env.SSO_CLIENT_SECRET,
+);
