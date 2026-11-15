@@ -715,3 +715,74 @@ Append one entry per task, newest at the bottom. Keep entries short and factual.
 - **T29:** "Admin › Teams" links to `?admin=teams`.
 - **T35:** after Dismiss, focus falls back to the page; consider moving it to the grid.
 **Questions for the product owner:** none blocking. Please check one call: an **unassigned admin** doesn't get the banner (they can book), and appears in the Unassigned group like everyone else there.
+
+## T18 — Grid keyboard navigation and screen-reader model — 2026-11-15
+**Status:** done (the manual NVDA check is still to do; see Questions)
+**Summary:**
+- **Navigation rules** (`src/domain/grid-navigation.ts`, pure and table-tested):
+  - `nextCell(layout, current, key)`: arrows stop at the edges; Home/End and Ctrl+Home/End go to the first or last day;
+  - `tabStopCell(layout, wanted, start)` picks the one cell in the Tab order:
+    - the last focused cell while it's still shown;
+    - if its person is hidden, the viewer (or the first person);
+    - if its date is gone (a new period), the same weekday;
+    - at first, the viewer's row today.
+- **The grid:** gridcells and admin name links carry `data-person` / `data-column`, and one `onKeyDown` and one `onFocus` on the grid handle them all (`use-grid-keyboard.ts`, a plain `switch`). The store's `focusedCell` follows clicks and keys.
+  - **PageUp/PageDown** change the period through the URL.
+  - **`?`** opens the new keyboard shortcuts dialog (`shortcuts-help-dialog.tsx`; `shortcutsHelpOpen` in the store, so T20's Key popover can open it).
+- **Focus is never lost:** if a re-render removes the focused element (a new period, a view switch, a filter, fresh data) and focus dropped to `<body>`, it goes to the tab stop. After PageDown on Ben's Tuesday, it lands on Ben's next Tuesday. Focus that has moved elsewhere is left alone.
+- **Admin name links** are part of the arrow-key navigation (← from the first day reaches the name). Only one element in the grid is in the Tab order, so Tab doesn't stop on every name. Team collapse buttons stay in the Tab order, as the task says.
+- **Visible focus:**
+  - an inset 2px ring for everything inside the grid (`[role="grid"] :focus-visible`);
+  - `scrollIntoView({ block: "nearest", inline: "nearest" })`, with the existing scroll-padding, so the sticky header and name column never cover the focused cell (2.4.11);
+  - the scroll box no longer has `tabIndex`, now that a cell is tabbable (T16 follow-up).
+- **Skip link** now jumps to the tab-stop cell (`#calendar-focus`).
+- **Announcements:** a period change says "Week of 8 to 14 November 2026" or "November 2026" (`formatPeriodAnnouncement`), however it was changed. Collapse announcements came in T17.
+- **Shared Dialog:** `DialogContent` now returns focus to whatever had it when the dialog opened, because Radix only returns it to a `DialogTrigger`. The upcoming dialogs that open from the store or the URL (event form, profile, admin) get this for free.
+- **`useCalendarParams()`:** one hook for the URL params (`shallow: false` plus the shared navigation transition), used by the header and the grid.
+- **Tests:**
+  - **Unit:** 30 new (navigation, tab stop, announcement wording).
+  - **Component:** 21 new in `grid-keyboard.test.tsx`, covering:
+    - every key;
+    - crossing team boundaries, collapsed teams and filtered rows;
+    - a click moves the tab stop;
+    - Tab goes to the next team button;
+    - `?` opens the dialog;
+    - PageDown asks for the next week, then focuses the same person and weekday, and announces it;
+    - focus recovery when a filter hides the focused person;
+    - admin name navigation;
+    - axe.
+  - **Totals:** 446 unit and component tests.
+  - **E2E:** 2 new (28 in total):
+    - keyboard only: skip link → today's cell → Home and → to Friday → ↑ to a teammate → PageDown keeps that person and Friday → Tab out to the next team button;
+    - `?` opens the shortcuts, which pass axe, and Esc puts focus back on the cell.
+**Key files:** `src/domain/grid-navigation.ts`, `src/features/calendar/grid/{use-grid-keyboard.ts,calendar-grid,grid-cell,person-row,team-group,day-header}.tsx`, `src/features/calendar/{calendar-store,use-calendar-params}.ts`, `src/features/calendar/shortcuts-help-dialog.tsx`, `src/components/ui/dialog.tsx`, `src/app/globals.css`, `src/app/(app)/layout.tsx`, `tests/e2e/grid-keyboard.spec.ts`
+**Simplicity pass** (my own re-read, then `/simplify`):
+- **One focus-recovery rule** ("the focused element is gone and focus is on `<body>`") instead of a special case for period changes. It also covers filters (T21) and refetches.
+- **Focus return in the shared `DialogContent`,** not repeated in each dialog.
+- **One `useCalendarParams` hook** instead of two copies of the nuqs setup.
+- **No extra file for one constant:** `CALENDAR_FOCUS_ID` lives in `grid-cell.tsx` (not a client module, so the server layout can import it).
+- **Removed** repeated comments, a comment pointing at the wrong file, and a redundant type.
+- **`DayHeaderRow`** moved into `day-header.tsx`, so `CalendarGrid` stays at about 150 lines.
+- **Test providers:** three grid test files share `GridTestProviders` (nuqs testing adapter, navigation transition, tooltips).
+**Deviations from plan:**
+- **`focusedCell` is `{ personId, column }`,** not `{ personId, date }`, because admins' names are a column too. The task file has an "as built" note.
+- **Name links are in the arrow navigation, not the Tab order.** Otherwise an admin would Tab through 300 names to leave the grid. Arrow-key navigation follows the APG grid pattern; Home/End still go to days, as the accessibility table says.
+- **Enter, Space and Delete aren't handled yet.** The task allowed "does nothing", and a placeholder event would be code T25 throws away (rule 10: no feature flags). T25's task file has the hand-off. The e2e test asserts the keyboard path up to that point instead of "Enter fires an event".
+- **No `aria-describedby` on cells:** each cell's `aria-label` already starts with the full date, so the column header would be read twice.
+- **"Nearest valid cell" when a person disappears** is the viewer's row (or the first row) on the same column, not the row next to the old one. The old position isn't known once the person has gone from the model, and it keeps the rule simple.
+- **Skip link in dev:** in `next dev`, Next's dev tools button is the first Tab stop, so the e2e test starts on the skip link. In production the skip link is first.
+- **`/simplify` findings noted for T19, not fixed:** each arrow key re-renders every `PersonRow` function (the compiler should skip their cells; estimated 1–3 ms), and the cell data attributes add HTML size. Both are in T19's task file with what to measure.
+**Follow-ups:**
+- **T19:** see the notes added to its task file.
+- **T20:** open the shortcuts dialog from the Key popover with `setShortcutsHelpOpen(true)`.
+- **T21:** focus recovery already handles a filter hiding the focused row (component test included).
+- **T25:**
+  - add Enter/Space/Delete to the hook's `switch` and to the shortcuts list;
+  - give `alert-dialog.tsx` the same focus return as `dialog.tsx` when it's needed.
+**Questions for the product owner:**
+- **Please do the quick NVDA check** (I can't run a screen reader here):
+  1. Tab into the grid and arrow around.
+  2. Check that cells read like "Tuesday 17 November, Ben Carter. Annual leave, …" without doubled dates.
+  3. Check that Page Down announces "Week of …".
+
+  Then note what you hear here or in `docs/a11y-report.md`.

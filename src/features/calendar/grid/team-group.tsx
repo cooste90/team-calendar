@@ -1,4 +1,5 @@
 import type { GridGroup } from "@/domain/grid-model-types";
+import type { CellPosition } from "@/domain/grid-navigation";
 import { PersonRow } from "./person-row";
 import { TeamGroupRow } from "./team-group-row";
 
@@ -7,11 +8,12 @@ type Props = {
   template: string;
   compact: boolean;
   canOpenProfiles: boolean;
+  tabStop: CellPosition | null;
   onToggle: () => void;
 };
 
 // One team: its collapse button row, then its people, or a note when it has none.
-export function TeamGroup({ group, template, compact, canOpenProfiles, onToggle }: Props) {
+export function TeamGroup({ group, template, compact, canOpenProfiles, tabStop, onToggle }: Props) {
   const id = `team-group-${group.id}`;
   const showEmptyNote = !group.collapsed && group.memberCount === 0 && !group.isUnassigned;
 
@@ -46,6 +48,7 @@ export function TeamGroup({ group, template, compact, canOpenProfiles, onToggle 
           template={template}
           compact={compact}
           canOpenProfile={canOpenProfiles}
+          tabStopColumn={tabStop?.personId === row.personId ? tabStop.column : null}
         />
       ))}
     </div>

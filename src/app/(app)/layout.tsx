@@ -3,6 +3,7 @@ import { RefreshOnFocus } from "@/components/refresh-on-focus";
 import { Toaster } from "@/components/ui/sonner";
 import { todayIn } from "@/domain/dates";
 import { readSavedView } from "@/features/calendar/calendar-view";
+import { CALENDAR_FOCUS_ID } from "@/features/calendar/grid/grid-cell";
 import { AppHeader } from "@/features/calendar/header/app-header";
 import {
   NavigationProgress,
@@ -23,7 +24,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <NavigationTransitionProvider>
       <a
-        href="#main"
+        href={`#${CALENDAR_FOCUS_ID}`}
         className="sr-only rounded-md bg-surface px-3 py-2 focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50"
       >
         Skip to calendar

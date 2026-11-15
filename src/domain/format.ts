@@ -122,6 +122,7 @@ export function formatPeriodTitle(
   const to = parts(range.to);
   const toText = `${to.day} ${LONG_MONTHS[to.monthIndex]} ${to.year}`;
 
+  // formatPeriodAnnouncement swaps the " – " below for " to ", so keep it the only dash.
   if (view === "month") {
     return `${LONG_MONTHS[from.monthIndex]} ${from.year}`;
   }
@@ -132,6 +133,17 @@ export function formatPeriodTitle(
     return `${from.day} ${LONG_MONTHS[from.monthIndex]} – ${toText}`;
   }
   return `${from.day} – ${toText}`;
+}
+
+// What screen readers hear when the period changes (accessibility §3):
+// "Week of 8 to 14 November 2026" or "November 2026".
+export function formatPeriodAnnouncement(
+  view: View,
+  range: { from: CalendarDate; to: CalendarDate },
+): string {
+  const title = formatPeriodTitle(view, range);
+  if (view === "month") return title;
+  return `Week of ${title.replace(" – ", " to ")}`;
 }
 
 // The period part of the browser tab title (accessibility §1):

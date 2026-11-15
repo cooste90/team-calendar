@@ -18,13 +18,13 @@ The grid is fully usable with a keyboard and a screen reader, following the ARIA
 - WAI-ARIA Authoring Practices: Data Grid pattern
 
 ## Deliverables
-1. **Focus model:** add `focusedCell: { personId, date }` to the calendar store (`src/features/calendar/calendar-store.ts`).
+1. **Focus model:** add `focusedCell: { personId, date }` to the calendar store (`src/features/calendar/calendar-store.ts`). *(As built: `{ personId, column }`, where the column is a date or the admins' name column.)*
    - Exactly one gridcell has `tabIndex=0` (roving tabindex). The others have −1.
    - Initial focus: the viewer's row × today if visible, else the first person × first day.
    - When filters, collapse or period changes remove the focused cell, focus moves to the nearest valid cell.
 2. **Key handling** on the grid container (one delegated `onKeyDown` with a plain `switch`), with every binding from the table in `03-accessibility.md` §3. Put the "which cell is next" maths in a pure, unit-tested function `nextCell(model, current, key)` in its own file, `src/domain/grid-navigation.ts` (`grid-model.ts` is already at the ~200-line guide), so the component stays short:
    - **PageUp and PageDown** change the period, then keep the same person and weekday once the new data arrives.
-   - **Enter, Space and Delete** dispatch a `cellActivate` / `cellDelete` event that T25 handles. For now, Enter shows a toast "Booking actions arrive in T25" behind a dev flag, or does nothing.
+   - **Enter, Space and Delete** dispatch a `cellActivate` / `cellDelete` event that T25 handles. For now, Enter shows a toast "Booking actions arrive in T25" behind a dev flag, or does nothing. *(As built: nothing yet; T25 adds them to the hook's `switch`.)*
 3. **Accessible names:** gridcells use `aria-label` from the model's `accessibleLabel`. The column header's date is exposed through `aria-describedby` only if the screen reader testing shows it's needed (avoid doubled reading). Team disclosure buttons stay in the Tab order. **Tab moves out of the grid**, as the grid pattern expects.
 4. **Focus visibility:**
    - The focused cell shows a 2px inset ring.

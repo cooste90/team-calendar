@@ -1,11 +1,11 @@
 import { render, screen, within } from "@testing-library/react";
 import axe from "axe-core";
 import { describe, expect, it, vi } from "vitest";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { DEFAULT_PATTERN, DEFAULT_PATTERN_EFFECTIVE_FROM } from "@/domain/availability";
 import { periodRange, type View } from "@/domain/dates";
 import type { CalendarData } from "@/server/queries/calendar";
 import { CalendarGrid } from "./calendar-grid";
+import { GridTestProviders } from "./grid-test-providers";
 
 // The grid saves team collapses with a server action, which can't run in a component
 // test. (team-groups.test.tsx tests collapsing.)
@@ -92,16 +92,16 @@ const data: CalendarData = {
 };
 
 function renderGrid(view: View, anchor = "2026-11-12", gridData = data) {
-  // The app has a TooltipProvider in the root layout; the test needs its own.
+  // The app's layouts provide these; the test needs its own.
   return render(
-    <TooltipProvider>
+    <GridTestProviders>
       <CalendarGrid
         data={gridData}
         view={view}
         period={periodRange(view, anchor)}
         filters={{ teamIds: [], personIds: [] }}
       />
-    </TooltipProvider>,
+    </GridTestProviders>,
   );
 }
 

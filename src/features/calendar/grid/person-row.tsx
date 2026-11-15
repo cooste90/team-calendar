@@ -3,9 +3,10 @@ import type { Route } from "next";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type { GridRow } from "@/domain/grid-model-types";
+import { NAME_COLUMN } from "@/domain/grid-navigation";
 import { serializeCalendarParams } from "@/lib/search-params";
 import { GridBar } from "./grid-bar";
-import { GridCell } from "./grid-cell";
+import { CALENDAR_FOCUS_ID, GridCell } from "./grid-cell";
 
 type Props = {
   row: GridRow;
@@ -13,11 +14,13 @@ type Props = {
   compact: boolean;
   // Admins get a link to the person's profile (spec §2.3); regular users get plain text.
   canOpenProfile: boolean;
+  // The column in this row that's in the Tab order, if this row has it.
+  tabStopColumn: string | null;
 };
 
 // One person: their sticky name, a cell per day, and the bars and day-off stripes laid
 // over the cells. Everything sits in the same grid row, placed by grid-column.
-export function PersonRow({ row, template, compact, canOpenProfile }: Props) {
+export function PersonRow({ row, template, compact, canOpenProfile, tabStopColumn }: Props) {
   return (
     <div
       role="row"
@@ -36,7 +39,11 @@ export function PersonRow({ row, template, compact, canOpenProfile }: Props) {
         )}
       >
         {canOpenProfile ? (
-          <ProfileLink personId={row.personId} name={row.displayName} />
+          <ProfileLink
+            personId={row.personId}
+            name={row.displayName}
+            isTabStop={tabStopColumn === NAME_COLUMN}
+          />
         ) : (
           <span className="truncate">{row.displayName}</span>
         )}
@@ -47,7 +54,13 @@ export function PersonRow({ row, template, compact, canOpenProfile }: Props) {
         )}
       </div>
       {row.cells.map((cell) => (
-        <GridCell key={cell.date} cell={cell} isViewer={row.isViewer} />
+        <GridCell
+          key={cell.date}
+          cell={cell}
+          personId={row.personId}
+          isViewer={row.isViewer}
+          isTabStop={tabStopColumn === cell.date}
+        />
       ))}
       {row.bars.map((bar) => (
         <GridBar key={bar.bookingId} bar={bar} compact={compact} />
@@ -68,14 +81,21 @@ export function PersonRow({ row, template, compact, canOpenProfile }: Props) {
 }
 
 // The person's name as a link that opens their profile (?person=), keeping the rest of
-// the URL. T27 builds the profile dialog.
-function ProfileLink({ personId, name }: { personId: string; name: string }) {
+// the URL. T27 builds the profile dialog. It's part of the grid's arrow-key navigation
+// (← from the first day), so only one name at a time is in the Tab order.
+type ProfileLinkProps = { personId: string; name: string; isTabStop: boolean };
+
+function ProfileLink({ personId, name, isTabStop }: ProfileLinkProps) {
   const searchParams = useSearchParams();
   const href = `/${serializeCalendarParams(searchParams, { person: personId })}` as Route;
   return (
     <Link
       href={href}
       scroll={false}
+      data-person={personId}
+      data-column={NAME_COLUMN}
+      tabIndex={isTabStop ? 0 : -1}
+      id={isTabStop ? CALENDAR_FOCUS_ID : undefined}
       // py-1 makes it at least 24px tall, the minimum target size (WCAG 2.5.8).
       className="truncate rounded-sm py-1 underline-offset-4 hover:underline"
     >

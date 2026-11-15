@@ -4,6 +4,7 @@ import { cn } from "cn";
 import { XIcon } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import type * as React from "react";
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 
 function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
@@ -42,15 +43,32 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  onOpenAutoFocus,
+  onCloseAutoFocus,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
 }) {
+  // WestCal: on close, focus goes back to whatever had it when the dialog opened (a grid
+  // cell, a link). Radix only returns it to a DialogTrigger, and most of our dialogs open
+  // from a key, the store or the URL instead (accessibility §1).
+  const openedFrom = useRef<HTMLElement | null>(null);
+
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
+        onOpenAutoFocus={(event) => {
+          openedFrom.current = document.activeElement as HTMLElement | null;
+          onOpenAutoFocus?.(event);
+        }}
+        onCloseAutoFocus={(event) => {
+          onCloseAutoFocus?.(event);
+          if (event.defaultPrevented || !openedFrom.current?.isConnected) return;
+          event.preventDefault();
+          openedFrom.current.focus();
+        }}
         className={cn(
           "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-dialog bg-popover p-6 text-popover-foreground text-sm shadow-popover outline-none ring-1 ring-foreground/10 duration-100 data-closed:animate-out data-open:animate-in sm:max-w-sm",
           className,

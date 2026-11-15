@@ -10,13 +10,28 @@ const HATCH: Record<WorkDay, string> = {
   PM: "bg-hatch-left",
 };
 
+// The element id of the grid cell (or name) that's in the Tab order. The layout's
+// "Skip to calendar" link jumps to it (accessibility §1).
+export const CALENDAR_FOCUS_ID = "calendar-focus";
+
+type Props = {
+  cell: GridCellModel;
+  personId: string;
+  isViewer: boolean;
+  isTabStop: boolean;
+};
+
 // One person on one day. Its accessible name says everything about that day, so screen
-// reader users never need the bars. Keyboard focus and actions come in T18 and T25.
-export function GridCell({ cell, isViewer }: { cell: GridCellModel; isViewer: boolean }) {
+// reader users never need the bars. Actions on the cell come in T25.
+export function GridCell({ cell, personId, isViewer, isTabStop }: Props) {
   return (
     <div
       role="gridcell"
       aria-label={cell.accessibleLabel}
+      data-person={personId}
+      data-column={cell.date}
+      tabIndex={isTabStop ? 0 : -1}
+      id={isTabStop ? CALENDAR_FOCUS_ID : undefined}
       data-today={cell.isToday || undefined}
       data-availability={cell.availability}
       style={{ gridColumn: cell.gridColumn }}

@@ -6,6 +6,7 @@ import {
   formatLong,
   formatLongRange,
   formatPeople,
+  formatPeriodAnnouncement,
   formatPeriodTitle,
   formatRangeSummary,
   formatShort,
@@ -75,6 +76,16 @@ describe("formatPeriodTitle", () => {
     ["month", "2026-11-01", "2026-11-30", "November 2026"],
   ] as const)("%s %s to %s → %s", (view, from, to, expected) => {
     expect(formatPeriodTitle(view, { from, to })).toBe(expected);
+  });
+});
+
+describe("formatPeriodAnnouncement", () => {
+  it.each([
+    ["week", "2026-11-08", "2026-11-14", "Week of 8 to 14 November 2026"],
+    ["week", "2026-11-29", "2026-12-05", "Week of 29 November to 5 December 2026"],
+    ["month", "2026-11-01", "2026-11-30", "November 2026"],
+  ] as const)("%s %s to %s → %s", (view, from, to, expected) => {
+    expect(formatPeriodAnnouncement(view, { from, to })).toBe(expected);
   });
 });
 

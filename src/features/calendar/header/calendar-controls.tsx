@@ -1,10 +1,9 @@
 "use client";
 
-import { useQueryStates } from "nuqs";
 import { SegmentedControl } from "@/components/segmented-control";
 import { type CalendarDate, shiftPeriod, type View } from "@/domain/dates";
-import { calendarSearchParams } from "@/lib/search-params";
 import { setViewPreference } from "@/server/actions/set-view-preference";
+import { useCalendarParams } from "../use-calendar-params";
 import { BusinessUnitSwitcher } from "./business-unit-switcher";
 import { useNavigationTransition } from "./navigation-transition";
 import { PeriodNav } from "./period-nav";
@@ -22,8 +21,8 @@ const VIEW_OPTIONS = [
   { value: "month", label: "Month" },
 ];
 
-// The BU switcher, view toggle and period navigation. Each one changes the URL; with
-// shallow: false the server renders the page again with the new data (architecture §6.1).
+// The BU switcher, view toggle and period navigation. Each one changes the URL, and the
+// server renders the page again with the new data (see useCalendarParams).
 export function CalendarControls({
   businessUnits,
   ownBusinessUnitSlug,
@@ -31,10 +30,7 @@ export function CalendarControls({
   today,
 }: Props) {
   const { startTransition } = useNavigationTransition();
-  const [params, setParams] = useQueryStates(calendarSearchParams, {
-    shallow: false,
-    startTransition,
-  });
+  const [params, setParams] = useCalendarParams();
   const view = params.view ?? defaultView;
   const anchor = params.date ?? today;
 

@@ -2,10 +2,33 @@ import { cn } from "cn";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { GridColumn } from "@/domain/grid-model-types";
 
+type RowProps = { columns: GridColumn[]; template: string; compact: boolean };
+
+// The sticky row of day headers along the top of the grid.
+export function DayHeaderRow({ columns, template, compact }: RowProps) {
+  return (
+    <div
+      role="row"
+      style={{ gridTemplateColumns: template }}
+      className="sticky top-0 z-10 grid min-h-[3.375rem] border-b bg-surface"
+    >
+      <div
+        role="columnheader"
+        className="sticky left-0 z-20 col-start-1 row-start-1 flex items-center border-r bg-surface px-3.5 font-medium text-muted-foreground text-xs"
+      >
+        Team / person
+      </div>
+      {columns.map((column) => (
+        <DayHeader key={column.date} column={column} compact={compact} />
+      ))}
+    </div>
+  );
+}
+
 // One day at the top of the grid: "Thu" over "12", with today's date in a pill and a
 // public holiday's name in a small chip. Its aria-label gives screen readers the full
 // date instead ("Thursday 12 November, today").
-export function DayHeader({ column, compact }: { column: GridColumn; compact: boolean }) {
+function DayHeader({ column, compact }: { column: GridColumn; compact: boolean }) {
   const { header } = column;
   return (
     <div

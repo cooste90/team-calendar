@@ -2,6 +2,11 @@
 
 **Phase:** 3 · **Depends on:** T18 · **Size:** S
 
+**From T17 and T18 (measure these with the large seed):**
+- **Collapse clicks:** each one runs `refresh()` (through `authedAction`), so the server sends the whole BU's data again. `useOptimistic` relies on that refresh. Measure the payload and time for a 300-person BU before deciding whether actions need a way to skip it.
+- **Arrow keys:** the focused cell lives in the store and the tab stop is passed down, so each arrow key re-renders `CalendarGrid`, every `TeamGroup` and every `PersonRow` function. The React Compiler should skip the unchanged rows' cells and `buildGridModel`. Check the "Memo ✨" badges in React DevTools and time a key press (an estimate is 1–3 ms). Only if it's slow: `React.memo` on `PersonRow`/`TeamGroup`, or a per-cell store selector.
+- **HTML size:** every cell has `data-person`, `data-column` and `tabindex`, which adds roughly 800 KB of uncompressed HTML for a 300-person month. Check the compressed HTML size too, not just the RSC payload. If it matters, `data-person` can move onto the row.
+
 ## Goal
 Prove the plain grid (no virtualisation) is fast enough with the large seed, using simple CSS and data fixes only. The biggest BU has about 300 people.
 

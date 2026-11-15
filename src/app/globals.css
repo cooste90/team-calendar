@@ -275,6 +275,12 @@
   outline-offset: 2px;
 }
 
+/* Everything in the grid sits edge to edge in a scroll box, where an outside ring would
+   be cut off, so the ring goes inside (accessibility §3). */
+[role="grid"] :focus-visible {
+  outline-offset: -2px;
+}
+
 /* Windows High Contrast (design system §2.2): use system colours, never background alone. */
 @media (forced-colors: active) {
   :root,

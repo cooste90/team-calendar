@@ -77,7 +77,7 @@ Size key: **S** ≈ small, under 300 lines changed · **M** ≈ 300–800 · **L
 - [x] [T15](tasks/T15-app-shell-header.md) App shell and header navigation · **M**
 - [x] [T16](tasks/T16-grid-rendering.md) Grid rendering: week/month, bars, hatching, today, PH markers · **L**
 - [x] [T17](tasks/T17-grid-team-groups.md) Team groups: ordering, collapse persistence, Unassigned, admin links · **M**
-- [ ] [T18](tasks/T18-grid-keyboard-sr.md) Grid keyboard navigation and screen-reader model · **M**
+- [x] [T18](tasks/T18-grid-keyboard-sr.md) Grid keyboard navigation and screen-reader model · **M**
 - [ ] [T19](tasks/T19-grid-performance.md) Grid performance check with the large seed · **S**
 - [ ] [T20](tasks/T20-key-popover.md) Key popover and keyboard shortcuts help · **S**
 - [ ] [T21](tasks/T21-filters.md) Team and person filter builders · **M**

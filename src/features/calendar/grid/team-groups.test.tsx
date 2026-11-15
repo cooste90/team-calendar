@@ -1,12 +1,12 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import axe from "axe-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { DEFAULT_PATTERN, DEFAULT_PATTERN_EFFECTIVE_FROM } from "@/domain/availability";
 import { periodRange } from "@/domain/dates";
 import type { ActionResult } from "@/server/authed-action";
 import type { CalendarData } from "@/server/queries/calendar";
 import { CalendarGrid } from "./calendar-grid";
+import { GridTestProviders } from "./grid-test-providers";
 
 const setTeamCollapsed = vi.hoisted(() =>
   vi.fn(async (): Promise<ActionResult<undefined>> => ({ ok: true, data: undefined })),
@@ -66,14 +66,14 @@ const admin: CalendarData["viewer"] = {
 
 function grid(gridData: CalendarData) {
   return (
-    <TooltipProvider>
+    <GridTestProviders>
       <CalendarGrid
         data={gridData}
         view="week"
         period={periodRange("week", "2026-11-12")}
         filters={{ teamIds: [], personIds: [] }}
       />
-    </TooltipProvider>
+    </GridTestProviders>
   );
 }
 

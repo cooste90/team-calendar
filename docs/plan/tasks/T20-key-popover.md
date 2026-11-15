@@ -2,6 +2,8 @@
 
 **Phase:** 3 · **Depends on:** T19 · **Size:** S
 
+**From T18:** the keyboard shortcuts dialog already exists (`src/features/calendar/shortcuts-help-dialog.tsx`, rendered by the grid). Open it from the Key popover with `useCalendarStore.getState().setShortcutsHelpOpen(true)`. Every `DialogContent` returns focus to whatever had it when the dialog opened.
+
 ## Goal
 The header Key button shows the leave types on hover, focus or click, accessibly.
 

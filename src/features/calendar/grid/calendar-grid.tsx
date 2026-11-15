@@ -1,19 +1,22 @@
 "use client";
 
-import { startTransition, useOptimistic } from "react";
+import { startTransition, useEffect, useOptimistic, useRef } from "react";
 import { toast } from "sonner";
 import { availabilityLookup } from "@/domain/availability";
 import type { Period, View } from "@/domain/dates";
-import { formatPeople, formatPeriodTitle } from "@/domain/format";
+import { formatPeople, formatPeriodAnnouncement, formatPeriodTitle } from "@/domain/format";
 import { buildGridModel, withGroupCollapsed } from "@/domain/grid-model";
 import type { GridGroup } from "@/domain/grid-model-types";
+import { type GridLayout, NAME_COLUMN, tabStopCell } from "@/domain/grid-navigation";
 import { canEditBookingsFor, canManageBusinessUnit } from "@/domain/permissions";
 import { setTeamCollapsed } from "@/server/actions/set-team-collapsed";
 import type { CalendarData } from "@/server/queries/calendar";
 import { useCalendarStore } from "../calendar-store";
-import { DayHeader } from "./day-header";
+import { ShortcutsHelpDialog } from "../shortcuts-help-dialog";
+import { DayHeaderRow } from "./day-header";
 import { NoTeamsMessage } from "./no-teams-message";
 import { TeamGroup } from "./team-group";
+import { useGridKeyboard } from "./use-grid-keyboard";
 
 type Props = {
   data: CalendarData;
@@ -78,10 +81,30 @@ export function CalendarGrid({ data, view, period, filters }: Props) {
     });
   }
 
+  // Keyboard focus: the cells the arrow keys can visit, and the one in the Tab order
+  // (accessibility §3). It starts on the viewer's row, today.
+  const canManage = canManageBusinessUnit(viewer, data.businessUnitId);
+  const dates = model.columns.map((column) => column.date);
+  const layout: GridLayout = {
+    personIds: model.groups.flatMap((group) => group.rows.map((row) => row.personId)),
+    columns: canManage ? [NAME_COLUMN, ...dates] : dates,
+  };
+  const focusedCell = useCalendarStore((store) => store.focusedCell);
+  const tabStop = tabStopCell(layout, focusedCell, { personId: viewer.id, column: data.today });
+  const { gridRef, onKeyDown, onFocus } = useGridKeyboard({ layout, tabStop, view, period });
+
+  // Tell screen readers when the period changes, however it was changed.
+  const periodText = formatPeriodAnnouncement(view, period);
+  const announcedPeriod = useRef(periodText);
+  useEffect(() => {
+    if (announcedPeriod.current === periodText) return;
+    announcedPeriod.current = periodText;
+    announce(periodText);
+  }, [periodText, announce]);
+
   // Every row uses the same columns: the name, then two half-day tracks per day.
   const template = `var(--name-col) repeat(${model.columns.length * 2}, minmax(0, 1fr))`;
   const compact = view === "month";
-  const canManage = canManageBusinessUnit(viewer, data.businessUnitId);
   const hasTeams = data.teams.length > 0;
   // A BU with no teams shows just the message, unless an admin has Unassigned people
   // to see.
@@ -91,36 +114,23 @@ export function CalendarGrid({ data, view, period, filters }: Props) {
     <>
       {!hasTeams && <NoTeamsMessage canManage={canManage} />}
       {showGrid && (
+        // scroll-padding matches the sticky header and name column, so a focused cell is
+        // never scrolled underneath them (WCAG 2.4.11).
         <section
           aria-label="Calendar"
-          // The box scrolls both ways, so keyboard users must be able to focus it to scroll
-          // (WCAG 2.1.1). T18 moves focus onto the cells, and this can then go.
-          // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable region must be focusable.
-          tabIndex={0}
           className="mx-5 mb-6 max-h-[calc(100dvh-9.5rem)] scroll-pt-[3.375rem] scroll-pl-[var(--name-col)] overflow-auto rounded-2xl border bg-surface shadow-[0_1px_2px_rgb(0_0_0/0.03)]"
         >
           <div
             role="grid"
+            ref={gridRef}
             aria-label={`Team calendar, ${formatPeriodTitle(view, period)}`}
+            onKeyDown={onKeyDown}
+            onFocus={onFocus}
             // A new key on each view change restarts the 150ms fade-in (design system §6).
             key={view}
             className="fade-in min-w-[56.25rem] animate-in duration-150"
           >
-            <div
-              role="row"
-              style={{ gridTemplateColumns: template }}
-              className="sticky top-0 z-10 grid min-h-[3.375rem] border-b bg-surface"
-            >
-              <div
-                role="columnheader"
-                className="sticky left-0 z-20 col-start-1 row-start-1 flex items-center border-r bg-surface px-3.5 font-medium text-muted-foreground text-xs"
-              >
-                Team / person
-              </div>
-              {model.columns.map((column) => (
-                <DayHeader key={column.date} column={column} compact={compact} />
-              ))}
-            </div>
+            <DayHeaderRow columns={model.columns} template={template} compact={compact} />
             {model.groups.map((group) => (
               <TeamGroup
                 key={group.id}
@@ -128,12 +138,14 @@ export function CalendarGrid({ data, view, period, filters }: Props) {
                 template={template}
                 compact={compact}
                 canOpenProfiles={canManage}
+                tabStop={tabStop}
                 onToggle={() => toggleGroup(group)}
               />
             ))}
           </div>
         </section>
       )}
+      <ShortcutsHelpDialog />
     </>
   );
 }
