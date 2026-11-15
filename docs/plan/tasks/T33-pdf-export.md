@@ -2,6 +2,8 @@
 
 **Phase:** 7 · **Depends on:** T32 · **Size:** L
 
+**From T20:** the "More" menu exists (`src/features/calendar/header/more-menu.tsx`). Add an Export item there for admins; it can open the Today / This week / Next week choice as a dialog or a submenu. In `app-header.tsx`, put the wide Export button in its own `hidden @min-[45rem]:block` wrapper, like the Key. A dialog opened from a menu item needs `onCloseAutoFocus` to put focus back on More (see the Key dialog).
+
 ## Goal
 Admins download a clean, print-ready attendance sheet for Today, This week or Next week, which managers tick by hand.
 

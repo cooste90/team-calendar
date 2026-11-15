@@ -4,6 +4,10 @@
 
 **From T18:** the keyboard shortcuts dialog already exists (`src/features/calendar/shortcuts-help-dialog.tsx`, rendered by the grid). Open it from the Key popover with `useCalendarStore.getState().setShortcutsHelpOpen(true)`. Every `DialogContent` returns focus to whatever had it when the dialog opened.
 
+**As built:** see the T20 entry in `progress.md`.
+- The Key is plain HTML (`src/features/calendar/key/key-popover.tsx`), not a Radix Popover or HoverCard: Radix's popover always loops Tab inside its content, and a HoverCard can't be reached by keyboard.
+- The "More" menu is `src/features/calendar/header/more-menu.tsx`. The header is a CSS container, and below 45rem (720px) the Key's slot is hidden and More is shown.
+
 ## Goal
 The header Key button shows the leave types on hover, focus or click, accessibly.
 

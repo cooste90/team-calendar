@@ -9,7 +9,7 @@ A team availability calendar showing who's in and who's off. The full plan is in
 | 0 · Foundation | T01–T04: tooling, database, tests and CI, design system | Done |
 | 1 · Domain logic | T05–T09: dates, half days, working patterns, booking rules, permissions, public holidays, tallies, grid model | Done |
 | 2 · Data and auth | T10–T14: database schema and migrations, sign-in, first-time sign-in, seed data, server actions and data loading | Done |
-| 3 · Calendar UI | T15–T21: app shell, grid, team groups, keyboard, filters (T15–T19 done) | Next: T20, key popover |
+| 3 · Calendar UI | T15–T21: app shell, grid, team groups, keyboard, filters (T15–T20 done) | Next: T21, filters |
 | 4–8 | Bookings, profile, admin, export, hardening | Not started |
 
 What you can open today:

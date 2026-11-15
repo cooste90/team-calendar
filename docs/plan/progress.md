@@ -837,3 +837,76 @@ On the dev server (React's slower development build) it's now 702–741 ms to th
 - **Running it:** `pnpm test:perf` replaces the test database's data with the large seed. Run it on its own; the next `pnpm test:e2e` puts the default seed back.
 - **CI:** the first nightly run will be the first CI run of the production perf check. If it fails only on timing, look at the numbers in its log before raising the tolerance.
 **Questions for the product owner:** none.
+
+## T20 — Key popover and keyboard shortcuts help — 2026-11-15
+**Status:** done. No new dependencies.
+**What I built:**
+- **`KeyPopover`** (`src/features/calendar/key/key-popover.tsx`): the header's Key button.
+  - **Opening:** on hover (after 150ms), on keyboard focus, and on click or tap. A click pins it open until Esc, a click outside or another click.
+  - **Closing:** when the pointer leaves (after 300ms, so the pointer can cross the gap onto the key), or when focus moves on past it.
+  - **Content** (`key-content.tsx`): the "Leave types" heading, the 9 leave chips with their names in two columns, the "Not a working day" hatch swatch, the half-day note, and a "Keyboard shortcuts" link that opens the T18 help dialog.
+- **`MoreMenu`** (`src/features/calendar/header/more-menu.tsx`): below 720px of header width the Key moves into a "More" dropdown, where it opens as a dialog.
+  - **How it switches:** the header is a CSS container (`@container`). Both menus are rendered, and CSS shows one of them (no JavaScript measuring).
+  - **Focus:** closing the Key dialog puts focus back on More.
+  - **Shortcuts:** the "Keyboard shortcuts" link opens the help dialog on top of the Key dialog, and Esc there comes back to the Key.
+- **`LabelledLeaveChip`** (`src/components/leave-chip.tsx`): a chip with its name beside it, with no tooltip. Screen readers hear "AL Annual leave" once, instead of the name twice.
+
+**Manual check: WCAG 1.4.13 and 2.1.1.** I walked through these in Chromium, driving the real page with the pointer and keyboard through a throwaway Playwright script:
+
+| Check | Result |
+|---|---|
+| Pointer rests on Key | opens |
+| Pointer moves slowly across the gap onto the key and stays 600ms | stays open (hoverable) |
+| Pointer moves away | closes after the delay |
+| Esc while hovering, without moving the pointer | closes (dismissible) |
+| Tab onto Key | opens; focus stays on the button |
+| Tab again | focus goes to "Keyboard shortcuts" inside the key |
+| Esc from there | closes, and focus goes back to Key |
+| Enter on Key | pins it; it stays open with the pointer away (persistent) |
+| "Keyboard shortcuts" | opens the help dialog; closing it puts focus back on Key |
+| Tab past the key | focus moves on to Sign out, and the key closes |
+| Click outside a pinned key | closes |
+| 320px wide: More › Key | the dialog opens; Esc puts focus back on More |
+
+Everything in the key is reachable and usable by keyboard alone (2.1.1).
+
+**Tests:**
+- **Component** (`key-popover.test.tsx`, `more-menu.test.tsx`):
+  - it opens on hover, focus and click, stays open while hovered, and closes when the pointer leaves;
+  - Esc closes it and keeps focus on the button, or brings focus back from inside the key;
+  - Tab moves through the key and on out;
+  - a click outside closes it, and a click pins it;
+  - the 9 codes and names are listed;
+  - the shortcuts link works;
+  - axe finds nothing with it open;
+  - the More dialog opens and gives focus back.
+- **E2E** (`header.spec.ts`):
+  - real hover, then Esc;
+  - axe with the key open, in both themes;
+  - the 320px test now also opens More › Key.
+
+**Key files:** `src/features/calendar/key/key-popover.tsx`, `src/features/calendar/key/key-content.tsx`, `src/features/calendar/header/more-menu.tsx`, `src/features/calendar/header/app-header.tsx`, `src/components/leave-chip.tsx`.
+**Simplicity pass** (my own re-read, then `/simplify`):
+- **Every way of closing goes through one `close()`.** This also fixed a pending hover timer reopening the key after Esc.
+- **One shared chip style** in `leave-chip.tsx`, instead of a second copy.
+- **The More test doesn't repeat the leave-type list check.**
+- **Kept two things the reviewers questioned:**
+  - **The document click-outside listener.** Relying on blur and `:hover` alone fails on touch screens, where `:hover` sticks after a tap.
+  - **The check that ignores focus coming back from inside the key.** Without it, Esc would only work because of the order React applies state updates in.
+
+**Deviations from plan:**
+- **No Radix Popover or HoverCard.** I tried a controlled Radix Popover first.
+  - **Portalled content:** the content goes to the end of the page, so Tab from the button can't reach it.
+  - **Content kept inline:** Radix's focus scope always loops Tab inside the content, so with one link in it, Tab could never leave.
+  - **HoverCard:** it makes its content unreachable by keyboard on purpose.
+  - **What I built instead:** a button plus a positioned `<div>` straight after it (as in the mockup), with two document listeners (Esc and click outside) while it's open. This is about as much code as the Radix version and has no workarounds.
+- **No `role="dialog"` on the key.** It's a disclosure: a button with `aria-expanded` and `aria-controls`, and the content right after it. That's simpler and reads in order with a screen reader.
+- **Design system §7 lists "HoverCard (Key)".** It isn't used for the Key.
+
+**Follow-ups:**
+- **T33:** add Export to the More menu (hand-off note added to the T33 task file).
+- **Firefox:** the local Firefox browser isn't installed (`browserType.launch: Executable doesn't exist`), so I only ran the header e2e tests in Chromium. The nightly CI run covers Firefox.
+- **After the shortcuts help closes, the key reopens.** Focus goes back to the Key button, which counts as keyboard focus. I think that's right: it's where you were, and Tab or Esc closes it.
+
+**Questions for the product owner:**
+- **Please try the Key by hand once:** hover, Tab, Enter and Esc, and the More menu on a narrow window. I checked it with a script driving a real browser, not by hand.

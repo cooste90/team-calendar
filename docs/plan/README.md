@@ -79,7 +79,7 @@ Size key: **S** ≈ small, under 300 lines changed · **M** ≈ 300–800 · **L
 - [x] [T17](tasks/T17-grid-team-groups.md) Team groups: ordering, collapse persistence, Unassigned, admin links · **M**
 - [x] [T18](tasks/T18-grid-keyboard-sr.md) Grid keyboard navigation and screen-reader model · **M**
 - [x] [T19](tasks/T19-grid-performance.md) Grid performance check with the large seed · **S**
-- [ ] [T20](tasks/T20-key-popover.md) Key popover and keyboard shortcuts help · **S**
+- [x] [T20](tasks/T20-key-popover.md) Key popover and keyboard shortcuts help · **S**
 - [ ] [T21](tasks/T21-filters.md) Team and person filter builders · **M**
 
 ### Phase 4 — Bookings

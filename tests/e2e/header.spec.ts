@@ -68,7 +68,38 @@ test("at 320px wide the header wraps without scrolling the page sideways", async
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
   expect(overflow).toBe(0);
-  for (const name of ["Previous week", "Next week", "Today", "Sign out"]) {
+  for (const name of ["Previous week", "Next week", "Today", "More", "Sign out"]) {
     await expect(page.getByRole("button", { name })).toBeInViewport();
   }
+
+  // The Key has moved into More, where it opens as a dialog.
+  await expect(page.getByRole("button", { name: "Key", exact: true })).toBeHidden();
+  await page.getByRole("button", { name: "More" }).click();
+  await page.getByRole("menuitem", { name: "Key" }).click();
+  await expect(page.getByRole("dialog", { name: "Leave types" })).toBeInViewport();
 });
+
+test("the Key opens on hover, stays open while hovered, and Esc closes it", async ({ page }) => {
+  await signInAs(page, "Priya Shah");
+  const keyButton = page.getByRole("button", { name: "Key", exact: true });
+  const key = page.getByRole("banner").getByRole("heading", { name: "Leave types" });
+
+  await keyButton.hover();
+  await expect(key).toBeVisible();
+  await page.getByRole("banner").getByText("Wellbeing day").hover();
+  await page.waitForTimeout(500); // longer than the close delay
+  await expect(key).toBeVisible();
+
+  // Esc closes it without moving the pointer (WCAG 1.4.13).
+  await page.keyboard.press("Escape");
+  await expect(key).toBeHidden();
+});
+
+for (const theme of ["light", "dark"] as const) {
+  test(`the open Key has no accessibility violations (${theme})`, async ({ page }) => {
+    await signInAs(page, "Tom Okafor");
+    await page.getByRole("button", { name: "Key", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Leave types" })).toBeVisible();
+    await expectNoA11yViolations(page, { theme });
+  });
+}
