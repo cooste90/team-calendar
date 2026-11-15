@@ -293,8 +293,9 @@ describe("performance", () => {
     const elapsed = performance.now() - started;
 
     expect(model.groups.flatMap((group) => group.rows)).toHaveLength(300);
-    // The target is under 25ms on a developer machine. The limit here is generous so
-    // a slow CI runner doesn't fail the build.
-    expect(elapsed).toBeLessThan(100);
+    // The target is under 25ms on a developer machine. The limit here only catches a big
+    // slowdown: CI runs this under coverage instrumentation on a shared runner, which
+    // once took 106ms. T19 measures real performance.
+    expect(elapsed).toBeLessThan(250);
   });
 });
