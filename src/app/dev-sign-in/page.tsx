@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { computeRole } from "@/domain/roles";
 import { devSignInEnabled, env } from "@/lib/env";
 import { signInAsDevProfile } from "@/server/actions/sign-in";
-import { devSsoProfiles } from "../../../prisma/seed/dev-sso-profiles";
+import { type DevSsoProfile, devSsoProfiles } from "../../../prisma/seed/dev-sso-profiles";
 import { CustomProfileForm } from "./custom-profile-form";
 
 export const metadata: Metadata = { title: "Developer sign-in · WestCal" };
@@ -28,20 +28,22 @@ export default function DevSignInPage() {
       <h1 className="font-semibold text-2xl">Developer sign-in</h1>
 
       {businessUnits.map((businessUnit) => (
-        <section key={businessUnit} className="flex flex-col gap-2">
-          <h2 className="font-semibold text-lg">{businessUnit}</h2>
+        <section key={businessUnit ?? "new"} className="flex flex-col gap-2">
+          <h2 className="font-semibold text-lg">
+            {businessUnit ?? "Not in the database yet (first sign-in)"}
+          </h2>
           <ul className="flex flex-col gap-2">
             {devSsoProfiles
               .filter((item) => item.businessUnit === businessUnit)
-              .map(({ profile, team }) => (
-                <li key={profile.ssoId}>
+              .map((item) => (
+                <li key={item.profile.ssoId}>
                   <form action={signInAsDevProfile} className="flex items-center gap-3">
-                    <input type="hidden" name="ssoId" value={profile.ssoId} />
+                    <input type="hidden" name="ssoId" value={item.profile.ssoId} />
                     <Button type="submit" variant="outline">
-                      Sign in as {profile.firstName} {profile.surname}
+                      Sign in as {item.profile.firstName} {item.profile.surname}
                     </Button>
-                    <Badge variant="secondary">{computeRole(profile, env)}</Badge>
-                    <span className="text-muted-foreground text-sm">{team ?? "Unassigned"}</span>
+                    <Badge variant="secondary">{computeRole(item.profile, env)}</Badge>
+                    <span className="text-muted-foreground text-sm">{teamLabel(item)}</span>
                   </form>
                 </li>
               ))}
@@ -52,4 +54,9 @@ export default function DevSignInPage() {
       <CustomProfileForm />
     </main>
   );
+}
+
+function teamLabel(item: DevSsoProfile) {
+  if (item.businessUnit === null) return "New user";
+  return item.team ?? "Unassigned";
 }

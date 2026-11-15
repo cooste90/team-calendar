@@ -8,7 +8,7 @@ const port = 3100;
 
 export default defineConfig({
   testDir: "tests/e2e",
-  globalSetup: "tests/migrate-test-db.ts",
+  globalSetup: "tests/e2e/global-setup.ts",
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
   reporter: isCI ? [["list"], ["html", { open: "never" }]] : "list",

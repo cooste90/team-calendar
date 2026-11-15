@@ -1,11 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { ensureBusinessUnits } from "./test-db";
 
-// Tom Okafor is the dev profile in the CALENDAR_ADMIN group. As a new user he joins
-// his profile's BU, "Finance", so make sure it exists.
-test.beforeAll(async () => {
-  await ensureBusinessUnits("Finance");
-});
+// Tom Okafor is the seeded West Operations admin (dev profile in the CALENDAR_ADMIN group).
 
 test("an admin signs in on the dev page, lands on the calendar, then signs out", async ({
   page,

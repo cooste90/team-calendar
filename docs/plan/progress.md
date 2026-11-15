@@ -448,3 +448,60 @@ Append one entry per task, newest at the bottom. Keep entries short and factual.
 - **T13:** the seed creates the BUs. The e2e `ensureBusinessUnits` helper can then go (or stay for test-specific data).
 - **Real SSO:** the cookie is read inside Better Auth's callback, which can only be checked by hand with a real identity provider (T37).
 **Questions for the product owner:** none.
+
+## T13 — Seed data, dev SSO profiles and the large seed — 2026-11-15
+**Status:** done
+**Summary:**
+- **`pnpm db:seed` / `pnpm db:seed:large`** (`prisma.config.ts` → `tsx --conditions=react-server prisma/seed/index.ts`):
+  - takes `--size=default|large` (or `SEED_SIZE`) and `SEED_TODAY` (defaults to today in `APP_TIME_ZONE`);
+  - deletes all data first, and refuses to run when `NODE_ENV=production`;
+  - uses a fixed faker seed (`fakerEN_GB`).
+- **One file per job**, called in order by `seed-database.ts`:
+  - `business-units.ts`: West Operations (50 people, 7 teams, 2 Unassigned), North Finance (80, 9) and Corporate Services (70, 8, **hidden**). Large adds South Health (300), East Infrastructure (250) and Central Digital (250).
+  - `people.ts`:
+    - a user for every dev profile that names a BU, then UK-named fake people (about 4% accented surnames, 5% preferred names);
+    - patterns: 75% default, 15% part-time (off Wed / Fri mornings only / off Mon), 5% weekend workers, 5% with a part-time pattern pending from next Sunday;
+    - about one day swap per 16 people, within a month of today.
+  - `bookings.ts`:
+    - −6 to +6 months: full days, half days, AM+PM pairs of different types, and blocks of 2–12 days (some starting PM or ending AM);
+    - about 10% of people on leave today, plus a few long parental leave blocks;
+    - 15% booked by a teammate or a BU admin;
+    - notes from a few words up to exactly 500 characters;
+    - every candidate goes through `bookingInputSchema` and `findConflicts` (clashes are skipped) and is saved with `saveBookingChanges`. Unassigned people get none, since they can't book.
+  - `public-holidays.ts`:
+    - the 24 England and Wales bank holidays for 2025–2027 (`uk-bank-holidays.ts`, checked against gov.uk on 2026-11-14), added in date order with `planPublicHolidayCreate`, so they carve the bookings already there;
+    - then two detached copies: someone moved Boxing Day 2026 (Mon 28 Dec) to Tue 29 Dec (`planUserEditsPhCopy` plus a date change), and someone deleted their Early May bank holiday 2027 (`planUserDeletesPhCopy`).
+- **Size and speed:** default is 200 people and about 7,050 bookings, PH copies included, in about 2 seconds. Large is 1,000 people and about 35,000 bookings in about 8.5 seconds (target: under 60).
+- **Dev profiles** (`prisma/seed/dev-sso-profiles.ts`), all seeded except the last:
+  - Grace Adeyemi (SUPER_ADMIN, 100001);
+  - Tom Okafor (West Operations admin);
+  - Priya Shah (user in a team);
+  - Owen Hughes (Unassigned);
+  - Fatima Rahman (North Finance admin);
+  - Callum Reid (Corporate Services admin);
+  - Ana Kowalska (hidden-BU member);
+  - Siobhán Ní Bhriain (not seeded: a brand-new person for onboarding).
+- **E2E:** Playwright's global setup (`tests/e2e/global-setup.ts`) now migrates and seeds the test DB. The auth and onboarding tests use the seeded people and BUs, and the `ensureBusinessUnits` helper is gone.
+- **Tests:** 2 new integration tests:
+  - one seed run checks no overlaps for anyone (`findConflicts`), everyone has a pattern, no future PH on a half-day the person doesn't work, every leave type is used, the hidden BU is flagged, and every BU has an admin profile with a matching ADMIN user;
+  - two runs with the same `SEED_TODAY` give the same counts and the same first 10 names.
+  - Totals: 48 integration and 14 e2e tests.
+- **README:** a seed section, the "Seeded accounts" table, and `pnpm db:seed` in the first-run steps.
+**Key files:** `prisma/seed/*`, `prisma.config.ts`, `package.json`, `tests/integration/seed.test.ts`, `tests/e2e/global-setup.ts`, `src/app/dev-sign-in/page.tsx`, `src/server/actions/sign-in.ts`, `README.md`
+**Simplicity pass:**
+- **No hand-written booking or PH rows.** Everything goes through `saveBookingChanges`.
+- **Bookings are saved per person,** with that person as the actor, so "booked by someone else" is the only case that sets `createdById`. Simpler than tracking creators for whole batches, and still fast (8.5 seconds for the large seed).
+- **One flat config per BU** (name, hidden, size, Unassigned count, teams) instead of a size-scaling formula.
+- **A plain field list for profile users** instead of copying the profile and stripping its groups.
+**Deviations from plan:**
+- **Two new dev dependencies,** both pinned. `@faker-js/faker` 10.6.0 is the library planned in architecture §1. `tsx` 4.23.15 is needed because Node can't run the seed's TypeScript with the project's `@/` paths on its own.
+- **`--conditions=react-server`:** the seed reuses app code (`saveBookingChanges`, the mappers, `db`) that imports `server-only`, which only loads under that condition, as it does inside Next.js. Explained in a comment in `prisma.config.ts`.
+- **Dev profile shape:** `businessUnit` can now be `null`, for the brand-new profile. The dev sign-in page lists it under "Not in the database yet (first sign-in)" and doesn't request a BU, so it reaches `/welcome`.
+- **Holidays after bookings:** holidays are added after the bookings, so the overwrite rules (carving, keeping parental leave, dropping zero-working-day pieces) are exercised exactly as when an admin adds a holiday.
+- **Determinism is per day.** The same `SEED_TODAY` gives the same data. A different day shifts the booking window, so the counts change a little.
+- **In CI the super admin is seeded as USER,** because CI doesn't set `SUPER_ADMIN_EMPLOYEE_NUMBERS`. The role is recomputed at sign-in anyway, and the integration tests set it.
+**Follow-ups:**
+- **Product owner:** `pnpm db:reset` (if you haven't since T10), then `pnpm db:seed`.
+- **T16+:** the e2e tests can rely on the seeded people and data. The seed runs with the real today, so assert on structure (rows, bars) rather than exact dates, or set `SEED_TODAY` in `tests/e2e/global-setup.ts` and the app's clock together.
+- **T19:** use `pnpm db:seed:large` for the performance check.
+**Questions for the product owner:** none.

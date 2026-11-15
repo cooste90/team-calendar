@@ -21,6 +21,8 @@
     "db:down": "docker compose down",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
+    "db:seed": "prisma db seed",
+    "db:seed:large": "prisma db seed -- --size=large",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
     "postinstall": "prisma generate",
@@ -51,6 +53,7 @@
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
     "@biomejs/biome": "2.4.2",
+    "@faker-js/faker": "10.6.0",
     "@playwright/test": "1.65.0",
     "@tailwindcss/turbopack": "4.3.3",
     "@testing-library/dom": "10.4.2",
@@ -70,6 +73,7 @@
     "prisma": "7.10.1",
     "shadcn": "4.23.0",
     "tailwindcss": "4.3.3",
+    "tsx": "4.23.15",
     "typescript": "5.9.3",
     "vitest": "5.1.0"
   },

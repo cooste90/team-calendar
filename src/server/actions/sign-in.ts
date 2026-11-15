@@ -44,10 +44,14 @@ export async function signInAsDevProfile(formData: FormData) {
   if (!devProfile) {
     throw new Error("Unknown dev profile.");
   }
-  const businessUnit = await db.businessUnit.findUnique({
-    where: { name: devProfile.businessUnit },
-  });
-  await devSignIn(devProfile.profile, businessUnit?.id);
+  let businessUnitId: string | undefined;
+  if (devProfile.businessUnit) {
+    const businessUnit = await db.businessUnit.findUnique({
+      where: { name: devProfile.businessUnit },
+    });
+    businessUnitId = businessUnit?.id;
+  }
+  await devSignIn(devProfile.profile, businessUnitId);
 }
 
 // Dev sign-in as a profile typed into the form. Groups are comma-separated.

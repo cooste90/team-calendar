@@ -1,56 +1,67 @@
-import type { SsoProfile } from "../../src/lib/schemas/sso-profile";
+import type { SsoProfile } from "@/lib/schemas/sso-profile";
 
-// Fake SSO profiles for the /dev-sign-in page. businessUnit and team are the names
-// the seed (T13) creates; a new user signing in joins that BU. T13 adds more.
-export type DevSsoProfile = { profile: SsoProfile; businessUnit: string; team: string | null };
+// Fake SSO profiles for the /dev-sign-in page. The seed creates a matching user for
+// each one (same ssoId, employee number and groups) in the BU and team named here.
+// businessUnit null means "not in the database yet": signing in tests onboarding.
+export type DevSsoProfile = {
+  profile: SsoProfile;
+  businessUnit: string | null;
+  team: string | null; // null = Unassigned
+};
+
+const ADMIN_GROUP = ["CALENDAR_ADMIN"];
 
 export const devSsoProfiles: DevSsoProfile[] = [
   {
-    profile: {
-      ssoId: "dev-0001",
-      employeeNumber: "100001", // on SUPER_ADMIN_EMPLOYEE_NUMBERS in .env.example
-      firstName: "Grace",
-      surname: "Adeyemi",
-      email: "grace.adeyemi@example.com",
-      formalGroups: [],
-    },
-    businessUnit: "Finance",
+    // 100001 is in SUPER_ADMIN_EMPLOYEE_NUMBERS in .env.example.
+    profile: profile("dev-0001", "100001", "Grace", "Adeyemi", []),
+    businessUnit: "West Operations",
+    team: "Service Design",
+  },
+  {
+    profile: profile("dev-0002", "200002", "Tom", "Okafor", ADMIN_GROUP),
+    businessUnit: "West Operations",
+    team: "Finance Operations",
+  },
+  {
+    profile: profile("dev-0003", "200003", "Priya", "Shah", []),
+    businessUnit: "West Operations",
+    team: "Service Design",
+  },
+  {
+    profile: profile("dev-0004", "200004", "Owen", "Hughes", []),
+    businessUnit: "West Operations",
     team: null,
   },
   {
-    profile: {
-      ssoId: "dev-0002",
-      employeeNumber: "200002",
-      firstName: "Tom",
-      surname: "Okafor",
-      email: "tom.okafor@example.com",
-      formalGroups: ["CALENDAR_ADMIN"],
-    },
-    businessUnit: "Finance",
+    profile: profile("dev-0005", "200005", "Fatima", "Rahman", ADMIN_GROUP),
+    businessUnit: "North Finance",
     team: "Payroll",
   },
   {
-    profile: {
-      ssoId: "dev-0003",
-      employeeNumber: "200003",
-      firstName: "Priya",
-      surname: "Shah",
-      email: "priya.shah@example.com",
-      formalGroups: [],
-    },
-    businessUnit: "Finance",
-    team: "Payroll",
+    profile: profile("dev-0006", "200006", "Callum", "Reid", ADMIN_GROUP),
+    businessUnit: "Corporate Services",
+    team: "Legal",
   },
   {
-    profile: {
-      ssoId: "dev-0004",
-      employeeNumber: "300004",
-      firstName: "Ana",
-      surname: "Kowalska",
-      email: "ana.kowalska@example.com",
-      formalGroups: [],
-    },
-    businessUnit: "Operations",
-    team: "Logistics",
+    profile: profile("dev-0007", "200007", "Ana", "Kowalska", []),
+    businessUnit: "Corporate Services",
+    team: "Communications",
+  },
+  {
+    profile: profile("dev-0008", "200008", "Siobhán", "Ní Bhriain", []),
+    businessUnit: null,
+    team: null,
   },
 ];
+
+function profile(
+  ssoId: string,
+  employeeNumber: string,
+  firstName: string,
+  surname: string,
+  formalGroups: string[],
+): SsoProfile {
+  const email = `${ssoId}@example.com`;
+  return { ssoId, employeeNumber, firstName, surname, email, formalGroups };
+}
