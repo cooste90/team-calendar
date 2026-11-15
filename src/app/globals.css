@@ -135,6 +135,10 @@
   );
   /* The grid's sticky name column (design system §5: 236px). */
   --name-col: 14.75rem;
+  /* Row heights (design system §5: team rows 40px, person rows 42px). team-group.tsx
+     adds them up for teams the browser skips drawing, so change them only here. */
+  --team-row-height: 2.5rem;
+  --person-row-height: 2.625rem;
 }
 
 /* Tailwind utilities for the tokens, e.g. bg-surface, text-muted-foreground, bg-leave-al. */

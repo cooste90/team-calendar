@@ -1,11 +1,15 @@
 import { render, screen, within } from "@testing-library/react";
 import axe from "axe-core";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DEFAULT_PATTERN, DEFAULT_PATTERN_EFFECTIVE_FROM } from "@/domain/availability";
 import { periodRange, type View } from "@/domain/dates";
 import type { CalendarData } from "@/server/queries/calendar";
 import { CalendarGrid } from "./calendar-grid";
+
+// The grid saves team collapses with a server action, which can't run in a component
+// test. (team-groups.test.tsx tests collapsing.)
+vi.mock("@/server/actions/set-team-collapsed", () => ({ setTeamCollapsed: vi.fn() }));
 
 // One team: Priya (the viewer) and Tom, who doesn't work on Wednesdays. Today is
 // Thursday 12 November 2026, and Wednesday 11th is a public holiday.

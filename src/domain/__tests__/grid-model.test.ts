@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { availabilityLookup } from "../availability";
 import { addDays, periodRange } from "../dates";
 import type { Booking } from "../events";
-import { buildGridModel } from "../grid-model";
+import { buildGridModel, withGroupCollapsed } from "../grid-model";
 import type { GridInput, GridPerson, GridRow } from "../grid-model-types";
 import type { LeaveType } from "../leave-types";
 import type { HalfDay } from "../slots";
@@ -261,6 +261,17 @@ describe("groups and rows", () => {
       "Sam Ólafsson",
       "Sam Oyelaran",
     ]);
+  });
+});
+
+describe("withGroupCollapsed", () => {
+  it.each([
+    ["collapsing adds the group", [], "ops", true, ["ops"]],
+    ["collapsing twice doesn't add it twice", ["ops"], "ops", true, ["ops"]],
+    ["expanding removes it", ["ops", "unassigned"], "ops", false, ["unassigned"]],
+    ["expanding an open group changes nothing", ["unassigned"], "ops", false, ["unassigned"]],
+  ])("%s", (_rule, ids, groupId, collapsed, expected) => {
+    expect(withGroupCollapsed(ids, groupId, collapsed)).toEqual(expected);
   });
 });
 

@@ -657,3 +657,61 @@ Append one entry per task, newest at the bottom. Keep entries short and factual.
 - **T18:** roving tabindex on `GridCell`, remove the section's `tabIndex`, retarget the skip link.
 - **T25:** bars become interactive.
 **Questions for the product owner:** none.
+
+## T17 — Team groups: ordering, collapse persistence, Unassigned, admin links — 2026-11-15
+**Status:** done
+**Summary:**
+- **Collapsible teams:**
+  - each team row is a disclosure button (`aria-expanded`, `aria-controls` → its rowgroup), labelled e.g. "Service Design, 6 people, your team";
+  - only the chevron turns (150ms);
+  - the live region says "Service Design collapsed, 6 people hidden.";
+  - the `setTeamCollapsed({ groupId, collapsed })` action calls the `saveTeamCollapsed` service, which updates `User.collapsedTeamIds` ("unassigned" for the Unassigned group);
+  - the grid shows the click at once with React's `useOptimistic`, and the first paint comes from the server, so there's no flicker.
+- **Ordering** comes from the T09 model (own team first, then admin order, then Unassigned for admins). The e2e test checks it with the seed: Tom sees Finance Operations first and Unassigned last.
+- **Admin name links:** for admins of the BU shown, names are links that add `?person=<id>` and keep the rest of the URL (`serializeCalendarParams`, a nuqs serializer next to the other URL params). Regular users get plain text.
+- **Unassigned banner:** "An admin needs to add you to a team before you can book." Dismissing it sets a session cookie (`dismissUnassignedBanner`), so it stays hidden until the browser closes.
+- **Empty states:**
+  - a BU with no teams says so; admins get an "Admin › Teams" link (`?admin=teams`) and still see their Unassigned people;
+  - an expanded empty team says "No one in this team yet".
+- **Small additions:** `formatPeople` ("1 person" / "6 people") and `withGroupCollapsed` in the domain; `--team-row-height` / `--person-row-height` in `globals.css`.
+- **Tests:**
+  - **Unit:** 7 new (396 unit and component tests in total).
+  - **Component:** 10 new in `team-groups.test.tsx`:
+    - a collapse shows at once and calls the action;
+    - after the refresh the team stays collapsed;
+    - a failed save springs back with a toast;
+    - `aria-controls` points at the right rowgroup;
+    - no Unassigned group and no links for a user;
+    - admin order and link hrefs;
+    - both empty states;
+    - axe.
+  - **Integration:** 4 new (60 in total): saving, expanding again, the same choice twice, and only the actor's own row changes.
+  - **E2E:** 4 new (26 in total):
+    - collapse, reload, still collapsed;
+    - an admin sees Unassigned last and clickable names;
+    - a user sees neither;
+    - the unassigned user sees the banner without their own row, dismisses it, and it stays gone after a reload (with axe).
+**Key files:** `src/features/calendar/grid/{calendar-grid,team-group,team-group-row,person-row,no-teams-message}.tsx`, `src/features/calendar/unassigned-banner.tsx`, `src/server/actions/{set-team-collapsed,dismiss-unassigned-banner}.ts`, `src/server/services/save-team-collapsed.ts`, `src/lib/search-params.ts`, `src/domain/{grid-model,format}.ts`, `src/app/(app)/page.tsx`, `src/app/globals.css`, `tests/e2e/team-groups.spec.ts`, `tests/integration/save-team-collapsed.test.ts`
+**Simplicity pass** (my own re-read, then `/simplify`):
+- **One collapse rule:** `withGroupCollapsed` is shared by the grid and the service, instead of two copies of the add/remove logic.
+- **`useOptimistic` instead of `useState`:** it follows the server after each refresh and springs back if a save fails, so it isn't copied client state (rule 6). The banner uses the same pattern.
+- **Typed links:** links are built with nuqs's `createSerializer(calendarSearchParams)`, not a hand-written URL helper, so `{ admin: "team" }` is a type error.
+- **Plain flags, no callbacks:** `canOpenProfile` / `canManage` booleans instead of passing an href callback through two components.
+- **Row heights in one place:** CSS variables used by the row classes and by the group's placeholder height.
+- **A plain label:** the team label is built with plain `if`s instead of filter/join.
+- **Comments:** removed a stale comment and two that repeated each other.
+**Deviations from plan:**
+- **`setTeamCollapsed({ groupId, collapsed })` instead of `toggleTeamCollapsed(id)`.** It states the new value, so a repeat (two tabs, a retry) can't flip it back. The task file has an "as built" note.
+- **`useOptimistic` instead of "one `useState`".** A React built-in that does the same job better (see above).
+- **Who sees the banner:** the rule is "can't book for themselves" (`!canEditBookingsFor(actor, actor)`), which is exactly the unassigned USER. An unassigned *admin* can still book anyone in their BU (spec §5.3), so the banner would be wrong for them. They see the Unassigned group, including themselves, like any admin.
+- **"Dismissible for the session"** means the browser session: a cookie with no expiry, set by a server action, read by the page (no flicker).
+- **No empty note under Unassigned.** An empty Unassigned group only shows its header ("Unassigned, 0 people"), because "No one in this team yet" doesn't fit a group that isn't a team.
+- **Per-group placeholder height (fixes a T16 issue).** T16 gave every group a fixed `contain-intrinsic-size: 20rem`. Off-screen groups taller than that overlapped the next group, which axe reported as tiny touch targets once names became links. Each group now reserves its real height (team row + 42px per person), which also stops the scrollbar jumping. Name links have `py-1` (24px targets, WCAG 2.5.8), and the team buttons have real spaces between their parts so the visible text matches the label (WCAG 2.5.3).
+- **`grid-model.ts` is 206 lines,** just over the ~200 guide, after adding `withGroupCollapsed` (7 lines). Left as is; split it if it grows.
+- **`/simplify` finding skipped:** every collapse click runs `refresh()` (through `authedAction`), so the page reloads its data on the server. `useOptimistic` now relies on that refresh. For a 300-person BU it's a full data payload per click. **T19** should measure it with the large seed, and only then decide whether actions need a way to skip the refresh.
+**Follow-ups:**
+- **T18:** team buttons and admin name links are in the Tab order (notes added to its task file).
+- **T27:** `?person=<id>` is already set by the name links.
+- **T29:** "Admin › Teams" links to `?admin=teams`.
+- **T35:** after Dismiss, focus falls back to the page; consider moving it to the grid.
+**Questions for the product owner:** none blocking. Please check one call: an **unassigned admin** doesn't get the banner (they can book), and appears in the Unassigned group like everyone else there.

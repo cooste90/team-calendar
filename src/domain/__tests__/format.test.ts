@@ -5,6 +5,7 @@ import {
   formatDocumentTitlePeriod,
   formatLong,
   formatLongRange,
+  formatPeople,
   formatPeriodTitle,
   formatRangeSummary,
   formatShort,
@@ -34,6 +35,16 @@ describe("formatCount", () => {
     [4, "4 days"],
   ])("%d → %s", (days, expected) => {
     expect(formatCount(days)).toBe(expected);
+  });
+});
+
+describe("formatPeople", () => {
+  it.each([
+    [1, "1 person"],
+    [0, "0 people"],
+    [6, "6 people"],
+  ])("%d → %s", (count, expected) => {
+    expect(formatPeople(count)).toBe(expected);
   });
 });
 

@@ -16,7 +16,7 @@ Complete the left-hand structure of the grid as described in spec §2.3 and §1.
    - It shows the chevron, team name and member count, plus a "Your team" tag (viewer's team) or a "Visible to admins only" tag (Unassigned).
    - Collapsing is instant. Only the chevron rotates (CSS transition).
 2. **Persistence:**
-   - A `toggleTeamCollapsed(teamId | "unassigned")` server action updates `User.collapsedTeamIds`.
+   - A `toggleTeamCollapsed(teamId | "unassigned")` server action updates `User.collapsedTeamIds`. *(As built: `setTeamCollapsed({ groupId, collapsed })`, which states the new value instead of flipping it, so a repeated request can't flip it back.)*
    - The grid keeps a local `useState` copy of the collapsed ids (initialised from the server data), so the click responds instantly. It then calls the action in the background. That's the only bit of "optimistic" state in the app, and it's one `useState`.
    - `getCalendarData` already returns `collapsedTeamIds`, so the first paint is correct.
 3. **Ordering:** the viewer's team is first, then the others by `sortOrder`, then Unassigned (only if `canSeeUnassigned`). This comes from the T09 model; just verify it with real data.

@@ -86,6 +86,11 @@ export function formatCount(days: number): string {
   return days === 1 ? "1 day" : `${days} days`;
 }
 
+// "1 person", "6 people", "0 people"
+export function formatPeople(count: number): string {
+  return count === 1 ? "1 person" : `${count} people`;
+}
+
 // The live summary under the dates in the booking form, e.g. "Thu 10 – Tue 15 · 4 days".
 // `count` is the number of working days, worked out elsewhere.
 export function formatRangeSummary(range: SlotRange, count: number): string {

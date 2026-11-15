@@ -4,6 +4,7 @@
 import {
   createLoader,
   createParser,
+  createSerializer,
   parseAsArrayOf,
   parseAsString,
   parseAsStringLiteral,
@@ -34,5 +35,13 @@ export const calendarSearchParams = {
 
 export const loadCalendarSearchParams = createLoader(calendarSearchParams);
 
+// Builds a link from the current params with some changed, keeping the rest, e.g.
+// serializeCalendarParams(searchParams, { person: id }) gives "?view=week&person=…".
+export const serializeCalendarParams = createSerializer(calendarSearchParams);
+
 // The cookie that remembers week or month view (set by setViewPreference).
 export const VIEW_COOKIE = "westcal-view";
+
+// Set when an unassigned person closes the "add you to a team" banner (set by
+// dismissUnassignedBanner).
+export const UNASSIGNED_BANNER_COOKIE = "westcal-unassigned-banner-dismissed";

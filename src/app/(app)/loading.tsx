@@ -13,8 +13,11 @@ export default function Loading() {
       <div className="mx-5 mb-6 overflow-hidden rounded-2xl border bg-surface">
         <Skeleton className="h-[3.375rem] rounded-none" />
         {Array.from({ length: 10 }, (_, index) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: identical placeholder rows that never reorder.
-          <div key={index} className="flex h-[2.625rem] items-center gap-3 border-t px-3.5">
+          <div
+            // biome-ignore lint/suspicious/noArrayIndexKey: identical placeholder rows that never reorder.
+            key={index}
+            className="flex h-(--person-row-height) items-center gap-3 border-t px-3.5"
+          >
             <Skeleton className="h-4 w-40" />
             <Skeleton className="h-6 flex-1" />
           </div>

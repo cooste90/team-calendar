@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { formatDocumentTitlePeriod, formatPeriodTitle } from "@/domain/format";
+import { canEditBookingsFor } from "@/domain/permissions";
 import { resolveCalendarView } from "@/features/calendar/calendar-view";
 import { CalendarGrid } from "@/features/calendar/grid/calendar-grid";
+import { UnassignedBanner } from "@/features/calendar/unassigned-banner";
+import { UNASSIGNED_BANNER_COOKIE } from "@/lib/search-params";
 import { getBusinessUnitBySlug } from "@/server/queries/business-units";
 import { getCalendarData } from "@/server/queries/calendar";
 import { requireUser } from "@/server/session";
@@ -23,6 +27,10 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
   const { params, view, period } = await resolveCalendarView(searchParams);
   const businessUnit = await getBusinessUnitBySlug(actor, params.bu);
   const data = await getCalendarData(actor, businessUnit, period.from, period.to);
+  // An unassigned USER can't book for anyone, not even themselves (spec §1.4, §5.3).
+  // Admins can book in their BU whether or not they're in a team, so they never see it.
+  const showUnassignedBanner =
+    !canEditBookingsFor(actor, actor) && !(await cookies()).has(UNASSIGNED_BANNER_COOKIE);
 
   return (
     <>
@@ -35,6 +43,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
           {businessUnit.name} · all teams · all people
         </p>
       </div>
+      {showUnassignedBanner && <UnassignedBanner />}
       <CalendarGrid
         data={data}
         view={view}

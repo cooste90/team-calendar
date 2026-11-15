@@ -23,7 +23,7 @@ export function GridCell({ cell, isViewer }: { cell: GridCellModel; isViewer: bo
       // A plain join, not cn(): cn would treat the hatch and the today colour as clashing
       // "bg-" classes and drop the hatch, but here they combine (stripes over a tint).
       className={[
-        "row-start-1 min-h-[2.625rem] min-w-0 border-border-soft border-l hover:bg-cell-hover",
+        "row-start-1 min-h-(--person-row-height) min-w-0 border-border-soft border-l hover:bg-cell-hover",
         HATCH[cell.availability],
         todayTint(cell.isToday, isViewer),
       ].join(" ")}

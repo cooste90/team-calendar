@@ -6,6 +6,10 @@
 - The grid's scroll box (`calendar-grid.tsx`) has `tabIndex={0}` so keyboard users can scroll it. Remove that once the roving tabindex puts a cell in the tab order.
 - Point the "Skip to calendar" link (`(app)/layout.tsx`, currently `#main`) at the focusable cell.
 
+**From T17:**
+- Team rows hold a real `<button>` (`team-group-row.tsx`), and admins' name cells hold a `<Link>` (`person-row.tsx`). Both are in the Tab order today. Decide how the name link fits the roving tabindex (e.g. the rowheader link stays tabbable, or arrows reach the rowheader and Enter follows the link) and test it.
+- Collapse/expand already announces "Service Design collapsed, 6 people hidden." through the live region.
+
 ## Goal
 The grid is fully usable with a keyboard and a screen reader, following the ARIA grid pattern in `03-accessibility.md` §3.
 

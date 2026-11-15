@@ -29,6 +29,12 @@ import { intersect, isSingleDay, portionOf, rangeOf, type SlotRange, toSlot } fr
 
 export const UNASSIGNED_GROUP_ID = "unassigned";
 
+// The list of collapsed groups after collapsing or expanding one, with no duplicates.
+export function withGroupCollapsed(ids: string[], groupId: string, collapsed: boolean): string[] {
+  const others = ids.filter((id) => id !== groupId);
+  return collapsed ? [...others, groupId] : others;
+}
+
 const collator = new Intl.Collator("en-GB");
 
 const availabilityText: Record<WorkDay, string> = {
