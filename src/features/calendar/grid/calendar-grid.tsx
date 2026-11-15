@@ -4,6 +4,7 @@ import { startTransition, useEffect, useMemo, useOptimistic, useRef } from "reac
 import { toast } from "sonner";
 import { availabilityLookup } from "@/domain/availability";
 import type { Period, View } from "@/domain/dates";
+import { hasFilters } from "@/domain/filter-options";
 import { formatPeople, formatPeriodAnnouncement, formatPeriodTitle } from "@/domain/format";
 import { buildGridModel, withGroupCollapsed } from "@/domain/grid-model";
 import type { GridGroup } from "@/domain/grid-model-types";
@@ -18,7 +19,9 @@ import { setTeamCollapsed } from "@/server/actions/set-team-collapsed";
 import type { CalendarData } from "@/server/queries/calendar";
 import { useCalendarStore } from "../calendar-store";
 import { ShortcutsHelpDialog } from "../shortcuts-help-dialog";
+import { useCalendarFilters } from "../use-calendar-params";
 import { DayHeaderRow } from "./day-header";
+import { NoMatchesMessage } from "./no-matches-message";
 import { NoTeamsMessage } from "./no-teams-message";
 import { TeamGroup } from "./team-group";
 import { useGridKeyboard } from "./use-grid-keyboard";
@@ -27,7 +30,6 @@ type Props = {
   data: CalendarData;
   view: View;
   period: Period;
-  filters: { teamIds: string[]; personIds: string[] };
 };
 
 // Each team is only given the tab stop if one of its people holds it, so on an arrow key
@@ -39,8 +41,9 @@ function isInGroup(group: GridGroup, cell: CellPosition | null) {
 
 // The calendar grid (architecture §9). buildGridModel works out everything; the
 // components below only turn the model into elements.
-export function CalendarGrid({ data, view, period, filters }: Props) {
+export function CalendarGrid({ data, view, period }: Props) {
   const { viewer } = data;
+  const [filters, setFilters] = useCalendarFilters();
   const announce = useCalendarStore((store) => store.announce);
   // The server's collapsed teams, plus any clicks still being saved, so a click shows at
   // once. React drops the pending ones when the save finishes: by then the refreshed
@@ -126,13 +129,17 @@ export function CalendarGrid({ data, view, period, filters }: Props) {
   const template = `var(--name-col) repeat(${model.columns.length * 2}, minmax(0, 1fr))`;
   const compact = view === "month";
   const hasTeams = data.teams.length > 0;
-  // A BU with no teams shows just the message, unless an admin has Unassigned people
-  // to see.
-  const showGrid = hasTeams || model.groups.length > 0;
+  const noMatches = hasFilters(filters) && model.groups.length === 0;
+  // No groups when the BU has no teams (unless an admin has Unassigned people to see),
+  // or when the filters match nobody. A message shows instead.
+  const showGrid = model.groups.length > 0;
 
   return (
     <>
       {!hasTeams && <NoTeamsMessage canManage={canManage} />}
+      {noMatches && (
+        <NoMatchesMessage onClearFilters={() => setFilters({ teams: null, people: null })} />
+      )}
       {showGrid && (
         // scroll-padding matches the sticky header and name column, so a focused cell is
         // never scrolled underneath them (WCAG 2.4.11).

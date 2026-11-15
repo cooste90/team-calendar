@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import axe from "axe-core";
 import { describe, expect, it, vi } from "vitest";
 import { DEFAULT_PATTERN, DEFAULT_PATTERN_EFFECTIVE_FROM } from "@/domain/availability";
@@ -95,12 +96,7 @@ function renderGrid(view: View, anchor = "2026-11-12", gridData = data) {
   // The app's layouts provide these; the test needs its own.
   return render(
     <GridTestProviders>
-      <CalendarGrid
-        data={gridData}
-        view={view}
-        period={periodRange(view, anchor)}
-        filters={{ teamIds: [], personIds: [] }}
-      />
+      <CalendarGrid data={gridData} view={view} period={periodRange(view, anchor)} />
     </GridTestProviders>,
   );
 }
@@ -182,5 +178,30 @@ describe("CalendarGrid", () => {
     ).toBeInTheDocument();
     expect(screen.getAllByRole("row").length).toBeGreaterThan(0);
     expect((await axe.run(container)).violations).toEqual([]);
+  });
+});
+
+describe("filters", () => {
+  function renderFiltered(searchParams: Record<string, string>) {
+    return render(
+      <GridTestProviders searchParams={searchParams}>
+        <CalendarGrid data={data} view="week" period={periodRange("week", "2026-11-12")} />
+      </GridTestProviders>,
+    );
+  }
+
+  it("shows only the chosen people", () => {
+    renderFiltered({ people: "tom" });
+    expect(screen.getByText("Tom Okafor")).toBeInTheDocument();
+    expect(screen.queryByText("Priya Shah")).not.toBeInTheDocument();
+  });
+
+  it("says so when the filters match nobody, and Clear filters shows everyone again", async () => {
+    renderFiltered({ teams: "a-team-from-another-bu" });
+    expect(screen.queryByRole("grid")).not.toBeInTheDocument();
+    expect(screen.getByText("No one matches these filters.")).toBeInTheDocument();
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(screen.getByRole("grid")).toBeInTheDocument();
   });
 });

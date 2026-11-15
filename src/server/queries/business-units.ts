@@ -1,3 +1,4 @@
+import { cache } from "react";
 import "server-only";
 import { NotFoundError } from "@/domain/errors";
 import { type Actor, canViewBusinessUnit } from "@/domain/permissions";
@@ -13,15 +14,16 @@ export async function getVisibleBusinessUnits(actor: Actor) {
 }
 
 // The BU in the URL, or the person's own BU when there's none. A hidden BU they can't
-// view is "not found", so its name never leaks.
-export async function getBusinessUnitBySlug(actor: Actor, slug: string | null) {
+// view is "not found", so its name never leaks. cache() means one lookup per request:
+// the page, its header and its title all ask for it.
+export const getBusinessUnitBySlug = cache(async (actor: Actor, slug: string | null) => {
   const where = slug === null ? { id: actor.businessUnitId } : { slug };
   const unit = await db.businessUnit.findUnique({ where, select: columns });
   if (!unit || !canViewBusinessUnit(actor, unit)) {
     throw new NotFoundError("That business unit doesn't exist.");
   }
   return unit;
-}
+});
 
 // Before sign-in: every BU, hidden ones included, for first-time users to pick from
 // (spec §1.3: new members of a hidden BU need to be able to join it).

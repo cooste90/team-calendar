@@ -1,8 +1,10 @@
 // The shapes that go into and come out of buildGridModel (grid-model.ts).
+
 import type { AvailabilityLookup, WorkDay } from "./availability";
 import type { CalendarDate, Period, View } from "./dates";
 import type { PersonName } from "./display-name";
 import type { Booking } from "./events";
+import type { Filters } from "./filter-options";
 import type { LeaveType } from "./leave-types";
 import type { PublicHoliday } from "./public-holidays";
 import type { Portion } from "./slots";
@@ -30,7 +32,7 @@ export type GridInput = {
   bookings: Booking[];
   publicHolidays: PublicHoliday[];
   collapsedTeamIds: string[];
-  filters: { teamIds: string[]; personIds: string[] };
+  filters: Filters;
 };
 
 export type GridColumn = {

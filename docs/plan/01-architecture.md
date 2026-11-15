@@ -53,7 +53,7 @@ Read this together with `00-product-spec.md`. This file says **how** the app is 
 │  │  ├─ (auth)/sign-in/page.tsx
 │  │  ├─ (auth)/dev-sign-in/page.tsx          # 404 unless DEV_SIGN_IN_ENABLED
 │  │  ├─ (auth)/welcome/page.tsx              # first-time BU choice fallback
-│  │  ├─ (app)/layout.tsx                     # requires session; header; providers
+│  │  ├─ (app)/layout.tsx                     # requires session; skip link; providers (the page renders the header, T21)
 │  │  ├─ (app)/page.tsx                       # calendar; also renders the profile/admin dialogs from ?profile= / ?person= / ?admin=
 │  │  ├─ api/auth/[...all]/route.ts
 │  │  ├─ api/export/attendance/route.ts       # GET PDF
@@ -345,7 +345,8 @@ The whole app uses one pattern, so there's only one thing to learn:
   - Each person comes with `patterns` and `overrides`, not one `WorkDay` per date. A bar's day count can reach outside the range (T09), and a lookup function can't be passed to a client component. The client builds `availabilityLookup(person.patterns, person.overrides)`.
   - `viewer` is the actor plus `canSeeUnassigned`. The client builds `canEdit` with `canEditBookingsFor`.
   - The function runs 7 small indexed queries at once (Prisma loads patterns and overrides with one query each). 300 people × 6 weeks loads in well under 150ms locally.
-- **Changing period, view, BU or filters** updates the URL through nuqs with `shallow: false`, so Next re-renders the page on the server with the new data. Wrap the update in `startTransition` and dim the grid while `isPending` is true. That's the whole "loading between periods" story.
+- **Changing period, view or BU** updates the URL through nuqs with `shallow: false`, so Next re-renders the page on the server with the new data. Wrap the update in `startTransition` and dim the grid while `isPending` is true. That's the whole "loading between periods" story.
+- **Filters are the exception** (T21): the page already has everyone in the BU, so a filter change updates the URL shallowly (`useCalendarFilters`) and the grid redraws in the browser, with no server round trip.
 - **Other people's changes:** a tiny `useRefreshOnFocus()` hook calls `router.refresh()` when the window regains focus (spec §2.5). No polling.
 - **Cache Components (`cacheComponents`) stays OFF.** All data is per-user and dynamic.
 

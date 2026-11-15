@@ -2,6 +2,8 @@
 
 **Phase:** 5 · **Depends on:** T25 · **Size:** S
 
+**From T21:** the calendar page (`src/app/(app)/page.tsx`) renders `AppHeader`, not the layout. The page has the signed-in person (`actor`), so pass what the menu needs from there. Sign out is currently the last item in the header's right-hand group, in `app-header.tsx`.
+
 ## Goal
 The avatar menu from the mockup: who you are, theme choice, and links to your profile and admin.
 

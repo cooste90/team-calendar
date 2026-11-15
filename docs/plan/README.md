@@ -80,7 +80,7 @@ Size key: **S** ≈ small, under 300 lines changed · **M** ≈ 300–800 · **L
 - [x] [T18](tasks/T18-grid-keyboard-sr.md) Grid keyboard navigation and screen-reader model · **M**
 - [x] [T19](tasks/T19-grid-performance.md) Grid performance check with the large seed · **S**
 - [x] [T20](tasks/T20-key-popover.md) Key popover and keyboard shortcuts help · **S**
-- [ ] [T21](tasks/T21-filters.md) Team and person filter builders · **M**
+- [x] [T21](tasks/T21-filters.md) Team and person filter builders · **M**
 
 ### Phase 4 — Bookings
 - [ ] [T22](tasks/T22-booking-create-service.md) Booking create service: conflicts, replace, transactions · **M**

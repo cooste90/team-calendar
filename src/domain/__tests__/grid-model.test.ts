@@ -45,7 +45,7 @@ function input(changes: Partial<GridInput> = {}): GridInput {
     bookings: [],
     publicHolidays: [],
     collapsedTeamIds: [],
-    filters: { teamIds: [], personIds: [] },
+    filters: { teams: [], people: [] },
     ...changes,
   };
 }
@@ -230,7 +230,7 @@ describe("groups and rows", () => {
   });
 
   it("filters show the union of the chosen teams and people, and drop empty groups", () => {
-    const filters = { teamIds: ["design"], personIds: ["ana"] };
+    const filters = { teams: ["design"], people: ["ana"] };
     const groups = buildGridModel(input({ teams, people, filters })).groups;
     expect(groups.map((group) => [group.name, group.rows.map((row) => row.personId)])).toEqual([
       ["Design", ["li"]],

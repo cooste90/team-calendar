@@ -67,12 +67,7 @@ const admin: CalendarData["viewer"] = {
 function grid(gridData: CalendarData) {
   return (
     <GridTestProviders>
-      <CalendarGrid
-        data={gridData}
-        view="week"
-        period={periodRange("week", "2026-11-12")}
-        filters={{ teamIds: [], personIds: [] }}
-      />
+      <CalendarGrid data={gridData} view="week" period={periodRange("week", "2026-11-12")} />
     </GridTestProviders>
   );
 }

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import axe from "axe-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -6,6 +6,7 @@ import { DEFAULT_PATTERN, DEFAULT_PATTERN_EFFECTIVE_FROM } from "@/domain/availa
 import { periodRange } from "@/domain/dates";
 import type { CalendarData } from "@/server/queries/calendar";
 import { useCalendarStore } from "../calendar-store";
+import { useCalendarFilters } from "../use-calendar-params";
 import { CalendarGrid } from "./calendar-grid";
 import { GridTestProviders } from "./grid-test-providers";
 
@@ -55,19 +56,14 @@ const data: CalendarData = {
 type Options = {
   gridData?: CalendarData;
   anchor?: string;
-  personIds?: string[];
+  searchParams?: Record<string, string>; // the starting URL, e.g. { people: "ben,dan" }
   onUrlUpdate?: (event: { searchParams: URLSearchParams }) => void;
 };
 
-function grid({ gridData = data, anchor = "2026-11-12", personIds = [], onUrlUpdate }: Options) {
+function grid({ gridData = data, anchor = "2026-11-12", searchParams, onUrlUpdate }: Options) {
   return (
-    <GridTestProviders onUrlUpdate={onUrlUpdate}>
-      <CalendarGrid
-        data={gridData}
-        view="week"
-        period={periodRange("week", anchor)}
-        filters={{ teamIds: [], personIds }}
-      />
+    <GridTestProviders searchParams={searchParams} onUrlUpdate={onUrlUpdate}>
+      <CalendarGrid data={gridData} view="week" period={periodRange("week", anchor)} />
     </GridTestProviders>
   );
 }
@@ -132,7 +128,7 @@ describe("keys", () => {
 
   it("↓ only visits the people a filter shows", async () => {
     const user = userEvent.setup();
-    render(grid({ personIds: ["ben", "dan"] }));
+    render(grid({ searchParams: { people: "ben,dan" } }));
     cell("Ben Carter", "Thursday 12 November").focus();
     await user.keyboard("{ArrowDown}");
     expect(cell("Dan Evans", "Thursday 12 November")).toHaveFocus();
@@ -173,22 +169,44 @@ describe("Page Down", () => {
 });
 
 describe("focus isn't lost", () => {
-  it("when a filter hides the focused person, focus goes to the viewer on the same day", () => {
-    const { rerender } = render(grid({}));
+  // Filters to Priya and Ben, like the People filter does. fireEvent.click doesn't move
+  // focus, so focus stays wherever the test put it.
+  function ShowOnlyPriyaAndBen() {
+    const [, setFilters] = useCalendarFilters();
+    return (
+      <button type="button" onClick={() => setFilters({ people: ["priya", "ben"] })}>
+        Show only Priya and Ben
+      </button>
+    );
+  }
+
+  function renderWithFilter() {
+    render(
+      <GridTestProviders>
+        <CalendarGrid data={data} view="week" period={periodRange("week", "2026-11-12")} />
+        <ShowOnlyPriyaAndBen />
+      </GridTestProviders>,
+    );
+    return () => fireEvent.click(screen.getByRole("button", { name: "Show only Priya and Ben" }));
+  }
+
+  it("when a filter hides the focused person, focus goes to the viewer on the same day", async () => {
+    const filter = renderWithFilter();
     cell("Dan Evans", "Monday 9 November").focus();
 
-    rerender(grid({ personIds: ["priya", "ben"] }));
+    filter();
 
-    expect(cell("Priya Shah", "Monday 9 November")).toHaveFocus();
+    await waitFor(() => expect(cell("Priya Shah", "Monday 9 November")).toHaveFocus());
   });
 
-  it("but focus that has moved on to something still there stays put", () => {
-    const { rerender } = render(grid({}));
+  it("but focus that has moved on to something still there stays put", async () => {
+    const filter = renderWithFilter();
     cell("Dan Evans", "Monday 9 November").focus();
     screen.getByRole("button", { name: /^Operations/ }).focus();
 
-    rerender(grid({ personIds: ["priya", "ben"] }));
+    filter();
 
+    await waitFor(() => expect(screen.queryByText("Dan Evans")).not.toBeInTheDocument());
     expect(screen.getByRole("button", { name: /^Operations/ })).toHaveFocus();
   });
 });

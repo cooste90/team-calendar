@@ -3,6 +3,8 @@ import {
   formatCount,
   formatDayHeader,
   formatDocumentTitlePeriod,
+  formatFilterName,
+  formatFilterSummary,
   formatLong,
   formatLongRange,
   formatPeople,
@@ -110,5 +112,29 @@ describe("long dates for screen readers", () => {
     ["2026-10-30", "2026-11-03", "Friday 30 October to Tuesday 3 November"],
   ])("formatLongRange(%s, %s) → %s", (from, to, expected) => {
     expect(formatLongRange(from, to)).toBe(expected);
+  });
+});
+
+describe("formatFilterName", () => {
+  it.each([
+    [0, "Teams"],
+    [1, "Teams, 1 selected"],
+    [2, "Teams, 2 selected"],
+  ])("with %i chosen it's %s", (count, expected) => {
+    expect(formatFilterName("Teams", count)).toBe(expected);
+  });
+});
+
+describe("formatFilterSummary", () => {
+  it.each([
+    [
+      ["Service Design", "Finance Operations"],
+      2,
+      "Filtered: Service Design, Finance Operations · 2 people",
+    ],
+    [["Service Design"], 0, "Filtered: Service Design"],
+    [[], 1, "Filtered: 1 person"],
+  ])("teams %j and %i people → %s", (teamNames, peopleCount, expected) => {
+    expect(formatFilterSummary(teamNames, peopleCount)).toBe(expected);
   });
 });

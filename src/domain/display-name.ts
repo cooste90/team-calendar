@@ -11,3 +11,13 @@ export function displayFirstName(person: PersonName): string {
 export function displayName(person: PersonName): string {
   return `${displayFirstName(person)} ${person.surname}`;
 }
+
+const collator = new Intl.Collator("en-GB");
+
+// People are listed by surname, then first name (spec §2.3). Use with Array.sort.
+export function compareBySurname(a: PersonName, b: PersonName): number {
+  return (
+    collator.compare(a.surname, b.surname) ||
+    collator.compare(displayFirstName(a), displayFirstName(b))
+  );
+}

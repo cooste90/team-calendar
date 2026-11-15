@@ -2,6 +2,11 @@
 
 **Phase:** 3 · **Depends on:** T20 · **Size:** M
 
+**As built:** see the T21 entry in `progress.md`.
+- **Header:** it now lives in the calendar page (`src/app/(app)/page.tsx`), not the layout, because the filters need the page's data.
+- **Filter state:** filters are shallow URL updates through `useCalendarFilters`, so there's no server round trip.
+- **List:** the panel is a plain combobox and listbox, not cmdk.
+
 ## Goal
 Multi-select team and person filters, stored in the URL, that feel fast and are fully accessible.
 

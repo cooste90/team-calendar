@@ -5,8 +5,9 @@
 // PM. So day 0's AM is column 2, its PM column 3, day 1's AM column 4, and so on.
 import type { WorkDay } from "./availability";
 import { countWorkingDays, nonWorkingSlots } from "./counting";
-import { displayFirstName, displayName } from "./display-name";
+import { compareBySurname, displayName } from "./display-name";
 import type { Booking } from "./events";
+import { hasFilters } from "./filter-options";
 import {
   formatCount,
   formatLongRange,
@@ -26,6 +27,7 @@ import type {
 } from "./grid-model-types";
 import { leaveTypes } from "./leave-types";
 import { intersect, isSingleDay, portionOf, rangeOf, type SlotRange, toSlot } from "./slots";
+import { byAdminOrder, UNASSIGNED_GROUP_NAME } from "./teams";
 
 export const UNASSIGNED_GROUP_ID = "unassigned";
 
@@ -34,8 +36,6 @@ export function withGroupCollapsed(ids: string[], groupId: string, collapsed: bo
   const others = ids.filter((id) => id !== groupId);
   return collapsed ? [...others, groupId] : others;
 }
-
-const collator = new Intl.Collator("en-GB");
 
 const availabilityText: Record<WorkDay, string> = {
   FULL: "",
@@ -162,22 +162,16 @@ export function buildGridModel(input: GridInput): GridModel {
     };
   }
 
-  const filtersActive = filters.teamIds.length > 0 || filters.personIds.length > 0;
+  const filtersActive = hasFilters(filters);
   const shown = input.people.filter(
     (person) =>
       !filtersActive ||
-      (person.teamId !== null && filters.teamIds.includes(person.teamId)) ||
-      filters.personIds.includes(person.id),
+      (person.teamId !== null && filters.teams.includes(person.teamId)) ||
+      filters.people.includes(person.id),
   );
 
   function makeGroup(id: string, name: string, teamId: string | null): GridGroup {
-    const members = shown
-      .filter((person) => person.teamId === teamId)
-      .sort(
-        (a, b) =>
-          collator.compare(a.surname, b.surname) ||
-          collator.compare(displayFirstName(a), displayFirstName(b)),
-      );
+    const members = shown.filter((person) => person.teamId === teamId).sort(compareBySurname);
     const collapsed = input.collapsedTeamIds.includes(id);
     return {
       id,
@@ -191,13 +185,14 @@ export function buildGridModel(input: GridInput): GridModel {
   }
 
   // The viewer's own team first, then the rest in admin order, then Unassigned (admins only).
-  const teams = [...input.teams].sort((a, b) => a.sortOrder - b.sortOrder);
+  const teams = byAdminOrder(input.teams);
   const ordered = [
     ...teams.filter((team) => team.id === viewer.teamId),
     ...teams.filter((team) => team.id !== viewer.teamId),
   ];
   const groups = ordered.map((team) => makeGroup(team.id, team.name, team.id));
-  if (viewer.canSeeUnassigned) groups.push(makeGroup(UNASSIGNED_GROUP_ID, "Unassigned", null));
+  if (viewer.canSeeUnassigned)
+    groups.push(makeGroup(UNASSIGNED_GROUP_ID, UNASSIGNED_GROUP_NAME, null));
 
   return {
     columns,

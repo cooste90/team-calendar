@@ -91,6 +91,21 @@ export function formatPeople(count: number): string {
   return count === 1 ? "1 person" : `${count} people`;
 }
 
+// A filter button's name for screen readers: "Teams", or "Teams, 2 selected"
+// (accessibility §2).
+export function formatFilterName(label: string, count: number): string {
+  return count > 0 ? `${label}, ${count} selected` : label;
+}
+
+// The line under the period title while filters are on, e.g.
+// "Filtered: Service Design, Finance Operations · 2 people".
+export function formatFilterSummary(teamNames: string[], peopleCount: number): string {
+  const parts: string[] = [];
+  if (teamNames.length > 0) parts.push(teamNames.join(", "));
+  if (peopleCount > 0) parts.push(formatPeople(peopleCount));
+  return `Filtered: ${parts.join(" · ")}`;
+}
+
 // The live summary under the dates in the booking form, e.g. "Thu 10 – Tue 15 · 4 days".
 // `count` is the number of working days, worked out elsewhere.
 export function formatRangeSummary(range: SlotRange, count: number): string {

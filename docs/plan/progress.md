@@ -910,3 +910,97 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 
 **Questions for the product owner:**
 - **Please try the Key by hand once:** hover, Tab, Enter and Esc, and the More menu on a narrow window. I checked it with a script driving a real browser, not by hand.
+
+## T21 — Team and person filter builders — 2026-11-15
+**Status:** done. No new dependencies. Two decisions made with the product owner, below.
+**What I built:**
+- **Filters in the header** (`src/features/calendar/filters/`):
+  - **`FilterBuilder`:** a button ("Teams", plus a count badge) that opens a popover. Screen readers hear "Teams, 2 selected".
+  - **`FilterPanel` (inside the popover):**
+    - the chosen ones as chips, each with a "Remove {name}" button;
+    - a search box;
+    - the list of options (people grouped under their team);
+    - Clear and Done buttons.
+  - **`CalendarFilters`:** wires up the Teams and People filters.
+- **Keyboard:**
+  - the search box is a combobox: typing narrows the list, ↑↓ move through it, and Enter ticks or unticks;
+  - Esc closes and puts focus back on the button.
+- **Filter state:** `useCalendarFilters` (in `use-calendar-params.ts`) updates `?teams=` and `?people=` shallowly. The page already has everyone in the BU, so the grid redraws in the browser with no server round trip.
+- **Summary line** (`FilterSummary`): with filters on, the line under the title reads "Filtered: Service Design, Finance Operations · 2 people", with a "Clear filters" button.
+- **Empty state:** when the filters match nobody, the grid is replaced by "No one matches these filters." and a Clear filters button.
+- **Narrow header:** below 720px, Teams and People move into the More menu next to the Key, and each opens as a dialog. Focus goes back to More when it closes.
+- **Domain:**
+  - `src/domain/filter-options.ts`: `teamFilterOptions`, `personFilterOptions` and `hasFilters`;
+  - `src/domain/teams.ts`: `byAdminOrder` and `UNASSIGNED_GROUP_NAME`, now shared with the grid model;
+  - `compareBySurname` in `display-name.ts`, also shared;
+  - `formatFilterName` and `formatFilterSummary` in `format.ts`.
+- **The header now lives in the page**, not the layout: a layout can't see the URL, so it couldn't know the BU's teams and people (product owner's choice).
+  - **The layout** keeps the skip link, toasts and live region.
+  - **The page** renders the header, the progress bar and `<main>`.
+  - **`loading.tsx`** gained a header-height bar.
+  - **`getBusinessUnitBySlug`** is now wrapped in React `cache()`, so moving the header didn't add a query to every period change.
+
+**Filter speed** (production build, South Health, 300 people):
+
+| | Tick a team | Untick (everyone back) |
+|---|---|---|
+| Week view | 19–27 ms | 25–49 ms |
+| Month view | 15–31 ms | 51–77 ms |
+| Month view, in the perf test (straight after scrolling the whole grid) | 20–32 ms | 69–127 ms |
+
+- **What the budget covers:** the acceptance criterion is under 50ms. Everything meets it except bringing all 300 people back in month view, which has to draw about 9,300 cells from scratch.
+- **The decision:** the product owner chose to accept that rather than keep hidden rows in the page. The perf test checks 50ms for ticking and 100ms for "everyone back".
+- **To be clear:** in the perf test (after scrolling) "everyone back" went over 100ms in 2 of 3 runs. It only passes because of the 1.5× local allowance.
+- **Arrow keys:** still no press at 16ms or more. The filter arrays from nuqs keep the same identity, so the T19 memo still works.
+
+**Tests:**
+- **Unit:** filter options (admin order, grouping, unassigned last, preferred names), `formatFilterName`, `formatFilterSummary`.
+- **Component** (`calendar-filters.test.tsx`):
+  - the button names;
+  - ticking updates the URL;
+  - search narrows the list, and the search box has focus on open;
+  - ↓ then Enter;
+  - chips remove;
+  - Clear, Done and Esc return focus;
+  - people are grouped by team;
+  - axe with it open.
+- **Grid** (`calendar-grid.test.tsx`): only the chosen people show; the no-matches message; Clear filters.
+- **Focus recovery** (`grid-keyboard.test.tsx`): when a filter hides the focused person, focus moves to the viewer on the same day; focus elsewhere stays put.
+- **More menu** (`more-menu.test.tsx`): Teams opens a dialog with focus in the search box.
+- **E2E** (`filters.spec.ts`):
+  - two teams, then one person from another team (union);
+  - the summary line;
+  - reload keeps the filters (URL);
+  - Clear filters;
+  - axe with a filter open, in both themes.
+- **Perf** (`grid-performance.perf.spec.ts`):
+  - times tick and untick from the click to the frame showing the new rows; Event Timing misses it, because the grid redraws just after the click event ends;
+  - a run on the dev build now gets a 2.5× wider allowance, so a plain `pnpm test:perf` doesn't fail just because React's development build is slower;
+  - production runs (`PERF_BASE_URL`, nightly CI) keep the real budgets.
+
+**Key files:** `src/features/calendar/filters/*`, `src/features/calendar/use-calendar-params.ts`, `src/app/(app)/page.tsx`, `src/app/(app)/layout.tsx`, `src/features/calendar/header/more-menu.tsx`, `src/domain/filter-options.ts`, `src/domain/teams.ts`.
+**Simplicity pass** (my own re-read, then `/simplify`):
+- **Rules written once:**
+  - one `hasFilters` rule, used by the grid model, the grid and the summary line;
+  - one admin-order sort and one "Unassigned" name, in `teams.ts`.
+- **One shape for the filters:** the grid model's `filters` now has the URL's shape (`teams`, `people`), so the grid passes it straight through.
+- **One condition:** `showGrid` is just "there are groups".
+- **Smaller files:** `FilterPanel` is split into `ChosenChips` and `OptionList`, so no function is over about 40 lines.
+- **The More dialogs** share one small `MoreDialog`.
+- **Kept, with reasons:**
+  - **Focusing the search box through a ref.** `autoFocus` worked in the popover but not in the More dialogs: the closing menu took focus back to More, and Radix's focus trap only pulls focus back if it saw focus land inside first.
+  - **`aria-label` names** ("Teams, 2 selected") rather than hidden text inside the badge. The hidden-text version came out as "Teams , 1 selected", and browsers differ on that spacing.
+  - **The `{" "}` before the badge.** It keeps the visible text "Teams 2", so the name matches it (WCAG 2.5.3, flagged by axe).
+
+**Deviations from plan:**
+- **No cmdk / shadcn Command.** cmdk sets `aria-selected` on the highlighted row, which in a multi-select listbox means "selected". So the panel is a plain combobox (search box with `aria-activedescendant`) plus a listbox with `aria-multiselectable`, where `aria-selected` means ticked.
+- **Enter ticks; Space types a space.** The task says "Space/Enter to toggle", but focus stays in the search box and team names have spaces in them.
+- **Filters don't go to the server.** Architecture §6 said `shallow: false` for filters too, which would mean a server round trip per click (~300ms), against the "under 50ms, no refetch" criterion. §6 is updated.
+- **Header moved into the page** (product owner's decision; the folder note in architecture §2 is updated).
+
+**Follow-ups:**
+- **T33:** the Export button goes in the wide header group next to the Key, and an Export item in the More menu (hand-off note already in the T33 task file).
+- **`src/components/ui/command.tsx`** is now unused by app code.
+- **If the "everyone back" time ever matters:** keep filtered-out rows mounted but hidden, rather than removed (the other option in the decision).
+
+**Questions for the product owner:** none.
