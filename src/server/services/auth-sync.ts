@@ -6,8 +6,8 @@ import { computeRole } from "@/domain/roles";
 import type { Prisma } from "@/generated/prisma/client";
 import { env } from "@/lib/env";
 import type { SsoProfile } from "@/lib/schemas/sso-profile";
-import { db } from "./db";
-import { provisionNewUser } from "./services/provision-new-user";
+import { db } from "../db";
+import { provisionNewUser } from "./provision-new-user";
 
 type SyncOptions = { requestedBusinessUnitId?: string };
 
@@ -53,8 +53,10 @@ async function chooseBusinessUnit(tx: Prisma.TransactionClient, requestedId?: st
 
 // The welcome page: a user without a BU picks their first one. Only a super admin can
 // move someone who already has a BU (spec §1.3), so this never changes an existing one.
-// They start Unassigned (no team).
+// They start Unassigned (no team). An unknown BU id is ignored.
 export async function joinFirstBusinessUnit(userId: string, businessUnitId: string) {
+  const unit = await db.businessUnit.findUnique({ where: { id: businessUnitId } });
+  if (!unit) return;
   await db.user.updateMany({
     where: { id: userId, businessUnitId: null },
     data: { businessUnitId },

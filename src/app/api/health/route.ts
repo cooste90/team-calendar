@@ -1,9 +1,9 @@
-import { db } from "@/server/db";
+import { pingDatabase } from "@/server/queries/health";
 
 // Used by Docker and Kubernetes to check the app and its database are working.
 export async function GET() {
   try {
-    await db.$queryRaw`SELECT 1`;
+    await pingDatabase();
     return Response.json({ status: "ok", db: "ok" });
   } catch (error) {
     console.error("Health check failed", error);

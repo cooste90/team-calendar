@@ -2,7 +2,10 @@ import { db } from "@/server/db";
 
 // A user row with only the required fields filled in. The id is reused for the
 // unique fields, so tests can make as many people as they need.
-export function createUser(id: string, teamId: string | null = null) {
+export function createUser(
+  id: string,
+  place: { businessUnitId?: string; teamId?: string | null } = {},
+) {
   return db.user.create({
     data: {
       id,
@@ -12,7 +15,8 @@ export function createUser(id: string, teamId: string | null = null) {
       name: `Test ${id}`,
       firstName: "Test",
       surname: id,
-      teamId,
+      businessUnitId: place.businessUnitId,
+      teamId: place.teamId ?? null,
     },
   });
 }

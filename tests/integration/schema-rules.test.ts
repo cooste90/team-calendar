@@ -136,7 +136,7 @@ it("deleting a team makes its members Unassigned", async () => {
   const team = await db.team.create({
     data: { businessUnitId: unit.id, name: "Payroll", sortOrder: 1 },
   });
-  await createUser("anna", team.id);
+  await createUser("anna", { businessUnitId: unit.id, teamId: team.id });
 
   await db.team.delete({ where: { id: team.id } });
 

@@ -341,6 +341,10 @@ The whole app uses one pattern, so there's only one thing to learn:
   ```
   - Availability is **resolved on the server for the range shown**: each person gets one `WorkDay` per date. The client never needs pattern history.
   - Unassigned people are only included when `canSeeUnassigned`.
+- **As built (T14):** `getCalendarData(actor, businessUnit, from, to)` in `src/server/queries/calendar.ts`. The page first gets the BU with `getBusinessUnitBySlug(actor, slug | null)`, which throws `NotFoundError` for a hidden BU the actor can't view. The result is plain data, so it can be passed to the client grid:
+  - Each person comes with `patterns` and `overrides`, not one `WorkDay` per date. A bar's day count can reach outside the range (T09), and a lookup function can't be passed to a client component. The client builds `availabilityLookup(person.patterns, person.overrides)`.
+  - `viewer` is the actor plus `canSeeUnassigned`. The client builds `canEdit` with `canEditBookingsFor`.
+  - The function runs 7 small indexed queries at once (Prisma loads patterns and overrides with one query each). 300 people × 6 weeks loads in well under 150ms locally.
 - **Changing period, view, BU or filters** updates the URL through nuqs with `shallow: false`, so Next re-renders the page on the server with the new data. Wrap the update in `startTransition` and dim the grid while `isPending` is true. That's the whole "loading between periods" story.
 - **Other people's changes:** a tiny `useRefreshOnFocus()` hook calls `router.refresh()` when the window regains focus (spec §2.5). No polling.
 - **Cache Components (`cacheComponents`) stays OFF.** All data is per-user and dynamic.

@@ -8,13 +8,14 @@ A team availability calendar showing who's in and who's off. The full plan is in
 |---|---|---|
 | 0 · Foundation | T01–T04: tooling, database, tests and CI, design system | Done |
 | 1 · Domain logic | T05–T09: dates, half days, working patterns, booking rules, permissions, public holidays, tallies, grid model | Done |
-| 2 · Data and auth | T10–T14: database schema and migrations, sign-in, first-time sign-in, seed data (T10–T13 done) | Next: T14, server actions and data loading |
-| 3–8 | Calendar UI, bookings, profile, admin, export, hardening | Not started |
+| 2 · Data and auth | T10–T14: database schema and migrations, sign-in, first-time sign-in, seed data, server actions and data loading | Done |
+| 3 · Calendar UI | T15–T21: app shell, grid, team groups, keyboard, filters | Next: T15, app shell and header |
+| 4–8 | Bookings, profile, admin, export, hardening | Not started |
 
 There's no calendar screen yet. What you can open today:
 - http://localhost:3000/sign-in: the sign-in page. With more than one business unit it asks first-time users which one they belong to. "Developer sign-in" takes you to the fake sign-in (dev only).
 - http://localhost:3000/dev-sign-in: sign in as one of the seeded people (see "Seeded accounts" below) or type in your own (dev only). A new person with no business unit picks one on the welcome page.
-- http://localhost:3000/: a placeholder home page with a Sign out button. It sends you to `/sign-in` if you're not signed in.
+- http://localhost:3000/: the calendar page. Until the grid arrives (T16) it shows the business unit, the week and counts of people and bookings (try `?date=2026-12-24` or `?view=month`). It sends you to `/sign-in` if you're not signed in.
 - http://localhost:3000/dev/design-system: every colour, leave chip and component, in light and dark (dev only)
 - http://localhost:3000/api/health: checks the app can reach the database
 

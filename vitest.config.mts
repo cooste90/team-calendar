@@ -3,7 +3,8 @@ import path from "node:path";
 import { defineConfig } from "vitest/config";
 
 // Three kinds of tests (see docs/plan/01-architecture.md §10):
-//   unit        - pure functions in src/domain and src/lib
+//   unit        - pure functions in src/domain and src/lib, and src/server code with its
+//                 request-only parts (session, refresh) mocked
 //   component   - React components in a fake browser (happy-dom)
 //   integration - server code against the real test database (pnpm db:up first)
 export default defineConfig({
@@ -27,7 +28,7 @@ export default defineConfig({
         test: {
           name: "unit",
           environment: "node",
-          include: ["src/domain/**/*.test.ts", "src/lib/**/*.test.ts"],
+          include: ["src/domain/**/*.test.ts", "src/lib/**/*.test.ts", "src/server/**/*.test.ts"],
         },
       },
       {

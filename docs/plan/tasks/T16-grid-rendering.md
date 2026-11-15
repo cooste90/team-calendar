@@ -13,6 +13,7 @@ A read-only calendar grid that looks like the mockup, driven entirely by `buildG
 
 ## Deliverables (`src/features/calendar/grid/`)
 1. **`CalendarGrid`** (client): receives the `getCalendarData` result as a prop from `(app)/page.tsx` and calls `buildGridModel(...)`. The React Compiler handles memoising, so no `useMemo`.
+   - From T14: each person arrives with `patterns` and `overrides`, so build `availability: availabilityLookup(person.patterns, person.overrides)`. Build `viewer.canEdit` from the plain `viewer` with `(person) => canEditBookingsFor(viewer, person)`. Functions can't be passed from the server page to a client component.
    - It renders a scroll container (`overflow: auto`, `max-height: calc(100dvh - header)`, `scroll-padding` for sticky areas) holding:
      - `GridHeaderRow`: a sticky top row with a sticky corner cell. `DayHeader` shows the weekday, the date (the today pill), and a PH name chip with a tooltip.
      - per group, `TeamGroupRow`: a simple non-collapsing header in this task (T17 adds collapse).

@@ -7,7 +7,7 @@ import { setSessionCookie } from "better-auth/cookies";
 import { z } from "zod";
 import { devSignInEnabled } from "@/lib/env";
 import { ssoProfileSchema } from "@/lib/schemas/sso-profile";
-import { syncSsoProfile } from "./auth-sync";
+import { syncSsoProfile } from "./services/auth-sync";
 
 const bodySchema = z.object({
   profile: ssoProfileSchema,

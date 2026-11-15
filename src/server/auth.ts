@@ -6,10 +6,10 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { genericOAuth } from "better-auth/plugins";
 import { env, ssoConfigured } from "@/lib/env";
-import { syncSsoProfile } from "./auth-sync";
 import { takeBusinessUnitChoice } from "./business-unit-choice";
 import { db } from "./db";
 import { devSignInPlugin } from "./dev-sign-in-plugin";
+import { syncSsoProfile } from "./services/auth-sync";
 import { mapSsoClaims } from "./sso-claims";
 
 export const SSO_PROVIDER_ID = "sso";

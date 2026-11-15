@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { type SsoProfile, ssoProfileSchema } from "@/lib/schemas/sso-profile";
 import { auth, SSO_PROVIDER_ID } from "@/server/auth";
 import { rememberBusinessUnitChoice, takeBusinessUnitChoice } from "@/server/business-unit-choice";
-import { db } from "@/server/db";
+import { findBusinessUnitIdByName } from "@/server/queries/business-units";
 import { devSsoProfiles } from "../../../prisma/seed/dev-sso-profiles";
 
 // The sign-in page's "Sign in with SSO" button. Better Auth gives us the identity
@@ -46,10 +46,7 @@ export async function signInAsDevProfile(formData: FormData) {
   }
   let businessUnitId: string | undefined;
   if (devProfile.businessUnit) {
-    const businessUnit = await db.businessUnit.findUnique({
-      where: { name: devProfile.businessUnit },
-    });
-    businessUnitId = businessUnit?.id;
+    businessUnitId = await findBusinessUnitIdByName(devProfile.businessUnit);
   }
   await devSignIn(devProfile.profile, businessUnitId);
 }

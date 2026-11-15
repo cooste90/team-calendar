@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 import { SignOutButton } from "@/components/sign-out-button";
 import { Button } from "@/components/ui/button";
 import { joinBusinessUnit } from "@/server/actions/join-business-unit";
-import { joinFirstBusinessUnit } from "@/server/auth-sync";
 import { listBusinessUnits } from "@/server/queries/business-units";
+import { joinFirstBusinessUnit } from "@/server/services/auth-sync";
 import { getCurrentUser } from "@/server/session";
 
 export const metadata: Metadata = { title: "Choose your business unit · WestCal" };

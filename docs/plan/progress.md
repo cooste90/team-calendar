@@ -506,3 +506,55 @@ Append one entry per task, newest at the bottom. Keep entries short and factual.
 - **T19:** use `pnpm db:seed:large` for the performance check.
 **Questions for the product owner:** none.
 **CI fix (after merge):** the first CI run of T13 failed in `checks`. T09's grid performance test took 106ms under coverage on the shared runner, against a 100ms safety limit; nothing in T13 caused it. The limit is now 250ms, with a comment explaining why. The 25ms developer-machine target is unchanged, and T19 measures real performance.
+
+## T14 — Server action helper, data loading and URL state — 2026-11-15
+**Status:** done
+**Summary:**
+- **`src/domain/errors.ts`:** added `NotFoundError` and `ConflictError` (with `details`).
+- **`authedAction(schema, handler)`** in `src/server/authed-action.ts`:
+  - steps: `requireUser()` → zod `safeParse` (VALIDATION, with every issue message in `details`) → handler → `refresh()` → `{ ok: true, data }`;
+  - thrown `AppError`s become their code (CONFLICT includes `details`);
+  - anything else is logged and returned as `INTERNAL` with a generic message;
+  - `unstable_rethrow` lets `redirect()` / `notFound()` through.
+- **Read functions** (`src/server/queries/`):
+  - `getVisibleBusinessUnits(actor)`;
+  - `getBusinessUnitBySlug(actor, slug | null)` (null = the person's own BU; `NotFoundError` for a hidden BU they can't view or an unknown slug);
+  - `getCalendarData(actor, businessUnit, from, to)`;
+  - `pingDatabase()`, used by the health route.
+- **nuqs 2.10.3:**
+  - `NuqsAdapter` in the root layout;
+  - `src/lib/search-params.ts` defines every architecture §6.3 param once (`calendarSearchParams` + `calendarSearchParamsCache`), plus `VIEW_COOKIE`;
+  - the `setViewPreference` action (built with `authedAction`) stores the view for a year, and the page reads it as the default view.
+- **Client pieces:**
+  - `useRefreshOnFocus()`;
+  - zustand 5.1.0 `useCalendarStore` (just `announcement` / `announce` for now);
+  - `<LiveRegion />` and `<Toaster />` in the new `(app)` layout.
+- **Placeholder calendar page** (`src/app/(app)/page.tsx`): view from the URL or cookie, the date from the URL or today, BU from the URL or the person's own. It shows "West Operations, 2026-11-15 to 2026-11-21" and "47 people, 112 bookings".
+- **Tests:**
+  - **Unit:** 11 new, 353 in total. Every error class maps to its code, invalid input gives VALIDATION without running the handler, and an unexpected error gives INTERNAL without leaking details. The unit project now also includes `src/server/**/*.test.ts`, with the session and `next/cache` mocked.
+  - **Integration:** 8 new, 56 in total:
+    - USER vs ADMIN Unassigned scoping;
+    - range filtering of bookings and public holidays;
+    - availability worked out from the returned patterns and overrides, inside and outside the range;
+    - hidden BU → `NotFoundError` (and allowed for a super admin);
+    - an unknown slug;
+    - performance: 300 people × 6 weeks under 150ms on the large seed (passes locally; skipped in CI).
+  - **E2E:** 15 in total. The calendar page shows counts, and `?date=2024-06-12` shows the right week with 0 bookings.
+**Key files:** `src/server/authed-action.ts`, `src/server/queries/{calendar,business-units,health}.ts`, `src/lib/search-params.ts`, `src/lib/use-refresh-on-focus.ts`, `src/features/calendar/calendar-store.ts`, `src/components/live-region.tsx`, `src/app/(app)/{layout,page}.tsx`, `src/server/actions/set-view-preference.ts`, `src/domain/errors.ts`
+**Simplicity pass:**
+- **No database calls in actions or pages.** `auth-sync.ts` moved to `src/server/services/`. The join and dev sign-in actions call services and queries (`joinFirstBusinessUnit` now checks the BU exists itself, and there's a new `findBusinessUnitIdByName`). The health route calls `pingDatabase()`.
+- **Grep check:** apart from `src/server/queries`, `src/server/services` and `db.ts`, the only file that touches the client is `auth.ts`, which hands it to Better Auth's Prisma adapter.
+- **One helper, no variants.** One `authedAction`, no admin variants.
+- **One set of parsers,** shared by the server cache and `useQueryStates`.
+**Deviations from plan:**
+- **People come back with `patterns` and `overrides`, not a lookup or a per-day array.** A lookup function can't be passed from a server page to a client component, and the grid needs availability outside the visible range (T09), so a per-day array for the range isn't enough. The client builds `availabilityLookup(patterns, overrides)`. Architecture §6.1 and T16 are updated. The plan's test "the availability array length equals the number of days" became "availability can be worked out for any day from the returned data".
+- **`getCalendarData` takes the BU object** (already permission-checked by `getBusinessUnitBySlug`) instead of an id, and checks `canViewBusinessUnit` again itself, without a query.
+- **7 queries, not "at most 5".** They are teams, users, patterns, overrides, bookings, holidays, and the viewer's collapsed groups. Prisma loads each relation with its own query, and single-query joins (`relationJoins`) are still a preview feature. The queries run at the same time, and the performance test shows 300 people × 6 weeks comfortably under 150ms.
+- **No UNAUTHENTICATED result.** A signed-out action call is redirected to `/sign-in` by `requireUser`, as pages are, instead of returning an error result.
+- **Pre-sign-in exceptions.** "Every query and service takes the actor" holds except for the sign-in path, which runs before there is an actor: `syncSsoProfile`, `joinFirstBusinessUnit`, `listBusinessUnits`, `findBusinessUnitIdByName`, `provisionNewUser`, and `saveBookingChanges` (which takes `actorId`).
+- **The test helper `createUser(id, { businessUnitId, teamId })`** now takes an options object.
+**Follow-ups:**
+- **T15:** use `getVisibleBusinessUnits` for the BU switcher, and `setViewPreference` when the view changes.
+- **T16:** see the note in its task file about building the lookup and `canEdit` on the client.
+- **T34:** a `NotFoundError` from the page (e.g. `?bu=` a hidden BU) currently shows the default error page.
+**Questions for the product owner:** none.

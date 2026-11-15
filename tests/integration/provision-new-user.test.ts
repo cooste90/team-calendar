@@ -1,8 +1,8 @@
 import { expect, it } from "vitest";
 import { toDbDate } from "@/domain/dates";
-import { syncSsoProfile } from "@/server/auth-sync";
 import { db } from "@/server/db";
 import { toBooking } from "@/server/mappers";
+import { syncSsoProfile } from "@/server/services/auth-sync";
 
 const newcomer = {
   ssoId: "sso-new",

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { SsoProfile } from "@/lib/schemas/sso-profile";
-import { syncSsoProfile } from "@/server/auth-sync";
 import { db } from "@/server/db";
 import { toPatternVersion } from "@/server/mappers";
+import { syncSsoProfile } from "@/server/services/auth-sync";
 
 const priya: SsoProfile = {
   ssoId: "sso-priya",

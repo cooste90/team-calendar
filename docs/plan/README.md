@@ -71,7 +71,7 @@ Size key: **S** ≈ small, under 300 lines changed · **M** ≈ 300–800 · **L
 - [x] [T11](tasks/T11-auth.md) Better Auth, SSO profile sync, roles, dev sign-in, session guard · **L**
 - [x] [T12](tasks/T12-onboarding.md) Sign-in page BU dropdown, welcome page, new-user provisioning · **M**
 - [x] [T13](tasks/T13-seed.md) Seed data (faker), dev SSO profiles, large seed · **M**
-- [ ] [T14](tasks/T14-action-query-infrastructure.md) Server action helper, data loading, URL state (nuqs) · **M**
+- [x] [T14](tasks/T14-action-query-infrastructure.md) Server action helper, data loading, URL state (nuqs) · **M**
 
 ### Phase 3 — Calendar UI
 - [ ] [T15](tasks/T15-app-shell-header.md) App shell and header navigation · **M**

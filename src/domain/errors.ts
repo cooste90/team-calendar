@@ -20,6 +20,25 @@ export class ForbiddenError extends AppError {
   }
 }
 
+// The thing doesn't exist, or the signed-in person isn't allowed to know it exists
+// (e.g. a hidden BU they don't belong to).
+export class NotFoundError extends AppError {
+  constructor(message: string) {
+    super("NOT_FOUND", message);
+  }
+}
+
+// The change clashes with existing bookings. `details` lists the clashes so the UI can
+// show them (spec §5.5).
+export class ConflictError extends AppError {
+  readonly details: string[];
+
+  constructor(message: string, details: string[]) {
+    super("CONFLICT", message);
+    this.details = details;
+  }
+}
+
 // Something about the input breaks a rule, e.g. changing the type of a booking that has started.
 export class ValidationError extends AppError {
   constructor(message: string) {

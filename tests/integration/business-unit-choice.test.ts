@@ -1,8 +1,8 @@
 import { beforeEach, expect, it } from "vitest";
 import type { SsoProfile } from "@/lib/schemas/sso-profile";
-import { syncSsoProfile } from "@/server/auth-sync";
 import { readBusinessUnitChoice, signBusinessUnitChoice } from "@/server/business-unit-choice";
 import { db } from "@/server/db";
+import { syncSsoProfile } from "@/server/services/auth-sync";
 
 const newcomer: SsoProfile = {
   ssoId: "sso-new",
