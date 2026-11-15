@@ -8,7 +8,7 @@ type Props = {
   template: string;
   compact: boolean;
   canOpenProfiles: boolean;
-  tabStop: CellPosition | null;
+  tabStop: CellPosition | null; // null unless one of this team's people holds it
   onToggle: () => void;
 };
 

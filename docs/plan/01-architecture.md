@@ -434,7 +434,8 @@ planReconcileForPerson(person, futureHolidays, fromDate): BookingChanges   // af
 - **Accessible names** come from the model, for example: `"Tuesday 10 November, Tom Okafor. Annual leave, Monday 9 to Wednesday 11 November, 3 days."`, plus ", not a working day" / ", morning only" and " View only." where they apply. T18 may append a short key hint.
 - **Bars are presentational** (`aria-hidden`) pointer targets layered over the cells. **Keyboard and screen-reader users work through the cells** (`role="gridcell"`, roving tabindex). See `03-accessibility.md §3`.
 - Any bar narrower than 24 CSS px, such as month-view half days, gets `pointer-events: none`, so the click lands on the cell (WCAG 2.5.8).
-- **Performance without virtualisation:** every row is rendered normally. Each team group gets the CSS `content-visibility: auto` (with `contain-intrinsic-size`), so the browser skips drawing groups that are off-screen. With the React Compiler on, that's enough for one BU (about 300 rows at most). The header row and name column are sticky with plain CSS `position: sticky`.
+- **Performance without virtualisation:** every row is rendered normally. Each team group gets the CSS `content-visibility: auto` (with `contain-intrinsic-size` worked out from its row count), so the browser skips drawing groups that are off-screen. With the React Compiler on, that's enough for one BU (about 300 rows at most). The header row and name column are sticky with plain CSS `position: sticky`.
+  - **As measured in T19:** two things keep an arrow key cheap with 300 rows. The model is built in a `useMemo`, because the compiler didn't cache that call. Only the team holding the tab stop gets new props, so React skips the other teams. Results: a production month view with 300 people loads the next month in about 0.3s, scrolls with no long tasks, and moves focus within one frame. `pnpm test:perf` checks this (nightly in CI).
 
 ---
 

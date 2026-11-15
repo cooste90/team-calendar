@@ -85,6 +85,21 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:e2e ${{ github.event_name == 'schedule' && '--project=firefox' || '' }}
+      # Nightly only: the grid performance check (large seed) on a production build.
+      # Sign-in still goes through the dev server Playwright starts; the production server
+      # on :3200 shares its test database and session cookie. It's ready long before the
+      # test needs it, because the test seeds the database first.
+      - run: pnpm build
+        if: github.event_name == 'schedule'
+      - run: pnpm start -p 3200 &
+        if: github.event_name == 'schedule'
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL_TEST }}
+          BETTER_AUTH_URL: http://localhost:3200
+      - run: pnpm test:perf
+        if: github.event_name == 'schedule'
+        env:
+          PERF_BASE_URL: http://localhost:3200
       - uses: actions/upload-artifact@v7
         if: failure()
         with:

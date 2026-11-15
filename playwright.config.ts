@@ -19,9 +19,11 @@ export default defineConfig({
     baseURL: `http://localhost:${port}`,
     trace: "retain-on-failure",
   },
+  // The performance check (*.perf.spec.ts) is its own project: `pnpm test:perf`.
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+    { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: /\.perf\.spec\.ts$/ },
+    { name: "firefox", use: { ...devices["Desktop Firefox"] }, testIgnore: /\.perf\.spec\.ts$/ },
+    { name: "perf", use: { ...devices["Desktop Chrome"] }, testMatch: /\.perf\.spec\.ts$/ },
   ],
   webServer: {
     // Always the dev server: dev-only pages (dev sign-in, the design gallery) are switched

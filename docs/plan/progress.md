@@ -786,3 +786,54 @@ Append one entry per task, newest at the bottom. Keep entries short and factual.
   3. Check that Page Down announces "Week of …".
 
   Then note what you hear here or in `docs/a11y-report.md`.
+
+## T19 — Grid performance check with the large seed — 2026-11-15
+**Status:** done. All budgets are met on a production build; no new dependencies.
+**Machine:** Intel Core Ultra 7 258V, 32 GB RAM, Windows 11, Node 24.11.1, Chromium (Playwright 1.65).
+**Results** (South Health, 300 people, month view, production build, 3 runs):
+
+| Budget | Before T19 | After T19 |
+|---|---|---|
+| Next month on screen, under 1s | 565 ms | 266–364 ms |
+| No long tasks over 50ms while scrolling | none | none (scrolled ~12,900px) |
+| Arrow key under 16ms | every press 16–48 ms | no press at 16 ms or more (0 of 40) |
+
+On the dev server (React's slower development build) it's now 702–741 ms to the next month, no long tasks, and at most one 16 ms key press. Before the fix, key presses there took up to 240 ms.
+
+**What was slow, and the fix:**
+- **`buildGridModel` ran on every arrow key.**
+  - **What I found:** the compiled `CalendarGrid` called it with no cache check.
+  - **Why** (the `/simplify` altitude review ran the compiler to confirm): the compiler can't tell the model isn't changed later, so it won't cache it across the hook calls that follow.
+  - **Result:** every key press rebuilt the model for 300 people, and all 9,300 cells re-rendered, because every row was a new object.
+  - **Fix:** a `useMemo` around the call, with a comment saying why.
+- **Every team re-rendered its rows on each key press,** because every team received the new tab stop. Now only the team holding it gets it; the others get `null`, so their rows come back from the compiler's cache.
+
+**Other checks:**
+- **Payload:**
+  - **HTML:** the first page load is 3.8 MB raw but 142 KB gzipped.
+  - **Next-month data (RSC):** 366 KB raw, 43 KB gzipped.
+  - **What fills it:** of the raw data, bookings are 275 KB (891 bookings, with notes) and availability patterns only 29 KB.
+  - **No change made:** the plan's fix (availability as a short string) would save under 29 KB, and the gzipped size is small. If size ever matters, the booking fields the grid doesn't show (notes, `createdById`) are where the savings are. T25's details popover needs notes, though.
+- **Collapse clicks (T17 note):** the click shows at once (`useOptimistic`). The background refresh is the same round trip as a navigation (about 0.3s, 43 KB gzipped), and nothing visible waits for it. Kept as it is: no need for actions to skip `refresh()`.
+- **CSS containment:** groups already use `content-visibility: auto` with their real height (T17). The sticky header, name column and keyboard focus still work, and the T18 keyboard tests pass.
+- **Hover:** CSS only (`hover:bg-cell-hover`). No state changes on hover.
+
+**Tests:** `tests/e2e/grid-performance.perf.spec.ts`, run with `pnpm test:perf` (its own Playwright project, not part of `pnpm test:e2e`).
+- **Setup:** it loads the large seed into the test database.
+- **Asserts:** the three budgets, with 1.5× tolerance locally and 3× in CI; and that it really measured 300 rows and scrolled down them.
+- **Production:** set `PERF_BASE_URL` to measure a production build; the header comment gives the commands.
+- **Nightly CI** builds the app, starts it on :3200 and measures that.
+**Key files:** `src/features/calendar/grid/calendar-grid.tsx`, `tests/e2e/grid-performance.perf.spec.ts`, `playwright.config.ts`, `package.json` (`test:perf`), `.github/workflows/ci.yml`, `docs/plan/01-architecture.md` §9
+**Simplicity pass** (my own re-read, then `/simplify`):
+- **The perf test measures only what it asserts.** The one-off payload numbers are recorded here instead of every night.
+- **No clean-up seed:** the next `pnpm test:e2e` re-seeds the default data anyway.
+- **One type for the browser-side records.**
+- **Reverted my `onToggle` change.** The compiler caches each team's rows separately from its toggle function, so it bought nothing. Re-measured on production afterwards: no slow key presses.
+**Deviations from plan:**
+- **No per-cell store selector.** The plan's suggested fix can't apply the tab-stop fallbacks (hidden person, new period) without the layout. Two smaller changes in `CalendarGrid` did the job.
+- **The perf test signs in on the dev server.** Production turns dev sign-in off, so a production measurement reuses the session cookie on a second server (`PERF_BASE_URL`).
+- **Tracing off and key presses 50 ms apart in the perf test.** Playwright's trace copies the whole page around every action, which took longer than the key presses being measured. Presses sent back to back queue behind each other's frames; a held-down key repeats every 33–50 ms.
+**Follow-ups:**
+- **Running it:** `pnpm test:perf` replaces the test database's data with the large seed. Run it on its own; the next `pnpm test:e2e` puts the default seed back.
+- **CI:** the first nightly run will be the first CI run of the production perf check. If it fails only on timing, look at the numbers in its log before raising the tolerance.
+**Questions for the product owner:** none.

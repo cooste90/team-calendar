@@ -15,6 +15,7 @@
     "test": "vitest run --project unit --project component",
     "test:int": "vitest run --project integration",
     "test:e2e": "playwright test --project=chromium",
+    "test:perf": "playwright test --project=perf",
     "check": "pnpm lint && pnpm typecheck && pnpm test",
     "prepare": "lefthook install",
     "db:up": "docker compose up -d --wait",

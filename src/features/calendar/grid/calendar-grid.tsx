@@ -1,13 +1,18 @@
 "use client";
 
-import { startTransition, useEffect, useOptimistic, useRef } from "react";
+import { startTransition, useEffect, useMemo, useOptimistic, useRef } from "react";
 import { toast } from "sonner";
 import { availabilityLookup } from "@/domain/availability";
 import type { Period, View } from "@/domain/dates";
 import { formatPeople, formatPeriodAnnouncement, formatPeriodTitle } from "@/domain/format";
 import { buildGridModel, withGroupCollapsed } from "@/domain/grid-model";
 import type { GridGroup } from "@/domain/grid-model-types";
-import { type GridLayout, NAME_COLUMN, tabStopCell } from "@/domain/grid-navigation";
+import {
+  type CellPosition,
+  type GridLayout,
+  NAME_COLUMN,
+  tabStopCell,
+} from "@/domain/grid-navigation";
 import { canEditBookingsFor, canManageBusinessUnit } from "@/domain/permissions";
 import { setTeamCollapsed } from "@/server/actions/set-team-collapsed";
 import type { CalendarData } from "@/server/queries/calendar";
@@ -25,6 +30,13 @@ type Props = {
   filters: { teamIds: string[]; personIds: string[] };
 };
 
+// Each team is only given the tab stop if one of its people holds it, so on an arrow key
+// the other teams get the same props and their rows come back from the compiler's cache
+// instead of re-rendering (T19).
+function isInGroup(group: GridGroup, cell: CellPosition | null) {
+  return group.rows.some((row) => row.personId === cell?.personId);
+}
+
 // The calendar grid (architecture §9). buildGridModel works out everything; the
 // components below only turn the model into elements.
 export function CalendarGrid({ data, view, period, filters }: Props) {
@@ -39,31 +51,39 @@ export function CalendarGrid({ data, view, period, filters }: Props) {
       withGroupCollapsed(ids, change.groupId, change.collapsed),
   );
 
-  const model = buildGridModel({
-    view,
-    period,
-    today: data.today,
-    viewer: {
-      id: viewer.id,
-      teamId: viewer.teamId,
-      canSeeUnassigned: viewer.canSeeUnassigned,
-      canEdit: (person) =>
-        canEditBookingsFor(viewer, {
+  // buildGridModel is the expensive step (about 10ms for 300 people). The React Compiler
+  // can't tell that the model is never changed afterwards, so it doesn't cache it, and
+  // without useMemo every arrow key rebuilt the model and re-rendered all 9,300 cells of
+  // a 300-person month (measured in T19).
+  const model = useMemo(
+    () =>
+      buildGridModel({
+        view,
+        period,
+        today: data.today,
+        viewer: {
+          id: viewer.id,
+          teamId: viewer.teamId,
+          canSeeUnassigned: viewer.canSeeUnassigned,
+          canEdit: (person) =>
+            canEditBookingsFor(viewer, {
+              ...person,
+              businessUnitId: data.businessUnitId,
+            }),
+        },
+        teams: data.teams,
+        // Functions can't come from the server, so each lookup is built here.
+        people: data.people.map((person) => ({
           ...person,
-          businessUnitId: data.businessUnitId,
-        }),
-    },
-    teams: data.teams,
-    // Functions can't come from the server, so each lookup is built here.
-    people: data.people.map((person) => ({
-      ...person,
-      availability: availabilityLookup(person.patterns, person.overrides),
-    })),
-    bookings: data.bookings,
-    publicHolidays: data.publicHolidays,
-    collapsedTeamIds,
-    filters,
-  });
+          availability: availabilityLookup(person.patterns, person.overrides),
+        })),
+        bookings: data.bookings,
+        publicHolidays: data.publicHolidays,
+        collapsedTeamIds,
+        filters,
+      }),
+    [data, viewer, view, period, collapsedTeamIds, filters],
+  );
 
   function toggleGroup(group: GridGroup) {
     const collapsed = !group.collapsed;
@@ -138,7 +158,7 @@ export function CalendarGrid({ data, view, period, filters }: Props) {
                 template={template}
                 compact={compact}
                 canOpenProfiles={canManage}
-                tabStop={tabStop}
+                tabStop={isInGroup(group, tabStop) ? tabStop : null}
                 onToggle={() => toggleGroup(group)}
               />
             ))}

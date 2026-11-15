@@ -9,7 +9,7 @@ A team availability calendar showing who's in and who's off. The full plan is in
 | 0 · Foundation | T01–T04: tooling, database, tests and CI, design system | Done |
 | 1 · Domain logic | T05–T09: dates, half days, working patterns, booking rules, permissions, public holidays, tallies, grid model | Done |
 | 2 · Data and auth | T10–T14: database schema and migrations, sign-in, first-time sign-in, seed data, server actions and data loading | Done |
-| 3 · Calendar UI | T15–T21: app shell, grid, team groups, keyboard, filters (T15–T18 done) | Next: T19, performance check |
+| 3 · Calendar UI | T15–T21: app shell, grid, team groups, keyboard, filters (T15–T19 done) | Next: T20, key popover |
 | 4–8 | Bookings, profile, admin, export, hardening | Not started |
 
 What you can open today:
@@ -85,6 +85,7 @@ Sign in as these on http://localhost:3000/dev-sign-in (the list lives in `prisma
 | `pnpm test:coverage` | Unit and component tests with a coverage report (`src/domain` must be 100%) |
 | `pnpm test:int` | Integration tests against the test database (run `pnpm db:up` first) |
 | `pnpm test:e2e` | Browser tests with accessibility checks (first time: `pnpm exec playwright install chromium`) |
+| `pnpm test:perf` | Grid performance check with the large seed (replaces the test database's data; see the test file for measuring a production build) |
 | `pnpm check` | Lint, type-check and test: run before pushing |
 | `pnpm db:up` / `pnpm db:down` | Start or stop the local databases |
 | `pnpm db:migrate` | Apply schema changes (creates a migration if `schema.prisma` changed) |
