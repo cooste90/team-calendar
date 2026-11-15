@@ -25,7 +25,7 @@ test("a new person who didn't choose a BU picks one on the welcome page", async 
   await page.getByRole("radio", { name: "North Finance" }).check();
   await page.getByRole("button", { name: "Continue" }).click();
   await expect(page).toHaveURL("/");
-  await expect(page.getByRole("heading", { name: "WestCal" })).toBeVisible();
+  await expect(page.getByText("North Finance · all teams · all people")).toBeVisible();
 });
 
 test("a BU chosen on the sign-in page is used for a new person", async ({ page }) => {

@@ -1,0 +1,74 @@
+import { expect, type Page, test } from "@playwright/test";
+import { expectNoA11yViolations } from "./a11y";
+import { signInAs } from "./sign-in";
+
+const title = (page: Page) => page.getByRole("heading", { level: 1 });
+
+test("the chosen view is remembered after leaving and coming back", async ({ page }) => {
+  await signInAs(page, "Priya Shah");
+  await page.getByRole("radio", { name: "Month" }).click();
+  await expect(page).toHaveURL(/view=month/);
+  await expect(title(page)).toHaveText(/^[A-Z][a-z]+ \d{4}$/); // e.g. "November 2026"
+
+  // No view in the URL: the cookie decides.
+  await page.goto("/");
+  await expect(title(page)).toHaveText(/^[A-Z][a-z]+ \d{4}$/);
+  await expect(page.getByRole("radio", { name: "Month" })).toBeChecked();
+});
+
+test("Previous, Next and the keyboard shortcuts move through the weeks", async ({ page }) => {
+  await signInAs(page, "Priya Shah");
+  await page.goto("/?view=week&date=2026-11-18");
+  await expect(title(page)).toHaveText("15 – 21 November 2026");
+  await expect(page).toHaveTitle("Week of 15 Nov 2026 · West Operations · WestCal");
+
+  await page.getByRole("button", { name: "Next week" }).click();
+  await expect(page).toHaveURL(/date=2026-11-22/);
+  await expect(title(page)).toHaveText("22 – 28 November 2026");
+
+  await page.getByRole("button", { name: "Previous week" }).click();
+  await page.getByRole("button", { name: "Previous week" }).click();
+  await expect(title(page)).toHaveText("8 – 14 November 2026");
+
+  await page.keyboard.press("Alt+BracketRight");
+  await expect(title(page)).toHaveText("15 – 21 November 2026");
+});
+
+test("a regular user can't see the hidden BU; a super admin can", async ({ page }) => {
+  await signInAs(page, "Priya Shah");
+  const switcher = page.getByRole("combobox", { name: "Business unit" });
+  await expect(switcher.getByRole("option")).toHaveText(["North Finance", "West Operations"]);
+
+  // Switching BU shows that BU.
+  await switcher.selectOption({ label: "North Finance" });
+  await expect(page).toHaveURL(/bu=north-finance/);
+  await expect(page.getByText("North Finance · all teams · all people")).toBeVisible();
+
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await signInAs(page, "Grace Adeyemi");
+  await expect(switcher.getByRole("option")).toHaveText([
+    "Corporate Services (hidden)",
+    "North Finance",
+    "West Operations",
+  ]);
+});
+
+for (const theme of ["light", "dark"] as const) {
+  test(`the calendar page has no accessibility violations (${theme})`, async ({ page }) => {
+    await signInAs(page, "Tom Okafor");
+    await expectNoA11yViolations(page, { theme });
+  });
+}
+
+test("at 320px wide the header wraps without scrolling the page sideways", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await signInAs(page, "Tom Okafor");
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBe(0);
+  for (const name of ["Previous week", "Next week", "Today", "Sign out"]) {
+    await expect(page.getByRole("button", { name })).toBeInViewport();
+  }
+});

@@ -1,9 +1,9 @@
 // The calendar's URL state (architecture §6.3), defined once. The page reads it with
-// calendarSearchParamsCache; client components use the same parsers with useQueryStates.
+// loadCalendarSearchParams; client components use the same parsers with useQueryStates.
 // Imported from "nuqs/server" so this file works on the server and in the browser.
 import {
+  createLoader,
   createParser,
-  createSearchParamsCache,
   parseAsArrayOf,
   parseAsString,
   parseAsStringLiteral,
@@ -32,7 +32,7 @@ export const calendarSearchParams = {
   ),
 };
 
-export const calendarSearchParamsCache = createSearchParamsCache(calendarSearchParams);
+export const loadCalendarSearchParams = createLoader(calendarSearchParams);
 
 // The cookie that remembers week or month view (set by setViewPreference).
 export const VIEW_COOKIE = "westcal-view";

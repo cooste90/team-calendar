@@ -24,6 +24,7 @@ The header Key button shows the leave types on hover, focus or click, accessibly
      - "Half days: morning on the left, afternoon on the right";
      - a "Keyboard shortcuts" link button that opens the T18 help dialog.
 2. Put it in the header slot reserved in T15, and in the "More" menu when the header is narrow. There, it opens as a dialog instead of a hover popover.
+   - From T15: the "More" menu doesn't exist yet, because it would have been empty. Build it here, as the T15 task describes: below 720px of header width (CSS container query on the header), Key and Export collapse into a "More" DropdownMenu. The header slot is the right-hand group in `src/features/calendar/header/app-header.tsx`.
 
 ## Tests
 - Component: opens on hover, focus and click; Esc closes it and returns focus to the trigger; the content stays open while hovered; the list has 9 items with codes and labels.

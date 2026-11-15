@@ -34,6 +34,11 @@ The header bar from the mockup, with working period navigation, the BU switcher 
    - One `keydown` listener in one small hook, with a plain `switch` on the key.
    - Using Alt means WCAG 2.1.4 is met without a settings screen. Note this in a comment.
 
+**As built:** see the T15 entry in `progress.md`.
+- The "More" menu moved to T20, the first task with something to put in it.
+- The selects are native `<select>`s styled like the mockup.
+- Sign out sits in the user-menu slot until T26.
+
 ## Tests
 - Component: PeriodNav computes the right anchors; the month dropdown in week view jumps to the week containing the 1st; year options span ±5.
 - E2E: change view → reload → the same view opens (cookie); Prev/Next updates the title and the URL; the BU switcher is hidden for a single-BU user and visible for a super admin; axe in both themes; zoom 320px → no horizontal page scroll and every control reachable through "More".

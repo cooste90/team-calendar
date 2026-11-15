@@ -74,7 +74,7 @@ Size key: **S** ≈ small, under 300 lines changed · **M** ≈ 300–800 · **L
 - [x] [T14](tasks/T14-action-query-infrastructure.md) Server action helper, data loading, URL state (nuqs) · **M**
 
 ### Phase 3 — Calendar UI
-- [ ] [T15](tasks/T15-app-shell-header.md) App shell and header navigation · **M**
+- [x] [T15](tasks/T15-app-shell-header.md) App shell and header navigation · **M**
 - [ ] [T16](tasks/T16-grid-rendering.md) Grid rendering: week/month, bars, hatching, today, PH markers · **L**
 - [ ] [T17](tasks/T17-grid-team-groups.md) Team groups: ordering, collapse persistence, Unassigned, admin links · **M**
 - [ ] [T18](tasks/T18-grid-keyboard-sr.md) Grid keyboard navigation and screen-reader model · **M**

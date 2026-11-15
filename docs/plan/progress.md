@@ -558,3 +558,54 @@ Append one entry per task, newest at the bottom. Keep entries short and factual.
 - **T16:** see the note in its task file about building the lookup and `canEdit` on the client.
 - **T34:** a `NotFoundError` from the page (e.g. `?bu=` a hidden BU) currently shows the default error page.
 **Questions for the product owner:** none.
+
+## T15 — App shell and header navigation — 2026-11-15
+**Status:** done
+**Summary:**
+- **`(app)/layout.tsx`:**
+  - `requireUser()`, a "Skip to calendar" link (to `#main`), the header, a thin progress bar, and `<main id="main">`;
+  - `<RefreshOnFocus />` (calls T14's hook once), `<Toaster />` and `<LiveRegion />`.
+  - The layout passes the header its defaults (visible BUs, own BU, saved view, today), because a layout can't see the URL's search params.
+- **Header** (`src/features/calendar/header/`), laid out as in the mockup's App artboard: brand | BU switcher | view toggle · Previous · Month · Year · Next · Today | right-hand group.
+  - `AppHeader` (server).
+  - `CalendarControls` (client) reads and writes the URL with nuqs (`shallow: false`, inside the shared transition). Switching BU clears the filters. Changing view awaits `setViewPreference` and then updates the URL.
+  - `PeriodNav` and `BusinessUnitSwitcher` only take props (testable on their own). The switcher is hidden when there's only one BU, and labels hidden BUs "(hidden)".
+  - `useCalendarShortcuts`: Alt+T / Alt+W / Alt+M / Alt+[ / Alt+]. One listener and a `switch` on `event.code`. A comment notes WCAG 2.1.4.
+  - `navigation-transition.tsx`: one `useTransition` shared through a small React context. `NavigationProgress` shows a bar under the header, and `PendingArea` dims the page to 60% with `aria-busy`.
+- **Sub-header:** an `<h1>` with `formatPeriodTitle`, plus "West Operations · all teams · all people".
+- **Browser tab title:** `generateMetadata` gives e.g. "Week of 15 Nov 2026 · West Operations · WestCal" (new `formatDocumentTitlePeriod`).
+- **Small additions:**
+  - `NativeSelect` (styled `<select>` with a chevron);
+  - `anchorForMonthSelection(view, month, year)` in `dates.ts`;
+  - `LONG_MONTHS` is exported;
+  - `resolveCalendarView(searchParams)` is shared by the page and its title.
+- **Tests:**
+  - **Unit:** 4 new domain tests.
+  - **Component:** 12 in total. PeriodNav's Previous/Next/Today anchors in both views, month/year choices (week view jumps to the week containing the 1st), years ±5, axe; the BU switcher is hidden for one BU and reports the chosen slug.
+  - **E2E:** 21 in total:
+    - the view is remembered through the cookie;
+    - Previous/Next and Alt+] update the title, the tab title and the URL;
+    - a USER sees only the two visible BUs, switching BU works, and the super admin also sees "Corporate Services (hidden)";
+    - axe in light and dark;
+    - at 320px, no sideways page scroll and the controls stay on screen.
+**Key files:** `src/app/(app)/{layout,page}.tsx`, `src/features/calendar/header/*`, `src/features/calendar/calendar-view.ts`, `src/components/{native-select,refresh-on-focus}.tsx`, `src/domain/{dates,format}.ts`, `tests/e2e/{header.spec,sign-in}.ts`, `tests/component-setup.ts`
+**Simplicity pass:**
+- **Native `<select>`s** for BU, month and year, as in the mockup itself: keyboard and screen-reader support for free, with no custom dropdown.
+- **One transition, not one per control.** One context instead of syncing `isPending` into the zustand store with an effect.
+- **One period resolver.** `resolveCalendarView` is shared by the page and `generateMetadata`.
+- **One sign-in helper** (`tests/e2e/sign-in.ts`) instead of copies in three specs.
+**Deviations from plan:**
+- **No "More" menu yet.** Key (T20) and Export (T33) don't exist, so it would have been an empty menu. The header simply wraps, and at 320px nothing scrolls sideways. T20 builds the More menu with the container query (its task file is updated).
+- **`createLoader` instead of `createSearchParamsCache`.** The page and `generateMetadata` both read the params. A loader parses on demand, with no request-scoped cache to set up first.
+- **Sign out sits in the user-menu slot** until T26's user menu replaces it.
+- **BU switcher test:** the seed has no single-BU user (everyone can see the two visible BUs), so "hidden for a single-BU user" is tested in the component test. The e2e test checks USER vs super admin options instead.
+- **The skip link targets `#main`.** T16 can point it straight at the grid.
+- **Year list edge case:** if the URL date is more than 5 years away, the Year select can't show that year (it isn't in the ±5 list). Navigation still works. Rare enough to leave.
+- **Component tests now clean up after each test** (`tests/component-setup.ts`). Vitest globals are off, so Testing Library's automatic cleanup wasn't running.
+- **CI:** `SUPER_ADMIN_EMPLOYEE_NUMBERS: "100001"` was added to the workflow env, so the seeded super admin is a super admin in CI too.
+**Follow-ups:**
+- **T16:** the grid goes inside `PendingArea`. Point the skip link at the grid.
+- **T20:** the More menu and container query.
+- **T21:** replace "all teams · all people".
+- **T26:** replace the Sign out button with the user menu.
+**Questions for the product owner:** none.

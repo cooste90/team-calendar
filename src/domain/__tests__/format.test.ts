@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   formatCount,
   formatDayHeader,
+  formatDocumentTitlePeriod,
   formatLong,
   formatLongRange,
   formatPeriodTitle,
@@ -63,6 +64,15 @@ describe("formatPeriodTitle", () => {
     ["month", "2026-11-01", "2026-11-30", "November 2026"],
   ] as const)("%s %s to %s → %s", (view, from, to, expected) => {
     expect(formatPeriodTitle(view, { from, to })).toBe(expected);
+  });
+});
+
+describe("formatDocumentTitlePeriod", () => {
+  it.each([
+    ["week", "2026-11-08", "Week of 8 Nov 2026"],
+    ["month", "2026-11-01", "November 2026"],
+  ] as const)("%s from %s → %s", (view, from, expected) => {
+    expect(formatDocumentTitlePeriod(view, from)).toBe(expected);
   });
 });
 

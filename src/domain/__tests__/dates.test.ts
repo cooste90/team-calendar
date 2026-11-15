@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   addDays,
   addMonths,
+  anchorForMonthSelection,
   calendarDateSchema,
   diffDays,
   eachDate,
@@ -191,6 +192,13 @@ describe("periods on screen", () => {
   it("choosing a month in week view jumps to the week containing the 1st", () => {
     expect(weekForMonthSelection(11, 2026)).toBe("2026-11-01"); // the 1st is a Sunday
     expect(weekForMonthSelection(1, 2027)).toBe("2026-12-27"); // the 1st is a Friday
+  });
+
+  it.each([
+    { view: "week", month: 1, year: 2027, anchor: "2026-12-27" },
+    { view: "month", month: 1, year: 2027, anchor: "2027-01-01" },
+  ] as const)("picking a month in $view view goes to $anchor", ({ view, month, year, anchor }) => {
+    expect(anchorForMonthSelection(view, month, year)).toBe(anchor);
   });
 });
 

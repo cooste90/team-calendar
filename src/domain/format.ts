@@ -20,7 +20,8 @@ const SHORT_MONTHS = [
   "Nov",
   "Dec",
 ];
-const LONG_MONTHS = [
+// Also used for the month dropdown in the header.
+export const LONG_MONTHS = [
   "January",
   "February",
   "March",
@@ -126,4 +127,14 @@ export function formatPeriodTitle(
     return `${from.day} ${LONG_MONTHS[from.monthIndex]} – ${toText}`;
   }
   return `${from.day} – ${toText}`;
+}
+
+// The period part of the browser tab title (accessibility §1):
+// "Week of 8 Nov 2026" or "November 2026".
+export function formatDocumentTitlePeriod(view: View, from: CalendarDate): string {
+  const { year, monthIndex, day } = parts(from);
+  if (view === "month") {
+    return `${LONG_MONTHS[monthIndex]} ${year}`;
+  }
+  return `Week of ${day} ${SHORT_MONTHS[monthIndex]} ${year}`;
 }

@@ -158,6 +158,15 @@ export function weekForMonthSelection(month: number, year: number): CalendarDate
   return startOfWeek(makeDate(year, month, 1));
 }
 
+// Where the month and year dropdowns take you (month is 1-12): the week containing the
+// 1st in week view, or that month in month view.
+export function anchorForMonthSelection(view: View, month: number, year: number): CalendarDate {
+  if (view === "week") {
+    return weekForMonthSelection(month, year);
+  }
+  return makeDate(year, month, 1);
+}
+
 // Postgres `date` columns arrive from Prisma as a JS Date at UTC midnight. These two
 // functions are the ONLY places a JS Date meets a CalendarDate: convert when reading
 // or writing rows, and use CalendarDate everywhere else.

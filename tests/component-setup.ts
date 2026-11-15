@@ -1,2 +1,9 @@
 // Adds DOM matchers such as toBeInTheDocument() to expect().
 import "@testing-library/jest-dom/vitest";
+import { cleanup } from "@testing-library/react";
+import { afterEach } from "vitest";
+
+// Remove what each test rendered, so the next test starts with an empty page.
+afterEach(() => {
+  cleanup();
+});

@@ -15,6 +15,8 @@ env:
   DATABASE_URL_TEST: postgresql://westcal:westcal@localhost:5433/westcal_test
   BETTER_AUTH_SECRET: ci-only-test-value-not-a-real-secret-0000
   BETTER_AUTH_URL: http://localhost:3000
+  # Matches the seeded super admin (Grace Adeyemi) in prisma/seed/dev-sso-profiles.ts.
+  SUPER_ADMIN_EMPLOYEE_NUMBERS: "100001"
 
 jobs:
   checks:
