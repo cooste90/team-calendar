@@ -609,3 +609,51 @@ Append one entry per task, newest at the bottom. Keep entries short and factual.
 - **T21:** replace "all teams · all people".
 - **T26:** replace the Sign out button with the user menu.
 **Questions for the product owner:** none.
+
+## T16 — Grid rendering: week and month, bars, hatching, today, PH markers — 2026-11-15
+**Status:** done
+**Summary:**
+- **`CalendarGrid`** (client, `src/features/calendar/grid/`):
+  - builds each person's `availabilityLookup` and the viewer's `canEdit` (via `canEditBookingsFor`), then calls `buildGridModel`;
+  - renders a scrolling box (sticky header row and name column, `scroll-padding` for both) holding a `role="grid"` labelled "Team calendar, 15 – 21 November 2026";
+  - each row is its own CSS grid with `var(--name-col) repeat(days × 2, minmax(0, 1fr))`, as in the mockup;
+  - team groups use `content-visibility: auto`;
+  - a view switch re-keys the grid, so it fades in (150ms, `tw-animate-css`).
+- **Pieces:**
+  - `DayHeader`: weekday, date with the today pill, and a PH chip with a tooltip; its accessible name is the model's full date.
+  - `TeamGroupRow`: name, count, "Your team" / "Visible to admins only" (T17 adds collapse).
+  - `PersonRow`: sticky rowheader, "You" chip, viewer tint.
+  - `GridCell`: hatching for OFF / AM-only / PM-only, the today tint, the crosshair tint in the viewer's row, and its accessible name from the model.
+  - `GridBar`: leave colours, ellipsis, square clipped edges, compact month sizes, `pointer-events: none` when narrow, the title, `aria-hidden`, and a forced-colours border.
+  - Day-off stripes over multi-day bars.
+- **Page:** the T14 counts are replaced by the grid, and the period's data comes from the server, so the first paint shows it. `(app)/loading.tsx` has shape-matched skeletons for the first load.
+- **Tokens:** `--name-col` (14.75rem = 236px) and a `bg-bar-hatch` utility. The viewer's name cell uses `bg-me` (the mockup's `--me-solid` has the same value).
+- **Tests:**
+  - **Component:** 9. They cover:
+    - 7 week headers with full-date names and today marked; 30 in November month view;
+    - a morning half bar in an even track and an afternoon one in an odd track;
+    - a clipped bar with a square start;
+    - an OFF cell hatched, including when it's also today;
+    - today's cells and the viewer row marked;
+    - a PH chip;
+    - the roles, and axe.
+  - **E2E:** 22. The new grid spec checks today highlighted, the viewer row, month view with bars, and attaches light and dark screenshots to the report. I also compared screenshots against the mockup's App artboard by eye in both views and themes: spacing, colours, radii and type match.
+**Key files:** `src/features/calendar/grid/*`, `src/app/(app)/{page,loading}.tsx`, `src/app/globals.css`, `src/server/queries/calendar.ts` (`businessUnitId`, `CalendarData`), `biome.jsonc`, `tests/e2e/{grid,calendar-data}.spec.ts`, `playwright.config.ts`
+**Simplicity pass:**
+- **No logic in the components.** They map the model to elements.
+- **One place for each size difference.** Week vs month sizes are one `compact` flag.
+- **Hatching in one place.** A small lookup table maps availability to the hatch class.
+- **Small helpers stay with their component** (`todayTint` in the cell file).
+**Deviations from plan:**
+- **The scroll box is a focusable `<section aria-label="Calendar">`.** Axe's `scrollable-region-focusable` needs keyboard users to be able to scroll it, and cells don't take focus until T18. T18 removes it (its task file is updated).
+- **`biome.json` became `biome.jsonc`,** with an override, explained in a comment, that turns off `useSemanticElements` and `useFocusableInteractive` for the grid folder. Those rules want table elements and focusable rows, but the architecture's grid is ARIA roles on divs (each row its own CSS grid), and in the grid pattern only cells take focus.
+  - **What went wrong first:** I put a comment into `biome.json`. It isn't valid JSON, so Biome silently fell back to its defaults and reformatted the repo with tabs. I restored every file from git before going on. Nothing reformatted was committed.
+- **`cn()` drops classes it thinks clash.** It treats `bg-hatch` and `bg-today` as competing background colours (tailwind-merge), so today's column lost its hatching. `GridCell` now joins its classes plainly, with a comment, and a regression test covers it. **Watch for this** wherever a custom `bg-*` utility is combined with a background colour.
+- **Day header text isn't `aria-hidden`.** Axe's `empty-table-header` wants visible text in a header; the `aria-label` still gives the full date.
+- **E2E timing:** Playwright's `expect` timeout is now 15s, and `signInAs` waits up to 30s, because the dev server compiles each page the first time a test opens it (slower since T12 turned off Turbopack's disk cache). The `calendar-data` spec now checks booking bars instead of the old counts.
+- **No Lighthouse CLS run.** The grid is server-rendered on first paint with fixed row heights, and the skeleton matches the layout, so there's nothing to shift. A Lighthouse pass belongs with T19 (performance) and T35.
+**Follow-ups:**
+- **T17:** collapse button and admin name links in `TeamGroupRow` and `PersonRow`.
+- **T18:** roving tabindex on `GridCell`, remove the section's `tabIndex`, retarget the skip link.
+- **T25:** bars become interactive.
+**Questions for the product owner:** none.

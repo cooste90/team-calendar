@@ -11,6 +11,9 @@ export default defineConfig({
   globalSetup: "tests/e2e/global-setup.ts",
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
+  // The dev server compiles each page the first time a test opens it, which can take
+  // several seconds, so wait longer than Playwright's default 5s.
+  expect: { timeout: 15_000 },
   reporter: isCI ? [["list"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL: `http://localhost:${port}`,

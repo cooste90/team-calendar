@@ -68,6 +68,7 @@ export async function getCalendarData(
   ]);
 
   return {
+    businessUnitId: businessUnit.id,
     range: { from, to },
     today: todayIn(env.APP_TIME_ZONE),
     teams,
@@ -88,3 +89,6 @@ export async function getCalendarData(
     collapsedTeamIds: viewerRow.collapsedTeamIds,
   };
 }
+
+// What the page passes to the client grid.
+export type CalendarData = Awaited<ReturnType<typeof getCalendarData>>;

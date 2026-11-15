@@ -2,6 +2,10 @@
 
 **Phase:** 3 · **Depends on:** T17 · **Size:** M
 
+**From T16:**
+- The grid's scroll box (`calendar-grid.tsx`) has `tabIndex={0}` so keyboard users can scroll it. Remove that once the roving tabindex puts a cell in the tab order.
+- Point the "Skip to calendar" link (`(app)/layout.tsx`, currently `#main`) at the focusable cell.
+
 ## Goal
 The grid is fully usable with a keyboard and a screen reader, following the ARIA grid pattern in `03-accessibility.md` §3.
 

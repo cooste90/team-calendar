@@ -86,7 +86,7 @@ Read this together with `00-product-spec.md`. This file says **how** the app is 
 │  ├─ integration/                            # Vitest + real Postgres (test DB)
 │  └─ e2e/                                    # Playwright
 ├─ .github/workflows/ci.yml
-├─ biome.json, lefthook.yml, vitest.config.ts, playwright.config.ts
+├─ biome.jsonc, lefthook.yml, vitest.config.mts, playwright.config.ts
 └─ docs/plan/
 ```
 

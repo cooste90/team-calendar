@@ -42,6 +42,23 @@
       "react": "recommended"
     }
   },
+  "overrides": [
+    {
+      // The calendar grid is the ARIA grid pattern (accessibility §3) built from divs,
+      // because each row is its own CSS grid (architecture §9) and table elements can't be
+      // laid out that way. In that pattern only the day cells take focus (roving tabindex,
+      // T18), not rows or headers. So these two rules don't fit the grid's files.
+      "includes": ["src/features/calendar/grid/**"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "useSemanticElements": "off",
+            "useFocusableInteractive": "off"
+          }
+        }
+      }
+    }
+  ],
   "assist": {
     "actions": {
       "source": {

@@ -27,6 +27,10 @@ A read-only calendar grid that looks like the mockup, driven entirely by `buildG
 5. **View switch:** the grid fades in over 150ms (the `fade-in` CSS class), turned off by the global reduced-motion rule.
 6. **Theming:** check both themes against the mockup. Forced-colors styles from the design system.
 
+**As built:** see the T16 entry in `progress.md`. For T17/T18:
+- The scroll box is a focusable `<section aria-label="Calendar">` until cells take focus; T18 removes its `tabIndex`.
+- Biome's `useSemanticElements` / `useFocusableInteractive` are off for `src/features/calendar/grid/**` (see `biome.jsonc`).
+
 ## Tests
 - Component (with fixture models):
   - week view renders 7 column headers with the right labels;

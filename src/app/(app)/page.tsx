@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { formatDocumentTitlePeriod, formatPeriodTitle } from "@/domain/format";
 import { resolveCalendarView } from "@/features/calendar/calendar-view";
+import { CalendarGrid } from "@/features/calendar/grid/calendar-grid";
 import { getBusinessUnitBySlug } from "@/server/queries/business-units";
 import { getCalendarData } from "@/server/queries/calendar";
 import { requireUser } from "@/server/session";
@@ -15,7 +16,8 @@ export async function generateMetadata({ searchParams }: PageProps<"/">): Promis
   };
 }
 
-// The calendar. Until the grid arrives (T16) it shows raw counts under the title.
+// The calendar. The data is loaded here on the server, so the first paint already
+// shows the grid (architecture §6.1).
 export default async function CalendarPage({ searchParams }: PageProps<"/">) {
   const actor = await requireUser();
   const { params, view, period } = await resolveCalendarView(searchParams);
@@ -33,9 +35,12 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
           {businessUnit.name} · all teams · all people
         </p>
       </div>
-      <p className="px-5">
-        {data.people.length} people, {data.bookings.length} bookings
-      </p>
+      <CalendarGrid
+        data={data}
+        view={view}
+        period={period}
+        filters={{ teamIds: params.teams, personIds: params.people }}
+      />
     </>
   );
 }

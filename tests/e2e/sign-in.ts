@@ -5,5 +5,6 @@ import { expect, type Page } from "@playwright/test";
 export async function signInAs(page: Page, name: string) {
   await page.goto("/dev-sign-in");
   await page.getByRole("button", { name: `Sign in as ${name}` }).click();
-  await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
+  // Generous: the first test to reach the calendar waits for the dev server to compile it.
+  await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible({ timeout: 30_000 });
 }
