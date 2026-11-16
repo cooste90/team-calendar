@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { ConflictError, ForbiddenError, NotFoundError } from "../errors";
+import { type ConflictDetail, ConflictError, ForbiddenError, NotFoundError } from "../errors";
 
 it.each([
   { error: new ForbiddenError("Admins only."), code: "FORBIDDEN", message: "Admins only." },
@@ -10,6 +10,14 @@ it.each([
 });
 
 it("a ConflictError carries the list of clashes", () => {
-  const error = new ConflictError("It clashes.", ["Annual leave on Fri 13 Nov"]);
-  expect(error.details).toEqual(["Annual leave on Fri 13 Nov"]);
+  const clash: ConflictDetail = {
+    bookingId: "b1",
+    type: "ANNUAL",
+    startDate: "2026-11-13",
+    startHalf: "AM",
+    endDate: "2026-11-13",
+    endHalf: "PM",
+    message: "You already have Annual leave on Fri 13 Nov (full day).",
+  };
+  expect(new ConflictError("It clashes.", [clash]).conflicts).toEqual([clash]);
 });

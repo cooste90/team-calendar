@@ -356,7 +356,7 @@ The whole app uses one pattern, so there's only one thing to learn:
   2. parses input with the zod schema;
   3. runs the handler (which calls a service);
   4. calls `refresh()` from `next/cache`, so the page reloads its data (see `node_modules/next/dist/docs/01-app/03-api-reference/04-functions/refresh.md`);
-  5. returns `{ ok: true, data } | { ok: false, error: { code, message, details? } }`.
+  5. returns `{ ok: true, data } | { ok: false, error: { code, message, details?, conflicts? } }`. `details` lists validation messages; `conflicts` lists each clash for a `CONFLICT` (booking id, type, the clashing dates and halves, and a sentence), so the form can show them and offer Replace (T22).
   Error codes: `UNAUTHENTICATED`, `FORBIDDEN`, `VALIDATION`, `CONFLICT`, `PAST_LOCKED`, `NOT_FOUND`, `INTERNAL`. Unexpected errors are logged on the server and returned as `INTERNAL`, without leaking details.
 - Services run in one `prisma.$transaction` and use `lockUsers` (§3.2) before touching bookings.
 - **On the client** a component calls the action, waits for the result, and either closes the dialog or shows the error. Use `useTransition` for the pending state. There is no optimistic cache patching. On our internal network a save and refresh takes a fraction of a second, and the grow animation (design system §6) makes the new booking feel instant.

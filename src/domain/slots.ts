@@ -34,6 +34,13 @@ export function rangeOf(booking: {
   };
 }
 
+// The reverse of rangeOf: a slot range as dates and halves, ready to save or show.
+export function datesOfRange(range: SlotRange) {
+  const start = fromSlot(range.start);
+  const end = fromSlot(range.end);
+  return { startDate: start.date, startHalf: start.half, endDate: end.date, endHalf: end.half };
+}
+
 export function overlaps(a: SlotRange, b: SlotRange): boolean {
   return a.start <= b.end && b.start <= a.end;
 }

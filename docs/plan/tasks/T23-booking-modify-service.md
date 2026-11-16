@@ -2,6 +2,13 @@
 
 **Phase:** 4 · **Depends on:** T22 · **Size:** L
 
+**From T22:** follow `createBooking` in `src/server/services/bookings.ts`.
+- **Shape:** numbered steps in one `db.$transaction`, `lockUsers` before reading bookings, `conflictError(...)` for clashes, and `saveBookingChanges` for planned changes.
+- **Replace:** `planReplace` already detaches public holiday copies it cuts.
+- **Converting ranges:** `datesOfRange(range)` (in `slots.ts`) turns a slot range back into dates and halves.
+- **Audit:** log each change with one `console.info` JSON line (see `logCreated`). Once there are four of them, move them into one helper.
+- **Race test:** warm the pool first (see `create-booking.test.ts`), or it won't race.
+
 ## Goal
 Every way of changing an existing booking (plus one-off availability overrides), safe and rule-complete.
 

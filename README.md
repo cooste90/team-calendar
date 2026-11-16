@@ -9,13 +9,14 @@ A team availability calendar showing who's in and who's off. The full plan is in
 | 0 · Foundation | T01–T04: tooling, database, tests and CI, design system | Done |
 | 1 · Domain logic | T05–T09: dates, half days, working patterns, booking rules, permissions, public holidays, tallies, grid model | Done |
 | 2 · Data and auth | T10–T14: database schema and migrations, sign-in, first-time sign-in, seed data, server actions and data loading | Done |
-| 3 · Calendar UI | T15–T21: app shell, grid, team groups, keyboard, filters (T15–T21 done) | Next: T22, booking create service |
-| 4–8 | Bookings, profile, admin, export, hardening | Not started |
+| 3 · Calendar UI | T15–T21: app shell, grid, team groups, keyboard, Key, filters | Done |
+| 4 · Bookings | T22–T25: create and modify services, the booking form, grid interactions (T22 done) | Next: T23, booking modify service |
+| 5–8 | Profile, admin, export, hardening | Not started |
 
 What you can open today:
 - http://localhost:3000/sign-in: the sign-in page. With more than one business unit it asks first-time users which one they belong to. "Developer sign-in" takes you to the fake sign-in (dev only).
 - http://localhost:3000/dev-sign-in: sign in as one of the seeded people (see "Seeded accounts" below) or type in your own (dev only). A new person with no business unit picks one on the welcome page.
-- http://localhost:3000/: the calendar page: the header (business unit switcher, Week/Month, Previous/Next, month and year, Today; Alt+T, Alt+W, Alt+M, Alt+[ and Alt+]), the period title and the read-only grid (week and month, light and dark). Teams collapse and expand, and stay that way next time. Admins also see the Unassigned group, and names they can click (the profile itself comes in T27). Owen Hughes (Unassigned) sees a banner. The grid works from the keyboard: Tab in, arrow keys, Home/End, Page Up/Down, and `?` for the list of shortcuts. It sends you to `/sign-in` if you're not signed in.
+- http://localhost:3000/: the calendar page: the header (business unit switcher, Week/Month, Previous/Next, month and year, Today; Alt+T, Alt+W, Alt+M, Alt+[ and Alt+]), the period title and the read-only grid (week and month, light and dark). Teams collapse and expand, and stay that way next time. Admins also see the Unassigned group, and names they can click (the profile itself comes in T27). Owen Hughes (Unassigned) sees a banner. The grid works from the keyboard: Tab in, arrow keys, Home/End, Page Up/Down, and `?` for the list of shortcuts. The Key shows the leave types, and the Teams and People filters narrow the grid (kept in the URL); on a narrow window both move into More. It sends you to `/sign-in` if you're not signed in.
 - http://localhost:3000/dev/design-system: every colour, leave chip and component, in light and dark (dev only)
 - http://localhost:3000/api/health: checks the app can reach the database
 

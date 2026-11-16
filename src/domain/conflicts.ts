@@ -1,11 +1,13 @@
 // Clashes between bookings. A person can't have two bookings on the same half-day
 // (spec §5.1). The services call findConflicts inside a locked transaction (architecture §3.2).
 import type { CalendarDate } from "./dates";
-import { PastLockedError } from "./errors";
+import { ConflictError, PastLockedError } from "./errors";
 import { type Booking, type BookingChanges, carveBooking, mergeChanges } from "./events";
 import { formatShort } from "./format";
 import { leaveTypes } from "./leave-types";
+import { planUserEditsPhCopy } from "./public-holidays";
 import {
+  datesOfRange,
   fromSlot,
   intersect,
   isSingleDay,
@@ -45,6 +47,26 @@ export function describeConflict(
   return `${who} ${type} ${describeWhen(conflict.overlap)}.`;
 }
 
+// The error a create or edit throws when it clashes and the person didn't ask to replace:
+// each clash with its booking, the half-days that clash and a sentence for the form.
+export function conflictError(
+  conflicts: Conflict[],
+  displayName: string,
+  viewerIsSubject: boolean,
+): ConflictError {
+  const details = conflicts.map((conflict) => ({
+    bookingId: conflict.booking.id,
+    type: conflict.booking.type,
+    ...datesOfRange(conflict.overlap),
+    message: describeConflict(conflict, displayName, viewerIsSubject),
+  }));
+  const message =
+    conflicts.length === 1
+      ? "This clashes with a booking that's already there."
+      : `This clashes with ${conflicts.length} bookings that are already there.`;
+  return new ConflictError(message, details);
+}
+
 function describeWhen(range: SlotRange): string {
   const start = fromSlot(range.start);
   const end = fromSlot(range.end);
@@ -59,7 +81,8 @@ function describeWhen(range: SlotRange): string {
 
 // "Replace": cut the new booking's half-days out of every clashing booking, splitting
 // a booking in two where needed. Pieces left on non-working days are kept, because
-// booking a day off is allowed. Past half-days can't be replaced.
+// booking a day off is allowed. Past half-days can't be replaced. A public holiday copy
+// that's cut is detached from its holiday, as if the person had edited it (spec §6.3).
 export function planReplace(
   candidate: SlotRange,
   conflicts: Conflict[],
@@ -68,5 +91,10 @@ export function planReplace(
   if (conflicts.some((conflict) => conflict.overlap.start < toSlot(today, "AM"))) {
     throw new PastLockedError("You can't replace a booking in the past.");
   }
-  return mergeChanges(conflicts.map((conflict) => carveBooking(conflict.booking, candidate)));
+  return mergeChanges(
+    conflicts.flatMap((conflict) => [
+      carveBooking(conflict.booking, candidate),
+      planUserEditsPhCopy(conflict.booking),
+    ]),
+  );
 }

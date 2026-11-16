@@ -2,6 +2,10 @@
 
 **Phase:** 4 · **Depends on:** T21 · **Size:** M
 
+**As built:** see the T22 entry in `progress.md`.
+- **Replace and public holidays:** `planReplace` itself detaches any public holiday copy it cuts, so every caller gets that.
+- **Day count:** it's worked out after the transaction commits.
+
 ## Goal
 A server-side create flow that enforces every rule, gives the UI exact conflict details, and supports "Replace".
 

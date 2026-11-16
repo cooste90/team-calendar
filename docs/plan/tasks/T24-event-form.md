@@ -2,6 +2,11 @@
 
 **Phase:** 4 · **Depends on:** T23 · **Size:** L
 
+**From T22:** call `createBookingAction({ booking, replace })` (`src/server/actions/create-booking.ts`).
+- **Success:** it returns `{ id, count }`.
+- **Clash:** it returns `error.code === "CONFLICT"` with `error.conflicts`, a list of `{ bookingId, type, startDate, startHalf, endDate, endHalf, message }`. Show each `message`, and send the same booking again with `replace: true` when the person presses Replace.
+- **Past dates:** a `PAST_LOCKED` error means a clash, or the booking itself, is in the past.
+
 ## Goal
 The booking form from the mockup's "Add / edit event dialog" artboard: fast, clear and accessible.
 

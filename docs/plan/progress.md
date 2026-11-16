@@ -1004,3 +1004,62 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 - **If the "everyone back" time ever matters:** keep filtered-out rows mounted but hidden, rather than removed (the other option in the decision).
 
 **Questions for the product owner:** none.
+
+## T22 — Booking create service: conflicts, Replace and transactions — 2026-11-16
+**Status:** done. No new dependencies. No UI yet (that's T24).
+**What I built:**
+- **`createBooking(actor, input, { replace }, today)`** (`src/server/services/bookings.ts`). It reads top to bottom like the task's list, all in one transaction:
+  1. load the person;
+  2. `canEditBookingsFor` (FORBIDDEN otherwise; an unassigned USER can't book for anyone);
+  3. `validateCreate`, the time window;
+  4. `lockUsers`;
+  5. load their bookings on those dates, then `findConflicts`;
+  6. a clash without Replace throws `conflictError(...)`;
+  7. with Replace, `planReplace` goes through `saveBookingChanges`;
+  8. insert, with `createdById = updatedById` = the actor and `publicHolidayId = null`;
+  9. return `{ id, count }`.
+  - **The day count** is worked out after the commit, so the lock isn't held for it.
+  - **Someone with no BU yet** gets NOT_FOUND.
+- **`createBookingAction`** (`src/server/actions/create-booking.ts`): takes `{ booking, replace }` and returns `{ id, count }`. "Today" is the server's Europe/London date.
+- **Clash details:**
+  - `ConflictError` now carries `conflicts`: each clash's booking id, type, the clashing dates and halves, and a sentence such as "Tom Okafor already has Annual leave from Thu 20 Jun (afternoon) to Fri 21 Jun.";
+  - `conflictError()` in `src/domain/conflicts.ts` builds it;
+  - `authedAction` passes it on as `error.conflicts`; `details` still means validation messages (architecture §6.2 updated).
+- **Replace and public holidays:** `planReplace` now detaches any public holiday copy it cuts, with an exclusion and an unlink. That way T23's edit flow gets the same rule.
+  - The task said "through `planUserDeletesPhCopy`". I used `planUserEditsPhCopy` for every cut copy. A copy that's only partly cut keeps its other half as an ordinary booking. A copy that's fully cut is removed, and its unlink then does nothing. Either way the person gets the exclusion.
+- **Audit line:** each create logs one `console.info` JSON line: event, actor, subject, type, start, end and how many bookings were replaced. No notes.
+- **`datesOfRange(range)`** (`src/domain/slots.ts`): the reverse of `rangeOf`. It replaces the same six lines in `changesForPieces`, `saveBookingChanges` and `conflictError`.
+
+**Tests** (integration, `tests/integration/create-booking.test.ts`, 19):
+- **Who and when:** a table covering USER self/teammate/other team/yesterday; ADMIN unassigned/other team/other BU/today − 7/today − 8; SUPER_ADMIN; and an unassigned USER.
+- **The save itself:** the day count and creator fields; AM and PM bookings of different types on the same day; the audit line has no notes.
+- **Clashes:**
+  - without Replace, nothing is saved and each clash is listed;
+  - with Replace, a long booking is split in two;
+  - Replace into the past fails with PAST_LOCKED and nothing changes;
+  - a partly replaced public holiday copy is detached.
+- **Race:** 10 saves for the same day at once. Exactly 1 wins and 9 get CONFLICT.
+  - **Checked by hand:** with `lockUsers` commented out, this test fails every time.
+  - **The warm-up:** the test first opens a connection per save. Without that, the first save finishes while the others are still connecting, and the test passed even without the lock.
+- **Unit:** `conflictError`, and `planReplace` detaching a public holiday copy.
+
+**Key files:** `src/server/services/bookings.ts`, `src/server/actions/create-booking.ts`, `src/domain/conflicts.ts`, `src/domain/errors.ts`, `src/domain/slots.ts`, `tests/integration/create-booking.test.ts`.
+**Simplicity pass** (my own re-read, then `/simplify`):
+- **The public holiday rule:** moved from the service into `planReplace`.
+- **Fewer queries:**
+  - the person is loaded with a narrow `select`;
+  - the working pattern and day swaps (only those inside the booking) are loaded after the commit;
+  - so a rejected save costs 2 fewer queries.
+- **The audit line** uses a one-line `biome-ignore`, the same way the seed script does, instead of allowing `console.info` everywhere.
+- **The test file:**
+  - the permission table is one line per rule;
+  - the inputs a test is about are written out in full;
+  - test rows go through the existing mappers.
+
+**Deviations from plan:** `planUserEditsPhCopy` instead of `planUserDeletesPhCopy`, as above. Same result, one rule for both cases.
+**Follow-ups:**
+- **T23:** follow the same shape (hand-off note in the T23 task file).
+- **T24:** the form uses `error.conflicts` and Replace (hand-off note in the T24 task file).
+- **T36:** puts this action in the permission matrix.
+
+**Questions for the product owner:** none.

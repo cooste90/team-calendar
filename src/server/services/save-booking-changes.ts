@@ -3,7 +3,7 @@
 import "server-only";
 import { toDbDate } from "@/domain/dates";
 import type { BookingChanges } from "@/domain/events";
-import { fromSlot } from "@/domain/slots";
+import { datesOfRange } from "@/domain/slots";
 import type { Prisma } from "@/generated/prisma/client";
 import { toEventData } from "../mappers";
 
@@ -23,15 +23,14 @@ export async function saveBookingChanges(
   });
 
   for (const { id, range } of changes.update) {
-    const start = fromSlot(range.start);
-    const end = fromSlot(range.end);
+    const dates = datesOfRange(range);
     await tx.event.update({
       where: { id },
       data: {
-        startDate: toDbDate(start.date),
-        startHalf: start.half,
-        endDate: toDbDate(end.date),
-        endHalf: end.half,
+        startDate: toDbDate(dates.startDate),
+        startHalf: dates.startHalf,
+        endDate: toDbDate(dates.endDate),
+        endHalf: dates.endHalf,
         updatedById: actorId,
       },
     });

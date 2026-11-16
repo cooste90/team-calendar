@@ -4,7 +4,7 @@ import { z } from "zod";
 import { type CalendarDate, calendarDateSchema, diffDays } from "./dates";
 import { type LeaveType, leaveTypes } from "./leave-types";
 import {
-  fromSlot,
+  datesOfRange,
   type HalfDay,
   type Portion,
   rangeOf,
@@ -150,15 +150,10 @@ export function changesForPieces(booking: Booking, pieces: SlotRange[]): Booking
   }
   changes.update.push({ id: booking.id, range: first });
   for (const piece of rest) {
-    const start = fromSlot(piece.start);
-    const end = fromSlot(piece.end);
     changes.create.push({
       userId: booking.userId,
       type: booking.type,
-      startDate: start.date,
-      startHalf: start.half,
-      endDate: end.date,
-      endHalf: end.half,
+      ...datesOfRange(piece),
       notes: booking.notes,
       publicHolidayId: booking.publicHolidayId,
       createdById: booking.createdById,

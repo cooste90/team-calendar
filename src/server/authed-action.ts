@@ -4,14 +4,15 @@ import "server-only";
 import { refresh } from "next/cache";
 import { unstable_rethrow } from "next/navigation";
 import type { z } from "zod";
-import { AppError, ConflictError, type ErrorCode } from "@/domain/errors";
+import { AppError, type ConflictDetail, ConflictError, type ErrorCode } from "@/domain/errors";
 import type { Actor } from "@/domain/permissions";
 import { requireUser } from "./session";
 
 export type ActionError = {
   code: ErrorCode | "INTERNAL";
   message: string;
-  details?: string[];
+  details?: string[]; // every validation message
+  conflicts?: ConflictDetail[]; // every clash, for a CONFLICT
 };
 
 export type ActionResult<Data> = { ok: true; data: Data } | { ok: false; error: ActionError };
@@ -46,7 +47,7 @@ export function authedAction<Schema extends z.ZodType, Data>(
 
 function toActionError(error: unknown): ActionError {
   if (error instanceof ConflictError) {
-    return { code: error.code, message: error.message, details: error.details };
+    return { code: error.code, message: error.message, conflicts: error.conflicts };
   }
   if (error instanceof AppError) {
     return { code: error.code, message: error.message };

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import {
+  type ConflictDetail,
   ConflictError,
   ForbiddenError,
   NotFoundError,
@@ -61,17 +62,22 @@ describe("authedAction", () => {
   });
 
   it("includes the clashes for a CONFLICT", async () => {
+    const clash: ConflictDetail = {
+      bookingId: "b1",
+      type: "ANNUAL",
+      startDate: "2026-11-13",
+      startHalf: "AM",
+      endDate: "2026-11-13",
+      endHalf: "PM",
+      message: "You already have Annual leave on Fri 13 Nov (full day).",
+    };
     const action = authedAction(schema, async () => {
-      throw new ConflictError("That clashes.", ["Annual leave on Fri 13 Nov"]);
+      throw new ConflictError("That clashes.", [clash]);
     });
 
     expect(await action({ name: "x" })).toEqual({
       ok: false,
-      error: {
-        code: "CONFLICT",
-        message: "That clashes.",
-        details: ["Annual leave on Fri 13 Nov"],
-      },
+      error: { code: "CONFLICT", message: "That clashes.", conflicts: [clash] },
     });
   });
 
