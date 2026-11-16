@@ -3,17 +3,21 @@
 import "server-only";
 import type { Override, PatternVersion } from "@/domain/availability";
 import { type CalendarDate, toDbDate } from "@/domain/dates";
-import type { PersonName } from "@/domain/display-name";
+import { displayName, type PersonName } from "@/domain/display-name";
 import { NotFoundError } from "@/domain/errors";
+import { formatTimestamp } from "@/domain/format";
 import {
   type Actor,
   type BusinessUnitAccess,
   canSeeUnassigned,
   canViewBusinessUnit,
 } from "@/domain/permissions";
+import { env } from "@/lib/env";
 import { db } from "../db";
 import { toBooking, toOverride, toPatternVersion, toPublicHoliday } from "../mappers";
 import { serverToday } from "../today";
+
+const nameFields = { firstName: true, preferredName: true, surname: true } as const;
 
 // A person on the grid. Their pattern history and day swaps come too, so the client can
 // work out any day's availability (a bar's day count can reach outside the range).
@@ -52,9 +56,7 @@ export async function getCalendarData(
       where: people,
       select: {
         id: true,
-        firstName: true,
-        preferredName: true,
-        surname: true,
+        ...nameFields,
         teamId: true,
         patterns: true,
         overrides: true,
@@ -62,6 +64,7 @@ export async function getCalendarData(
     }),
     db.event.findMany({
       where: { user: people, startDate: { lte: toDbDate(to) }, endDate: { gte: toDbDate(from) } },
+      include: { createdBy: { select: nameFields }, updatedBy: { select: nameFields } },
     }),
     db.publicHoliday.findMany({ where: { date: { gte: toDbDate(from), lte: toDbDate(to) } } }),
     db.user.findUniqueOrThrow({ where: { id: actor.id }, select: { collapsedTeamIds: true } }),
@@ -83,7 +86,17 @@ export async function getCalendarData(
         overrides: user.overrides.map(toOverride),
       }),
     ),
-    bookings: bookings.map(toBooking),
+    // Who added and last changed each booking, and when, for the booking form and the
+    // details popover. A deleted person's name is null.
+    bookings: bookings.map((row) => ({
+      ...toBooking(row),
+      audit: {
+        createdBy: row.createdBy && displayName(row.createdBy),
+        createdAt: formatTimestamp(row.createdAt, env.APP_TIME_ZONE),
+        updatedBy: row.updatedBy && displayName(row.updatedBy),
+        updatedAt: formatTimestamp(row.updatedAt, env.APP_TIME_ZONE),
+      },
+    })),
     publicHolidays: publicHolidays.map(toPublicHoliday),
     viewer: { ...actor, canSeeUnassigned: seesUnassigned },
     collapsedTeamIds: viewerRow.collapsedTeamIds,

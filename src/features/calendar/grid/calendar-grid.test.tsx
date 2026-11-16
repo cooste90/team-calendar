@@ -25,6 +25,12 @@ const booking = {
   publicHolidayId: null,
   startHalf: "AM",
   endHalf: "PM",
+  audit: {
+    createdBy: "Tom Okafor",
+    createdAt: "2 Nov 2026, 09:00",
+    updatedBy: null,
+    updatedAt: "2 Nov 2026, 09:00",
+  },
 } as const;
 
 const data: CalendarData = {

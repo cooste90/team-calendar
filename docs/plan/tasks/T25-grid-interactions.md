@@ -13,6 +13,14 @@
 - If Undo fails with `CONFLICT`, show its message ("Couldn't undo — something else is booked there now.").
 - `removeBookingDayAction({ id, date })` and `trimBookingAction({ id })` are the other two.
 
+**From T24:**
+- **Opening the form:** `useCalendarStore.getState().setEventDialog({ mode: "create", subjectId, date })` or `({ mode: "edit", bookingId })`. `EventFormDialog` is already rendered by the grid. Focus goes back to whatever opened it.
+- **Retire the gallery demo:** point `tests/e2e/event-form.spec.ts` at the seeded grid, then delete `src/app/dev/design-system/event-form-demo.tsx` and its gallery section.
+- **Share delete and Undo:** they're in the form's `EditActions` (`event-form/edit-actions.tsx`). Move them into one shared function or hook used by both the form and the details popover, and add what §5 asks for (confirmation for multi-day, announcement, focus, the Undo-clash message) there, so both behave the same.
+- **Reuse:** `BookingHistory` (`event-form/booking-history.tsx`) shows the "Created by / Last changed by" lines.
+- **The booking audit fields** are in the calendar data: `booking.audit.createdBy`, `createdAt`, `updatedBy`, `updatedAt`, already formatted.
+- **Buttons:** `Button` now defaults to `type="button"`. Give submit buttons `type="submit"`.
+
 ## Goal
 Bring the grid to life. Clicking a cell books, clicking a bar shows details, a new booking grows into place, and every action has a keyboard path. All of it uses the simple pattern: **call the action → it calls `refresh()` → the grid shows the new data.**
 

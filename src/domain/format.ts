@@ -1,7 +1,7 @@
 // en-GB date text for the UI (design system §8), e.g. "Thu 12 Nov".
 // The names are written out here rather than using Intl, so the output is exactly
 // the same on every computer and Node version.
-import { type CalendarDate, type View, weekday } from "./dates";
+import { type CalendarDate, isCalendarDate, makeDate, type View, weekday } from "./dates";
 import { fromSlot, isSingleDay, portionOf, type SlotRange } from "./slots";
 
 const SHORT_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -59,6 +59,65 @@ export function formatShort(date: CalendarDate): string {
 // "Thursday 12 November 2026"
 export function formatLong(date: CalendarDate): string {
   return `${formatWeekdayDayMonth(date)} ${parts(date).year}`;
+}
+
+// "Thu 12 Nov 2026": what the booking form's date inputs show.
+export function formatDateInput(date: CalendarDate): string {
+  return `${formatShort(date)} ${parts(date).year}`;
+}
+
+// The other way round, for typing into the booking form's date inputs (accessibility
+// §4). Accepts "12/11/2026", "12 Nov 2026", "Thu 12 Nov 2026", "12 November 2026" and
+// "2026-11-12". Returns null for anything else, or for a date that doesn't exist.
+export function parseDateText(text: string): CalendarDate | null {
+  const cleaned = text.trim().toLowerCase();
+  if (isCalendarDate(cleaned)) return cleaned;
+
+  const slashes = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(cleaned);
+  if (slashes) return dateFrom(slashes[3], Number(slashes[2]), slashes[1]);
+
+  // An optional weekday first ("Thu"), which is ignored.
+  const words = /^(?:[a-z]+,?\s+)?(\d{1,2})\s+([a-z]+)\s+(\d{4})$/.exec(cleaned);
+  if (words) {
+    const month = words[2];
+    const monthIndex = LONG_MONTHS.findIndex(
+      (name) => month.length >= 3 && name.toLowerCase().startsWith(month),
+    );
+    if (monthIndex === -1) return null;
+    return dateFrom(words[3], monthIndex + 1, words[1]);
+  }
+  return null;
+}
+
+function dateFrom(year: string, month: number, day: string): CalendarDate | null {
+  const date = makeDate(Number(year), month, Number(day));
+  return isCalendarDate(date) ? date : null;
+}
+
+// One formatter per time zone, made once: making one is slow, and the calendar formats
+// two timestamps for every booking it loads.
+const timestampFormatters = new Map<string, Intl.DateTimeFormat>();
+
+// "3 Nov 2026, 09:14" in the app's time zone: when a booking was created or changed.
+export function formatTimestamp(instant: Date, timeZone: string): string {
+  let formatter = timestampFormatters.get(timeZone);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat("en-GB", {
+      timeZone,
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    });
+    timestampFormatters.set(timeZone, formatter);
+  }
+  const formatted = formatter.formatToParts(instant);
+  const value = Object.fromEntries(formatted.map((part) => [part.type, part.value]));
+  const day = Number(value.day);
+  const month = SHORT_MONTHS[Number(value.month) - 1];
+  return `${day} ${month} ${value.year}, ${value.hour}:${value.minute}`;
 }
 
 // "Thursday 12 November": for screen-reader labels on the grid.

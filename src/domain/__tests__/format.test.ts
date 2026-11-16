@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatCount,
+  formatDateInput,
   formatDayHeader,
   formatDocumentTitlePeriod,
   formatFilterName,
@@ -12,8 +13,10 @@ import {
   formatPeriodTitle,
   formatRangeSummary,
   formatShort,
+  formatTimestamp,
   formatWeekdayDayMonth,
   formatWeekdayShort,
+  parseDateText,
 } from "../format";
 import { rangeOf } from "../slots";
 
@@ -136,5 +139,39 @@ describe("formatFilterSummary", () => {
     [[], 1, "Filtered: 1 person"],
   ])("teams %j and %i people → %s", (teamNames, peopleCount, expected) => {
     expect(formatFilterSummary(teamNames, peopleCount)).toBe(expected);
+  });
+});
+
+describe("the booking form's date inputs", () => {
+  it("show a date as “Thu 12 Nov 2026”", () => {
+    expect(formatDateInput("2026-11-12")).toBe("Thu 12 Nov 2026");
+  });
+
+  it.each([
+    ["12/11/2026", "2026-11-12"],
+    ["1/2/2027", "2027-02-01"],
+    ["12 Nov 2026", "2026-11-12"],
+    ["12 november 2026", "2026-11-12"],
+    ["Thu 12 Nov 2026", "2026-11-12"],
+    ["3 Sept 2026", "2026-09-03"],
+    ["2026-11-12", "2026-11-12"],
+    ["  12/11/2026  ", "2026-11-12"],
+    ["31/02/2026", null],
+    ["12 Nox 2026", null],
+    ["12 No 2026", null],
+    ["next Tuesday", null],
+    ["", null],
+  ])("read “%s” as %s", (text, expected) => {
+    expect(parseDateText(text)).toBe(expected);
+  });
+});
+
+describe("formatTimestamp", () => {
+  it.each([
+    ["2026-11-03T09:14:00Z", "3 Nov 2026, 09:14"], // GMT in winter
+    ["2026-07-01T08:05:00Z", "1 Jul 2026, 09:05"], // BST in summer
+    ["2026-12-31T23:30:00Z", "31 Dec 2026, 23:30"],
+  ])("%s reads “%s” in London", (instant, expected) => {
+    expect(formatTimestamp(new Date(instant), "Europe/London")).toBe(expected);
   });
 });

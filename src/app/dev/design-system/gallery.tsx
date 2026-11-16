@@ -24,6 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { leaveTypes } from "@/domain/leave-types";
+import { EventFormDemo } from "./event-form-demo";
 
 const swatches = [
   "bg",
@@ -173,6 +174,10 @@ export function Gallery() {
             </PopoverContent>
           </Popover>
         </div>
+      </Section>
+
+      <Section title="Booking form">
+        <EventFormDemo />
       </Section>
 
       <Section title="Grid patterns and motion">

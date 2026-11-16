@@ -18,6 +18,7 @@ import { canEditBookingsFor, canManageBusinessUnit } from "@/domain/permissions"
 import { setTeamCollapsed } from "@/server/actions/set-team-collapsed";
 import type { CalendarData } from "@/server/queries/calendar";
 import { useCalendarStore } from "../calendar-store";
+import { EventFormDialog } from "../event-form/event-form-dialog";
 import { ShortcutsHelpDialog } from "../shortcuts-help-dialog";
 import { useCalendarFilters } from "../use-calendar-params";
 import { DayHeaderRow } from "./day-header";
@@ -173,6 +174,7 @@ export function CalendarGrid({ data, view, period }: Props) {
         </section>
       )}
       <ShortcutsHelpDialog />
+      <EventFormDialog data={data} />
     </>
   );
 }

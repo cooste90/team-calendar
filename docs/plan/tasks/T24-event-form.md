@@ -12,6 +12,10 @@
 - **Delete button:** use `validateDelete`'s rule (allowed while `allowedEdits` is `"all"`). For a booking that has started, offer "Delete the remaining days" (`trimBookingAction({ id })`) instead.
 - **Day swaps:** `setAvailabilityOverrideAction({ userId, date, value })`, where `value` is `"FULL" | "AM" | "PM" | "OFF" | null`. It needs `canEditProfileOf`, so a teammate can't set one.
 
+**As built:** see the T24 entry in `progress.md`.
+- **Files:** the form is in `src/features/calendar/event-form/`.
+- **Seeing it:** until T25 opens it from the grid, try it in the dev gallery (`/dev/design-system`, "Booking form").
+
 ## Goal
 The booking form from the mockup's "Add / edit event dialog" artboard: fast, clear and accessible.
 

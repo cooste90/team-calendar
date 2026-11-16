@@ -11,17 +11,20 @@ export function SegmentedControl({
   options,
   value,
   onValueChange,
+  disabled = false,
 }: {
   label: string;
   options: Option[];
   value: string;
   onValueChange: (value: string) => void;
+  disabled?: boolean;
 }) {
   return (
     <ToggleGroup
       type="single"
       aria-label={label}
       value={value}
+      disabled={disabled}
       // Radix lets you click the selected item to clear it. Ignore that so one is always selected.
       onValueChange={(newValue) => {
         if (newValue) onValueChange(newValue);

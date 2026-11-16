@@ -65,6 +65,9 @@ export function mergeChanges(all: BookingChanges[]): BookingChanges {
   };
 }
 
+// Notes are optional and short (spec §5.1).
+export const NOTES_MAX_LENGTH = 500;
+
 // A booking can span at most 366 days. This is a sanity limit, not a spec rule.
 const MAX_SPAN_DAYS = 366;
 
@@ -84,7 +87,7 @@ export const bookingInputSchema = z
     notes: z
       .string()
       .trim()
-      .max(500, "Notes can be up to 500 characters")
+      .max(NOTES_MAX_LENGTH, `Notes can be up to ${NOTES_MAX_LENGTH} characters`)
       .transform((notes) => notes || undefined)
       .optional(),
   })

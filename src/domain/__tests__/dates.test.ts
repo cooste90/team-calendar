@@ -10,6 +10,7 @@ import {
   endOfWeek,
   fromDayNumber,
   fromDbDate,
+  fromLocalDate,
   isCalendarDate,
   nextSunday,
   periodRange,
@@ -20,6 +21,7 @@ import {
   toDayNumber,
   toDbDate,
   todayIn,
+  toLocalDate,
   weekday,
   weekForMonthSelection,
   yearOptions,
@@ -207,5 +209,16 @@ describe("database dates", () => {
     const dbDate = toDbDate("2026-03-29");
     expect(dbDate.toISOString()).toBe("2026-03-29T00:00:00.000Z");
     expect(fromDbDate(dbDate)).toBe("2026-03-29");
+  });
+});
+
+describe("the date picker's local dates", () => {
+  it.each([
+    "2026-11-12",
+    "2026-03-29",
+    "2026-10-25",
+    "2028-02-29",
+  ])("%s survives a round trip, even across a clock change", (date) => {
+    expect(fromLocalDate(toLocalDate(date))).toBe(date);
   });
 });

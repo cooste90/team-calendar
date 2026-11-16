@@ -46,6 +46,7 @@ function Button({
   variant = "default",
   size = "default",
   asChild = false,
+  type,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
@@ -59,6 +60,10 @@ function Button({
       data-variant={variant}
       data-size={size}
       className={cn(buttonVariants({ variant, size, className }))}
+      // WestCal: a plain button unless it says otherwise. The browser's default is
+      // "submit", which makes every button inside a form send it. (A Link passed with
+      // asChild gets no type.)
+      type={asChild ? type : (type ?? "button")}
       {...props}
     />
   );

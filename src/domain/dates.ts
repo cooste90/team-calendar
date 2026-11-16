@@ -36,7 +36,9 @@ export function fromDayNumber(dayNumber: number): CalendarDate {
   return date;
 }
 
-function makeDate(year: number, month: number, day: number): CalendarDate {
+// Builds "YYYY-MM-DD" from numbers. It doesn't check that the date exists: use
+// isCalendarDate for that.
+export function makeDate(year: number, month: number, day: number): CalendarDate {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
@@ -167,13 +169,23 @@ export function anchorForMonthSelection(view: View, month: number, year: number)
   return makeDate(year, month, 1);
 }
 
-// Postgres `date` columns arrive from Prisma as a JS Date at UTC midnight. These two
-// functions are the ONLY places a JS Date meets a CalendarDate: convert when reading
-// or writing rows, and use CalendarDate everywhere else.
+// Postgres `date` columns arrive from Prisma as a JS Date at UTC midnight. These two,
+// and the date picker's pair below, are the ONLY places a JS Date meets a CalendarDate:
+// convert at the edges, and use CalendarDate everywhere else.
 export function toDbDate(date: CalendarDate): Date {
   return new Date(`${date}T00:00:00Z`);
 }
 
 export function fromDbDate(date: Date): CalendarDate {
   return date.toISOString().slice(0, 10);
+}
+
+// The date picker (react-day-picker) works with JS Dates at local midnight.
+export function toLocalDate(date: CalendarDate): Date {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+export function fromLocalDate(day: Date): CalendarDate {
+  return makeDate(day.getFullYear(), day.getMonth() + 1, day.getDate());
 }

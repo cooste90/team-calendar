@@ -1132,3 +1132,71 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 
 **Follow-ups:** hand-off notes added to T24 (edit mode, locked fields, Delete vs trim, day swaps) and T25 (delete, Undo, remove day, trim).
 **Questions for the product owner:** none.
+
+## T24 — Add / edit event dialog — 2026-11-16
+**Status:** done. No new dependencies. Nothing opens it from the grid yet (T25). Until then it's in the dev gallery (`/dev/design-system`, "Booking form") with sample data.
+**What I built** (`src/features/calendar/event-form/`):
+- **`EventFormDialog`:** opened through `eventDialog` in the calendar store (`{ mode: "create", subjectId, date }` or `{ mode: "edit", bookingId }`).
+  - **Title and description:** "Add event" / "Edit event", and "For Priya Shah · Service Design".
+  - **Narrow screens:** a full-height sheet whose content scrolls, with the buttons kept in view.
+- **`EventForm`:** one `useState` object for the values.
+  - **Before sending:** `validateForm` uses the shared `bookingInputSchema`, plus "is it a real date" and the earliest start.
+  - **Sending:** `saveForm` sends the day swap first, then `createBookingAction` / `updateBookingAction` inside `startTransition`.
+  - **Errors:** shown next to each field (with `aria-describedby`), plus a summary.
+- **The parts, each in its own file:**
+  - **`TypePicker`:** a radio group of 9 cards; arrows move between them.
+  - **`DateRangeFields`:** start and end dates. The end follows the start, and the earliest date is `earliestCreatableDate` (`today` when editing). Duration shows for one day, First day / Last day for several. The live day count uses `formatRangeSummary` and `describeExcludedDays` with the person's own availability, in an `<output>` (a polite live region).
+  - **`DatePickerField`:** you can type `12/11/2026`, `12 Nov 2026`, `Thu 12 Nov 2026` or `2026-11-12`, or pick from a calendar (en-GB, weeks from Sunday) that hatches the person's days off.
+  - **`OverrideFields`:** "I'm working this day" (Full / AM / PM) on a day off, or "I'm not working this day". An admin sees "Tom Okafor is …". Only for people who can change the person's working days (`canEditProfileOf`), only when adding, and the count includes it before saving. "Save availability only" saves it on its own.
+  - **`ConflictAlert`:** `role="alert"`, focused, one line per clash, with "Replace it" (sends it again with `replace: true`) and "Change dates" (focuses the start date). The form keeps its values.
+  - **`NotesField`:** a 500-character limit (`NOTES_MAX_LENGTH`, shared with the schema). The counter is only read out from 80%.
+  - **`EditActions`:** Delete, with an Undo toast for 8 seconds, before the booking starts; "Delete remaining days" once it has.
+  - **`BookingHistory`:** "Created by … · when" and "Last changed by … · when" (or "a deleted user").
+  - **Small pieces:** `FormFooter` and `ErrorSummary`.
+  - **Edit mode:** the fields `allowedEdits` doesn't allow are disabled, with the reason shown.
+- **Supporting changes elsewhere:**
+  - **Domain:** `formatDateInput`, `parseDateText` and `formatTimestamp` in `format.ts` (one cached `Intl` formatter per time zone); `makeDate`, `toLocalDate` and `fromLocalDate` in `dates.ts`; `NOTES_MAX_LENGTH` in `events.ts`.
+  - **Calendar query:** each booking now has `audit` (who created and last changed it, and when, formatted in the app's time zone).
+  - **`Button`** now defaults to `type="button"` unless it's `asChild`. The browser default, "submit", made every button inside a form send it (that's how "Replace it" first sent the form without `replace`). Every existing form already marks its submit button.
+  - **`SegmentedControl`** gained `disabled`.
+
+**Tests:**
+- **Component** (`event-form.test.tsx`, 20):
+  - a new booking defaults to the clicked day as annual leave; the end follows the start; Duration vs First/Last day;
+  - the live count uses the spec's own examples (Thu–Tue for a Thu/Fri worker is 2 days; Mon–Fri with a Wednesday morning only is 4.5), and an afternoon first day shows in it;
+  - the earliest start: a USER can't go before today, an ADMIN can go 7 days back but not 8;
+  - a booking that has started: its type and start are locked with the reason shown, it offers "Delete remaining days", it shows its history, and a later end saves;
+  - the clash flow: what's there, focus, values kept, Replace, Change dates;
+  - day swaps: your own day off, an admin's wording, hidden for a teammate, hidden when editing, and saving the swap on its own;
+  - arrows and Space in the type picker; axe when adding and when editing.
+- **E2E** (`event-form.spec.ts`, on the gallery):
+  - axe in both themes, adding and editing;
+  - the arrow keys choose a type;
+  - at 320px it fills the screen, the buttons are in view, and axe passes.
+- **Unit:** typed date parsing, input formatting, timestamps (summer and winter), and local-date round trips.
+- **Screenshots** in light, dark, edit mode, the calendar popup and at 320px, compared with the mockup's EventDialog. It matches.
+
+**Key files:** `src/features/calendar/event-form/*`, `src/domain/format.ts`, `src/domain/dates.ts`, `src/server/queries/calendar.ts`, `src/components/ui/button.tsx`.
+**Simplicity pass** (my own re-read, then `/simplify`):
+- **`EventForm` is ~100 lines.** The footer, error summary and history are their own components, with no nested ternary.
+- **One availability rule:** the day count builds the planned day swaps and uses `availabilityLookup`, rather than restating "a swap wins".
+- **The date field** keeps just a draft of what's typed.
+- **Shared code instead of copies:** the date helpers (`makeDate`, local dates), the notes limit and the "Unassigned" name; `formatTimestamp` formats with one shared formatter.
+- **Edit actions** are one button.
+- **Explicit branches** in `findWhatToShow`.
+- **The e2e arrow test** waits for the type to be picked rather than a fixed delay.
+
+**Deviations from plan:**
+- **Saving just a day swap** uses its own "Save availability only" button, because the form always has a type chosen.
+- **Day swaps aren't offered in edit mode,** because there's no "clicked date".
+- **Arrows in the type picker:** Radix picks the type the arrow lands on only while the key is still held. Real key presses are; Playwright's `press()` isn't, so the e2e test holds the key until it's picked. The component test (in a fake browser) checks that the arrow moves focus and Space picks.
+- **Delete with Undo is in the form already.** T25's confirmation, announcement and focus handling should go into one shared helper (hand-off note in T25).
+
+**Follow-ups:**
+- **T25:** open the form from the grid, retire the gallery demo, and share delete/Undo (notes in the T25 task file).
+- **Optional tidy-ups the reviewers raised:**
+  - use the `ui/field` components for the form's labels and errors (the 13px label style is written 5 times);
+  - one shared test-data file for the calendar tests (the same `CalendarData` setup is now in 5 places).
+
+**Questions for the product owner:**
+- **Please try the form in the gallery** (`/dev/design-system` → "Booking form"): adding, editing, the calendar popup, typing dates, and a narrow window.
