@@ -3,63 +3,28 @@ import { addDays, toDbDate } from "@/domain/dates";
 import type { BookingInput } from "@/domain/events";
 import type { Actor } from "@/domain/permissions";
 import { db } from "@/server/db";
-import { toBooking, toEventData } from "@/server/mappers";
 import { createBooking } from "@/server/services/bookings";
-import { createUser } from "./helpers/create-user";
+import {
+  annualLeave,
+  bookingsInDb,
+  createPeople,
+  exclusionsInDb,
+  insertRow,
+} from "./helpers/people";
 
 // Today is Wednesday 12 June 2030.
 const TODAY = "2030-06-12";
 
-// West: Ops (Priya, Ben, and Tom the admin), Legal (Dan), and Newbie, who is unassigned.
-// North: Payroll (Nina, and Grace the super admin). Roles only matter on the Actor the
-// service is given, so the user rows are all created the same way.
-const actors: Record<string, Actor> = {};
+let actors: Record<string, Actor> = {};
 let auditLog: MockInstance; // console.info, where the audit lines go
 
 beforeEach(async () => {
   auditLog = vi.spyOn(console, "info").mockImplementation(() => {});
-  const west = await db.businessUnit.create({ data: { name: "West", slug: "west" } });
-  const north = await db.businessUnit.create({ data: { name: "North", slug: "north" } });
-  const ops = await db.team.create({
-    data: { businessUnitId: west.id, name: "Ops", sortOrder: 1 },
-  });
-  const legal = await db.team.create({
-    data: { businessUnitId: west.id, name: "Legal", sortOrder: 2 },
-  });
-  const payroll = await db.team.create({
-    data: { businessUnitId: north.id, name: "Payroll", sortOrder: 1 },
-  });
-  const people: Actor[] = [
-    { id: "priya", role: "USER", businessUnitId: west.id, teamId: ops.id },
-    { id: "ben", role: "USER", businessUnitId: west.id, teamId: ops.id },
-    { id: "tom", role: "ADMIN", businessUnitId: west.id, teamId: ops.id },
-    { id: "dan", role: "USER", businessUnitId: west.id, teamId: legal.id },
-    { id: "newbie", role: "USER", businessUnitId: west.id, teamId: null },
-    { id: "nina", role: "USER", businessUnitId: north.id, teamId: payroll.id },
-    { id: "grace", role: "SUPER_ADMIN", businessUnitId: north.id, teamId: payroll.id },
-  ];
-  for (const person of people) {
-    await createUser(person.id, { businessUnitId: person.businessUnitId, teamId: person.teamId });
-    actors[person.id] = person;
-  }
+  actors = await createPeople();
 });
-
-// Full days of annual leave, e.g. annualLeave("priya", "2030-06-17", "2030-06-21").
-function annualLeave(userId: string, startDate: string, endDate = startDate): BookingInput {
-  return { userId, type: "ANNUAL", startDate, startHalf: "AM", endDate, endHalf: "PM" };
-}
 
 function create(actorId: string, input: BookingInput, options = { replace: false }) {
   return createBooking(actors[actorId], input, options, TODAY);
-}
-
-// Every booking in the database, by person then start date, e.g.
-// "priya ANNUAL 2030-06-17 AM – 2030-06-18 PM".
-async function bookingsInDb() {
-  const rows = await db.event.findMany({ orderBy: [{ userId: "asc" }, { startDate: "asc" }] });
-  return rows
-    .map(toBooking)
-    .map((b) => `${b.userId} ${b.type} ${b.startDate} ${b.startHalf} – ${b.endDate} ${b.endHalf}`);
 }
 
 describe("who can book for whom, and when", () => {
@@ -221,12 +186,10 @@ it("replacing part of a public holiday copy detaches it from the holiday", async
   const holiday = await db.publicHoliday.create({
     data: { date: toDbDate("2030-08-26"), name: "Summer bank holiday" },
   });
-  const copy = await db.event.create({
-    data: toEventData({
-      ...annualLeave("priya", "2030-08-26"),
-      type: "PUBLIC_HOLIDAY",
-      publicHolidayId: holiday.id,
-    }),
+  const copyId = await insertRow({
+    ...annualLeave("priya", "2030-08-26"),
+    type: "PUBLIC_HOLIDAY",
+    publicHolidayId: holiday.id,
   });
 
   const morningAtHome = {
@@ -236,9 +199,7 @@ it("replacing part of a public holiday copy detaches it from the holiday", async
   } as const;
   await create("priya", morningAtHome, { replace: true });
 
-  const left = await db.event.findUniqueOrThrow({ where: { id: copy.id } });
+  const left = await db.event.findUniqueOrThrow({ where: { id: copyId } });
   expect(left).toMatchObject({ startHalf: "PM", endHalf: "PM", publicHolidayId: null });
-  expect(
-    await db.publicHolidayExclusion.findMany({ select: { userId: true, publicHolidayId: true } }),
-  ).toEqual([{ userId: "priya", publicHolidayId: holiday.id }]);
+  expect(await exclusionsInDb()).toEqual([{ userId: "priya", publicHolidayId: holiday.id }]);
 });

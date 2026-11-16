@@ -7,6 +7,11 @@
 - **Clash:** it returns `error.code === "CONFLICT"` with `error.conflicts`, a list of `{ bookingId, type, startDate, startHalf, endDate, endHalf, message }`. Show each `message`, and send the same booking again with `replace: true` when the person presses Replace.
 - **Past dates:** a `PAST_LOCKED` error means a clash, or the booking itself, is in the past.
 
+**From T23:** in edit mode, call `updateBookingAction({ id, booking, replace })`. Clashes and Replace work as for create.
+- **Type and start of a booking that has started:** they're locked. The server returns `VALIDATION`, so disable those fields with `allowedEdits(booking, today)`.
+- **Delete button:** use `validateDelete`'s rule (allowed while `allowedEdits` is `"all"`). For a booking that has started, offer "Delete the remaining days" (`trimBookingAction({ id })`) instead.
+- **Day swaps:** `setAvailabilityOverrideAction({ userId, date, value })`, where `value` is `"FULL" | "AM" | "PM" | "OFF" | null`. It needs `canEditProfileOf`, so a teammate can't set one.
+
 ## Goal
 The booking form from the mockup's "Add / edit event dialog" artboard: fast, clear and accessible.
 

@@ -15,6 +15,7 @@ import {
   planReconcileForPerson,
   planUserDeletesPhCopy,
   planUserEditsPhCopy,
+  planUserUpdatesPhCopy,
 } from "../public-holidays";
 import { type HalfDay, rangeOf, toSlot } from "../slots";
 
@@ -350,6 +351,16 @@ describe("a person changing their own copy", () => {
       remove: ["copy"],
       addExclusions: exclusion,
     });
+  });
+
+  it.each([
+    ["only the notes", { notes: "Going to the coast" }, false],
+    ["the type", { type: "ANNUAL" }, true],
+    ["the date", { startDate: "2026-11-19", endDate: "2026-11-19" }, true],
+    ["a half", { endHalf: "AM" }, true],
+  ] as const)("saving it from the form with %s changed detaches it: %s", (_what, change, detaches) => {
+    const changes = planUserUpdatesPhCopy(copy, { ...copy, ...change });
+    expect(changes).toEqual(detaches ? planUserEditsPhCopy(copy) : emptyChanges());
   });
 
   it("a PH booking that isn't linked to a holiday is just an ordinary booking", () => {

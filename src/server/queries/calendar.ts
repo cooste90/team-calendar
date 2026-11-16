@@ -2,7 +2,7 @@
 // plain data that can be passed to the client grid.
 import "server-only";
 import type { Override, PatternVersion } from "@/domain/availability";
-import { type CalendarDate, toDbDate, todayIn } from "@/domain/dates";
+import { type CalendarDate, toDbDate } from "@/domain/dates";
 import type { PersonName } from "@/domain/display-name";
 import { NotFoundError } from "@/domain/errors";
 import {
@@ -11,9 +11,9 @@ import {
   canSeeUnassigned,
   canViewBusinessUnit,
 } from "@/domain/permissions";
-import { env } from "@/lib/env";
 import { db } from "../db";
 import { toBooking, toOverride, toPatternVersion, toPublicHoliday } from "../mappers";
+import { serverToday } from "../today";
 
 // A person on the grid. Their pattern history and day swaps come too, so the client can
 // work out any day's availability (a bar's day count can reach outside the range).
@@ -70,7 +70,7 @@ export async function getCalendarData(
   return {
     businessUnitId: businessUnit.id,
     range: { from, to },
-    today: todayIn(env.APP_TIME_ZONE),
+    today: serverToday(),
     teams,
     people: users.map(
       (user): CalendarPerson => ({

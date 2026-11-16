@@ -84,7 +84,7 @@ Size key: **S** ≈ small, under 300 lines changed · **M** ≈ 300–800 · **L
 
 ### Phase 4 — Bookings
 - [x] [T22](tasks/T22-booking-create-service.md) Booking create service: conflicts, replace, transactions · **M**
-- [ ] [T23](tasks/T23-booking-modify-service.md) Booking update/delete/split/trim/undo, PH detach, availability overrides · **L**
+- [x] [T23](tasks/T23-booking-modify-service.md) Booking update/delete/split/trim/undo, PH detach, availability overrides · **L**
 - [ ] [T24](tasks/T24-event-form.md) Add / edit event dialog · **L**
 - [ ] [T25](tasks/T25-grid-interactions.md) Grid interactions, grow animation, undo · **L**
 

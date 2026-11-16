@@ -9,6 +9,10 @@
 - **Audit:** log each change with one `console.info` JSON line (see `logCreated`). Once there are four of them, move them into one helper.
 - **Race test:** warm the pool first (see `create-booking.test.ts`), or it won't race.
 
+**As built:** see the T23 entry in `progress.md`.
+- **Edits:** in `booking-edits.ts`; create and Undo are in `bookings.ts`; day swaps are in `availability.ts`.
+- **A locked field** (for example, the type of a booking that has started) returns `VALIDATION`, not `FIELD_LOCKED`.
+
 ## Goal
 Every way of changing an existing booking (plus one-off availability overrides), safe and rule-complete.
 

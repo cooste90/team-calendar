@@ -10,6 +10,7 @@ import {
   planRemoveDay,
   planTrimRemaining,
   validateCreate,
+  validateDelete,
   validateOverrideChange,
   validateUpdate,
 } from "../time-rules";
@@ -126,6 +127,21 @@ describe("validateUpdate", () => {
     expect(() => validateUpdate(future, { ...future, startDate: "2026-11-11" }, TODAY)).toThrow(
       PastLockedError,
     );
+  });
+});
+
+describe("validateDelete", () => {
+  it.each([
+    ["a future booking", future, "ok"],
+    ["one starting today", startsToday, "ok"],
+    ["one that has started", ongoing, "PAST_LOCKED"],
+    ["a past one", past, "PAST_LOCKED"],
+  ] as const)("%s → %s", (_what, booking, result) => {
+    if (result === "ok") {
+      expect(() => validateDelete(booking, TODAY)).not.toThrow();
+    } else {
+      expect(() => validateDelete(booking, TODAY)).toThrow(PastLockedError);
+    }
   });
 });
 

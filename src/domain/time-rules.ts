@@ -73,6 +73,18 @@ export function validateUpdate(before: Booking, after: Booking, today: CalendarD
   }
 }
 
+// A booking can be deleted until it starts. After that its past days stay: "Delete the
+// remaining days" ends it yesterday instead (spec §5.4).
+export function validateDelete(booking: Booking, today: CalendarDate): void {
+  const edits = allowedEdits(booking, today);
+  if (edits === "none") {
+    throw new PastLockedError("Past bookings can't be deleted.");
+  }
+  if (edits === "end-and-notes") {
+    throw new PastLockedError("This booking has started. Use “Delete the remaining days” instead.");
+  }
+}
+
 // "Delete the remaining days" on a booking that has started: it now ends yesterday.
 export function planTrimRemaining(booking: Booking, today: CalendarDate): BookingChanges {
   if (classifyBooking(booking, today) !== "ongoing") {

@@ -16,6 +16,7 @@ import type { CalendarDate } from "./dates";
 import {
   type Booking,
   type BookingChanges,
+  type BookingInput,
   changesForPieces,
   emptyChanges,
   mergeChanges,
@@ -207,6 +208,18 @@ export function planUserEditsPhCopy(booking: Booking): BookingChanges {
     unlink: [booking.id],
     addExclusions: [{ userId: booking.userId, publicHolidayId: booking.publicHolidayId }],
   };
+}
+
+// A person saves their copy from the booking form. Changing only the notes keeps it
+// linked; changing its type or dates makes it an ordinary booking (planUserEditsPhCopy).
+export function planUserUpdatesPhCopy(before: Booking, after: BookingInput): BookingChanges {
+  const onlyNotesChanged =
+    before.type === after.type &&
+    before.startDate === after.startDate &&
+    before.startHalf === after.startHalf &&
+    before.endDate === after.endDate &&
+    before.endHalf === after.endHalf;
+  return onlyNotesChanged ? emptyChanges() : planUserEditsPhCopy(before);
 }
 
 // A person deletes their copy: it goes, and they're excluded so it isn't recreated.

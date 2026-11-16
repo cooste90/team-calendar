@@ -8,6 +8,11 @@
 - Every `DialogContent` (`src/components/ui/dialog.tsx`) returns focus to whatever had it when it opened, so a dialog opened from a cell goes back to that cell. AlertDialog doesn't do this yet; give `alert-dialog.tsx` the same few lines when the delete confirmation needs it.
 - If a booking change removes the focused cell, `use-grid-keyboard.ts` puts focus back on the tab stop.
 
+**From T23:** the actions for the details popover and toasts are ready:
+- `deleteBookingAction({ id })` returns `{ booking, publicHolidayId }`. Pass it unchanged to `restoreBookingAction` for the toast's Undo.
+- If Undo fails with `CONFLICT`, show its message ("Couldn't undo — something else is booked there now.").
+- `removeBookingDayAction({ id, date })` and `trimBookingAction({ id })` are the other two.
+
 ## Goal
 Bring the grid to life. Clicking a cell books, clicking a bar shows details, a new booking grows into place, and every action has a keyboard path. All of it uses the simple pattern: **call the action → it calls `refresh()` → the grid shows the new data.**
 

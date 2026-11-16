@@ -2,9 +2,9 @@
 // (cookie) and today (spec §2.2). Shared by the page and its browser tab title.
 import "server-only";
 import { cookies } from "next/headers";
-import { periodRange, todayIn, type View } from "@/domain/dates";
-import { env } from "@/lib/env";
+import { periodRange, type View } from "@/domain/dates";
 import { loadCalendarSearchParams, VIEW_COOKIE } from "@/lib/search-params";
+import { serverToday } from "@/server/today";
 
 export async function readSavedView(): Promise<View> {
   const saved = (await cookies()).get(VIEW_COOKIE)?.value;
@@ -14,6 +14,6 @@ export async function readSavedView(): Promise<View> {
 export async function resolveCalendarView(searchParams: PageProps<"/">["searchParams"]) {
   const params = await loadCalendarSearchParams(searchParams);
   const view = params.view ?? (await readSavedView());
-  const period = periodRange(view, params.date ?? todayIn(env.APP_TIME_ZONE));
+  const period = periodRange(view, params.date ?? serverToday());
   return { params, view, period };
 }

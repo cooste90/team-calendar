@@ -1063,3 +1063,72 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 - **T36:** puts this action in the permission matrix.
 
 **Questions for the product owner:** none.
+
+## T23 — Booking edit, delete, remove day, trim, Undo, PH detach and day swaps — 2026-11-16
+**Status:** done. No new dependencies. Server only; the form (T24) and grid actions (T25) come next.
+**What I built:**
+- **`src/server/services/booking-edits.ts`:** each one starts with the same private `startChange` helper. It finds the booking's owner, checks `canEditBookingsFor`, locks the person, reads the booking again under the lock, then checks `canModify`.
+  - **`updateBooking`:**
+    - `validateUpdate` (once it has started, only the end and notes);
+    - clash check ignoring itself, with Replace as in T22;
+    - `planUserUpdatesPhCopy` (detaches a public holiday copy when its type or dates change; editing only the notes keeps it linked);
+    - sets `updatedById`.
+  - **`deleteBooking`:** `validateDelete`, so only before it starts. A public holiday copy gets an exclusion. It returns `{ booking, publicHolidayId }` for Undo.
+  - **`removeBookingDay`:** `planRemoveDay`. A day in the middle splits the booking, and both pieces keep the original creator. A public holiday copy's day removed means it's gone, with an exclusion.
+  - **`trimRemainingDays`:** `planTrimRemaining`, so a booking that has started ends yesterday.
+- **`restoreBooking`** (Undo, `bookings.ts`):
+  - it re-runs the create steps (shared with `createBooking` as `insertBooking`) without Replace;
+  - a clash returns CONFLICT with "Couldn't undo — something else is booked there now.";
+  - a public holiday copy is linked again and its exclusion removed, if the holiday still exists and the date hasn't passed.
+- **`setAvailabilityOverride`** (`src/server/services/availability.ts`):
+  - **Permission:** `canEditProfileOf`.
+  - **Time rules:** a new day swap follows `validateCreate` (admins can go 7 days back); changing or removing one needs today or later (`validateOverrideChange`).
+  - **`null`** removes it.
+  - **Public holiday on that date:** `planReconcileForPerson` brings their copy in line, in the same transaction.
+- **Six actions,** all through `authedAction`: `updateBookingAction`, `deleteBookingAction`, `restoreBookingAction`, `removeBookingDayAction`, `trimBookingAction` and `setAvailabilityOverrideAction`.
+- **Shared pieces:**
+  - **`booking-queries.ts`:** `loadPerson` and `loadOverlapping`.
+  - **`src/server/audit.ts`:** `logBookingChange`, one JSON line per create, update, delete, restore, remove-day or trim (T22 said to extract it at four).
+  - **`src/server/today.ts`:** `serverToday()`. It replaces `todayIn(env.APP_TIME_ZONE)` in four existing files too.
+- **New domain rules:**
+  - `validateDelete` in `time-rules.ts`;
+  - `planUserUpdatesPhCopy` in `public-holidays.ts`.
+- **`saveBookingChanges` skips steps with nothing to do.** It runs while the person is locked, so empty statements only made other saves wait.
+
+**Tests:**
+- **Integration, `edit-booking.test.ts`:**
+  - **A booking that has started:** changing its type → VALIDATION; moving its end later works; trim ends it yesterday; deleting it → PAST_LOCKED.
+  - **A past booking** added by an admin within the 7 days: editing or deleting it → PAST_LOCKED.
+  - **Who can edit:** a teammate can edit; another team can't.
+  - **Clashes and audit:** no clash with itself, but a clash with others, and Replace works; it records who changed it and keeps who created it.
+  - **Remove this day:** a middle day leaves 2 bookings with the creator kept; the first day moves the start.
+  - **A public holiday copy:**
+    - moved, it's detached, and a later admin move of the holiday (the T08 planner, called directly) leaves it alone;
+    - editing only its notes keeps it linked;
+    - removing its day deletes it with an exclusion;
+    - deleting it adds an exclusion, and Undo links it again with no exclusion.
+  - **Undo:** it brings a booking back, notes included; after something else was booked there, it returns CONFLICT.
+- **Integration, `availability-override.test.ts`:**
+  - **Who:** self and an admin can set one; a teammate can't (FORBIDDEN).
+  - **Past lock:** a user can't add one for yesterday; an admin can for 7 days back but not 8; nobody can change one whose day has passed; `null` removes it.
+  - **Public holidays:** working on a holiday you'd normally have off creates your copy; "not working" removes it; working the morning gives a morning copy.
+- **Unit:** `validateDelete` and `planUserUpdatesPhCopy`.
+- **Shared test setup** now lives in `tests/integration/helpers/people.ts` (people and teams, `annualLeave`, `insertRow`, `bookingsInDb`, `exclusionsInDb`). `create-booking.test.ts` uses it too.
+
+**Key files:** `src/server/services/booking-edits.ts`, `bookings.ts`, `availability.ts`, `booking-queries.ts`, `src/server/audit.ts`, `src/server/today.ts`, `src/server/actions/*`.
+**Simplicity pass** (my own re-read, then `/simplify`):
+- **Rules moved into the domain:** "delete only before it starts" became `validateDelete`, and "notes-only keeps a copy linked" became `planUserUpdatesPhCopy`.
+- **Less code in `saveBookingChanges`'s callers:** with empty steps skipped, `createBooking` no longer needs its own "only if there are clashes" check.
+- **Undo** uses a plain `try/catch`, with the relinking in one small function.
+- **The day-swap snapshot** loads only that day's swap.
+- **No hand-copied field list:** the delete snapshot is the booking itself.
+- **Tests:** an `update()` wrapper; the test-only insert is renamed `insertRow`, so it isn't confused with the service's `insertBooking`.
+
+**Deviations from plan:**
+- **`FIELD_LOCKED` is `VALIDATION`.** That's the error the T07 domain already throws for a locked field; there's no separate code.
+- **A public holiday copy detaches when its type changes too,** not only its dates. A copy turned into annual leave but still linked would be deleted if an admin later deleted the holiday.
+- **Removing a copy's day uses `planUserEditsPhCopy`** alongside `planRemoveDay`. The result is the same as a delete (gone, plus an exclusion).
+- **The services are split over 3 files** (`bookings.ts`, `booking-edits.ts`, `availability.ts`) rather than all in `bookings.ts`, to keep each under ~200 lines.
+
+**Follow-ups:** hand-off notes added to T24 (edit mode, locked fields, Delete vs trim, day swaps) and T25 (delete, Undo, remove day, trim).
+**Questions for the product owner:** none.

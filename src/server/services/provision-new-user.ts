@@ -6,12 +6,12 @@ import {
   DEFAULT_PATTERN,
   DEFAULT_PATTERN_EFFECTIVE_FROM,
 } from "@/domain/availability";
-import { toDbDate, todayIn } from "@/domain/dates";
+import { toDbDate } from "@/domain/dates";
 import { mergeChanges } from "@/domain/events";
 import { planPublicHolidayCreate } from "@/domain/public-holidays";
 import type { Prisma } from "@/generated/prisma/client";
-import { env } from "@/lib/env";
 import { toPatternColumns, toPublicHoliday } from "../mappers";
+import { serverToday } from "../today";
 import { saveBookingChanges } from "./save-booking-changes";
 
 export async function provisionNewUser(tx: Prisma.TransactionClient, userId: string) {
@@ -23,7 +23,7 @@ export async function provisionNewUser(tx: Prisma.TransactionClient, userId: str
     },
   });
 
-  const today = todayIn(env.APP_TIME_ZONE);
+  const today = serverToday();
   const rows = await tx.publicHoliday.findMany({ where: { date: { gte: toDbDate(today) } } });
 
   // A new user has no bookings or exclusions yet, so the planner only creates PHs.

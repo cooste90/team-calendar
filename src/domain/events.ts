@@ -37,6 +37,10 @@ export type NewBooking = BookingInput & {
   createdById?: string | null;
 };
 
+// A deleted booking, as the delete hands it back for Undo (spec §5.6). publicHolidayId
+// lets Undo link a public holiday copy to its holiday again.
+export type DeletedBooking = { booking: BookingInput; publicHolidayId: string | null };
+
 // What a planner wants saved. saveBookingChanges (T12) writes it in one transaction.
 export type BookingChanges = {
   create: NewBooking[];

@@ -12,15 +12,22 @@ export async function saveBookingChanges(
   changes: BookingChanges,
   actorId: string,
 ) {
+  // Each step only runs when it has something to do: this runs while the person is
+  // locked, so empty statements would only make other saves wait.
+
   // Removals first, so a new booking never sits on top of one that's being replaced.
-  await tx.event.deleteMany({ where: { id: { in: changes.remove } } });
+  if (changes.remove.length > 0) {
+    await tx.event.deleteMany({ where: { id: { in: changes.remove } } });
+  }
 
   // Split-off pieces keep the original creator; everything else is created by the actor.
-  await tx.event.createMany({
-    data: changes.create.map((booking) =>
-      toEventData({ ...booking, createdById: booking.createdById ?? actorId }),
-    ),
-  });
+  if (changes.create.length > 0) {
+    await tx.event.createMany({
+      data: changes.create.map((booking) =>
+        toEventData({ ...booking, createdById: booking.createdById ?? actorId }),
+      ),
+    });
+  }
 
   for (const { id, range } of changes.update) {
     const dates = datesOfRange(range);
@@ -36,9 +43,16 @@ export async function saveBookingChanges(
     });
   }
 
-  await tx.publicHolidayExclusion.createMany({ data: changes.addExclusions, skipDuplicates: true });
-  await tx.event.updateMany({
-    where: { id: { in: changes.unlink } },
-    data: { publicHolidayId: null },
-  });
+  if (changes.addExclusions.length > 0) {
+    await tx.publicHolidayExclusion.createMany({
+      data: changes.addExclusions,
+      skipDuplicates: true,
+    });
+  }
+  if (changes.unlink.length > 0) {
+    await tx.event.updateMany({
+      where: { id: { in: changes.unlink } },
+      data: { publicHolidayId: null },
+    });
+  }
 }
