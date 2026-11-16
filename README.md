@@ -26,8 +26,9 @@ What you can open today:
 |---|---|
 | `src/domain/` | All the business rules as plain, fully tested TypeScript (no React or database). Start here to understand how the app thinks. |
 | `src/components/` | Shared React components; `ui/` holds the shadcn components |
+| `src/features/calendar/` | The calendar's screens: `header/`, `grid/`, `filters/`, `key/` and `event-form/` (the booking dialog), plus the one client store (`calendar-store.ts`) |
 | `src/app/` | Next.js pages and API routes |
-| `src/server/` | Server-only code: the database client, sign-in (`auth.ts`, `auth-sync.ts`, `session.ts`), and server actions |
+| `src/server/` | Server-only code: the database client, sign-in (`auth.ts`, `auth-sync.ts`, `session.ts`), `queries/` (reads), `services/` (writes, in transactions), `actions/` (server actions), the audit log (`audit.ts`) and `today.ts` |
 | `src/lib/` | Small shared helpers, e.g. `env.ts`, which checks the settings in `.env` |
 | `prisma/` | The database schema, migrations and the demo data seed (`prisma/seed/`) |
 | `tests/` | Integration tests (real database) and end-to-end browser tests |

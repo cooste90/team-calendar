@@ -58,7 +58,7 @@ Read this together with `00-product-spec.md`. This file says **how** the app is 
 │  │  ├─ api/auth/[...all]/route.ts
 │  │  ├─ api/export/attendance/route.ts       # GET PDF
 │  │  ├─ api/health/route.ts
-│  │  ├─ dev/design-system/page.tsx           # dev-only component gallery
+│  │  ├─ dev/design-system/page.tsx           # dev-only component gallery (and the booking form demo until T25)
 │  │  ├─ layout.tsx, globals.css, error.tsx, not-found.tsx, forbidden.tsx
 │  ├─ components/ui/                          # shadcn
 │  ├─ components/                             # shared app components (brand/, leave-chip, segmented-control, live-region…)
@@ -70,7 +70,8 @@ Read this together with `00-product-spec.md`. This file says **how** the app is 
 │  ├─ domain/                                 # PURE TypeScript. No React, Prisma or Next imports.
 │  │  ├─ dates.ts, slots.ts, format.ts, availability.ts, counting.ts, events.ts,
 │  │  ├─ conflicts.ts, permissions.ts, time-rules.ts, public-holidays.ts,
-│  │  ├─ tallies.ts, grid-model.ts, grid-model-types.ts, leave-types.ts, display-name.ts, errors.ts
+│  │  ├─ tallies.ts, grid-model.ts, grid-model-types.ts, grid-navigation.ts, leave-types.ts,
+│  │  ├─ display-name.ts, filter-options.ts, teams.ts, errors.ts
 │  │  └─ __tests__/
 │  ├─ server/                                 # `import "server-only"` in every file
 │  │  ├─ db.ts                                # Prisma client singleton (adapter-pg) + lockUsers()
@@ -78,7 +79,10 @@ Read this together with `00-product-spec.md`. This file says **how** the app is 
 │  │  ├─ auth.ts, auth-sync.ts, session.ts    # Better Auth instance, syncSsoProfile, requireUser()
 │  │  ├─ queries/                             # read functions, scoped by visibility
 │  │  ├─ services/                            # write logic, transactions, calls into domain/
+│  │  │                                       #   (bookings.ts, booking-edits.ts, availability.ts, …)
 │  │  ├─ actions/                             # "use server" thin wrappers → services
+│  │  ├─ audit.ts                             # one JSON log line per booking change
+│  │  ├─ today.ts                             # serverToday(): the app's date (APP_TIME_ZONE)
 │  │  └─ authed-action.ts                     # authedAction() helper
 │  ├─ lib/        (env.ts, search-params.ts, schemas/)   # no utils.ts: shadcn imports `cn` from the `cn` package
 │  └─ generated/prisma/                       # Prisma output (gitignored)
