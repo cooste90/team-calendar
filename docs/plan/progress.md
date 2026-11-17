@@ -1200,3 +1200,59 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 
 **Questions for the product owner:**
 - **Please try the form in the gallery** (`/dev/design-system` → "Booking form"): adding, editing, the calendar popup, typing dates, and a narrow window.
+
+## T25 — Grid interactions, grow animation and Undo — 2026-11-17
+**Status:** done. No new dependencies. Phase 4 (bookings) is complete.
+**What I built:**
+- **Clicking or pressing Enter / Space on a day** (`grid/use-cell-actions.ts`, one `onClick` on the grid like the T18 keyboard handler):
+  - an empty day you can book on opens Add event;
+  - anything else opens the **cell menu**: each booking that day (chip, type, "Mon 16 – Wed 18 · 3 days") with View, and Edit when allowed; "Add to morning" / "Add to afternoon" for a free half; "Set availability for this day" (opens the form, which has the day swap options);
+  - a day you can't book on (another team, the past, an unassigned viewer) only offers View, or says "Nothing booked."
+- **Clicking a bar** opens the **booking details**: type, dates and count, notes, "Created by / Last changed by", then Edit, Delete, "Remove this day (Tue 17 Nov)" and "Delete remaining days" as permitted. Both live in one popover (`grid-popover/`), anchored to the day's cell. Esc or a click outside closes it, and focus goes back to the cell.
+- **Delete** (`booking-actions.ts`, shared by the form and the popover, as T24 asked):
+  - a single day goes at once; several days ask first: "Delete Annual leave, Mon 16 – Wed 18 Nov (3 days)?" (`delete-confirm-dialog.tsx`);
+  - then a "Booking deleted" toast with **Undo** for 8 seconds. Undo brings it back, grows it in, and puts focus on its first day; a clash shows the server's "Couldn't undo — something else is booked there now.";
+  - the **Delete key** on a day with exactly one deletable booking does the same.
+- **Grow animation:** a successful create (or Undo) stores `lastCreatedId`; that bar gets `animate-grow` and clears it on `animationend`.
+- **Screen reader messages** for every success, e.g. "Annual leave added for Priya Shah, Tuesday 17 to Thursday 19 November, 3 days.", "Booking deleted. Undo available.", "Tue 17 Nov removed from the booking."
+- **Focus:** after the form saves, focus is back on the day it opened from; after delete, on the day; after Undo, on the restored booking's first day.
+- **Small pieces:**
+  - **Domain:** `src/domain/grid-actions.ts` (`findCell`, `canAddOn`, `freeHalves`, `bookingActions`) and `formatShortRange`.
+  - **Client:** `grid/describe-cell.ts` (what a day holds and offers, used by clicks, keys and the popover); `grid/cell-elements.ts` (`positionOf`, `findGridCell`, `focusGridCell`, `focusLastCell`, shared with the keyboard hook, whose unused `gridRef` is gone); `CalendarBooking` type in `queries/calendar.ts`.
+  - **Store:** `gridPopover`, `deleteConfirmId`, `lastCreatedId`; the form target takes an optional `portion` for "Add to morning / afternoon".
+  - **Shortcuts dialog** lists Enter / Space, Delete and Esc.
+- **Retired the gallery demo** (`event-form-demo.tsx` and its section); `event-form.spec.ts` now opens the form from the seeded grid.
+
+**Tests:**
+- **Unit:** `grid-actions` (each rule as a table row) and `formatShortRange`. `src/domain` is still at 100%.
+- **Component** (`grid-interactions.test.tsx`, 17): Add event on a free day but not a past one; the cell menu's contents (free half, View/Edit, View only for another team, nothing for an unassigned viewer); Add to afternoon picks the afternoon; Esc returns focus; details per permission (own future booking, a teammate's started one, another team's); a single-day delete with its toast and Undo; a failed delete's message; the multi-day confirmation from the Delete key, with focus back on the cell; Delete ignored on a booking that has started; the grow class; axe with each popup open. 570 unit and component tests in total.
+- **E2E** (`grid-interactions.spec.ts`, 11, plus 4 in `event-form.spec.ts`): book Tue–Thu by clicking (grows once, "AL · N days", focus back, still there after a reload); AM AL + PM FL on one day; a clash then Replace; an admin moves the end of a booking that has started; Remove this day leaves two bars; Delete then Undo; the keyboard-only version (book, menu, details, Esc, Delete, confirm); a teammate's day can be booked, another team's only viewed; a second browser sees a new booking after a focus event; axe with the menu, details and confirmation open in both themes. The whole Chromium suite passes (49).
+  - Each booking test uses its **own empty week 30–43 weeks ahead** (`tests/e2e/grid-helpers.ts`), so tests can't clash with each other or the seed. The admin test books for Owen (Unassigned, so the seed gives him nothing). The helpers import `@/domain/dates`, which Playwright resolves.
+
+**Key files:** `src/features/calendar/{booking-actions.ts,delete-confirm-dialog.tsx,calendar-store.ts}`, `src/features/calendar/grid-popover/*`, `src/features/calendar/grid/{use-cell-actions,describe-cell,cell-elements,use-grid-keyboard}.ts`, `src/features/calendar/grid/{calendar-grid,grid-bar}.tsx`, `src/features/calendar/event-form/{edit-actions,save-form,event-form}.tsx`, `src/domain/grid-actions.ts`, `tests/e2e/{grid-interactions.spec,event-form.spec,grid-helpers}.ts`.
+**Simplicity pass** (my own re-read, then `/simplify` with four reviewers):
+- **One description of a day** (`describeCell`) instead of the same booking lookup and rules written in both the click handler and the popover; it reuses the model's display name.
+- **One popover, one confirmation dialog** rendered once by the grid, not one per cell.
+- **Delete, Undo and trim written once** for the form and the grid; the form's `EditActions` and `FormFooter` lost their `onDone` plumbing.
+- **Plain code:** no half-filled `notSaved` object in `save-form.ts`; `savedMessage` counts the days itself; plain `if`s for the form's portion and the confirmation's open state; one store subscription per bar (about 900 of them); the e2e date helpers use the app's own `addDays` / `startOfWeek` / `todayIn`.
+- **Skipped, with reasons:**
+  - **Focus return through "whatever had focus" in the popup primitives** (an altitude reviewer's idea): a bar click has no focused opener, and the popover's Delete button is gone before the confirmation closes, so both would still need the cell. The two grid popups use `focusLastCell` instead (task file "As built").
+  - **Exposing the day count on the grid model** to save recounting in the popup: it runs once per open, and `grid-model.ts` is already at the ~200 line guide.
+  - **Moving the form's save message into `booking-actions.ts`:** the form closes through its own dialog (`onDone`), so it stays in `EventForm`.
+  - **`formatShortRange`**, though similar to the other range formatters: it's the task's exact confirmation wording.
+
+**Deviations from plan:**
+- **The popover points at the day's cell, not the bar,** and "Remove this day" uses that day, with no date select (task file "As built").
+- **Keyboard Delete only acts on a booking that hasn't started.** One that has started needs "Delete remaining days", which is in its details.
+- **From the form, the multi-day confirmation opens on top of the form,** and Cancel returns to it.
+- **Undo also animates** the restored bar ("back in place"); the spec only says new bookings grow.
+- **Component axe checks of a modal look at the dialog only:** happy-dom misreads the page that a Radix modal hides. The e2e tests check the whole page in a real browser.
+
+**Follow-ups:**
+- **T26:** `signInAs` (tests/e2e/sign-in.ts) waits for the Sign out button; update it when the user menu replaces it.
+- **T34/T35:** a booking deleted in another tab and then restored can reopen a stale form target (the form dialog closes itself when its booking disappears, but doesn't clear the store). Rare; worth a look in the polish pass.
+- **Tidy-up still open from T24:** one shared `CalendarData` test file (now 6 copies).
+
+**Questions for the product owner:**
+- **Please try it by hand:** click a free day, a day with bookings, and a bar; delete and Undo; and the keyboard path (Tab into the grid, Enter, Delete, Esc).
+- **Check two calls:** keyboard Delete ignores a booking that has already started, and Undo makes the restored bar grow.

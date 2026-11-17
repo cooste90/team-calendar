@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { displayName } from "@/domain/display-name";
 import { canEditProfileOf } from "@/domain/permissions";
+import type { Portion } from "@/domain/slots";
 import { UNASSIGNED_GROUP_NAME } from "@/domain/teams";
 import type { CalendarData } from "@/server/queries/calendar";
 import { type EventDialogTarget, useCalendarStore } from "../calendar-store";
@@ -43,6 +44,7 @@ export function EventFormDialog({ data }: { data: CalendarData }) {
             subject={opened.subject}
             booking={opened.booking}
             date={opened.date}
+            portion={opened.portion}
             viewer={data.viewer}
             today={data.today}
             canEditProfile={opened.canEditProfile}
@@ -59,12 +61,16 @@ export function EventFormDialog({ data }: { data: CalendarData }) {
 function findWhatToShow(target: EventDialogTarget, data: CalendarData) {
   let booking = null;
   let subjectId = "";
+  let date = null;
+  let portion: Portion = "FULL";
   if (target.mode === "edit") {
     booking = data.bookings.find((item) => item.id === target.bookingId);
     if (!booking) return null;
     subjectId = booking.userId;
   } else {
     subjectId = target.subjectId;
+    date = target.date;
+    portion = target.portion ?? "FULL";
   }
   const person = data.people.find((item) => item.id === subjectId);
   if (!person) return null;
@@ -73,7 +79,8 @@ function findWhatToShow(target: EventDialogTarget, data: CalendarData) {
   return {
     subject: { ...person, name: displayName(person) },
     booking,
-    date: target.mode === "create" ? target.date : null,
+    date,
+    portion,
     teamName: team?.name ?? UNASSIGNED_GROUP_NAME,
     canEditProfile: canEditProfileOf(data.viewer, {
       ...person,

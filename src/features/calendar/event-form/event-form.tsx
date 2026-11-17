@@ -6,8 +6,10 @@ import type { CalendarDate } from "@/domain/dates";
 import type { ConflictDetail } from "@/domain/errors";
 import type { BookingInput } from "@/domain/events";
 import type { Actor } from "@/domain/permissions";
+import type { Portion } from "@/domain/slots";
 import { allowedEdits, earliestCreatableDate } from "@/domain/time-rules";
-import type { CalendarData, CalendarPerson } from "@/server/queries/calendar";
+import type { CalendarBooking, CalendarPerson } from "@/server/queries/calendar";
+import { useCalendarStore } from "../calendar-store";
 import { BookingHistory } from "./booking-history";
 import { ConflictAlert } from "./conflict-alert";
 import { DateRangeFields } from "./date-range-fields";
@@ -22,13 +24,14 @@ import {
 } from "./form-values";
 import { NotesField } from "./notes-field";
 import { OverrideFields } from "./override-fields";
-import { saveForm } from "./save-form";
+import { savedMessage, saveForm } from "./save-form";
 import { TypePicker } from "./type-picker";
 
 type Props = {
   subject: CalendarPerson & { name: string };
-  booking: CalendarData["bookings"][number] | null; // null for a new booking
+  booking: CalendarBooking | null; // null for a new booking
   date: CalendarDate | null; // the clicked date, for a new booking
+  portion: Portion; // the part of that day a new booking starts as
   viewer: Actor;
   today: CalendarDate;
   canEditProfile: boolean; // can set day swaps for this person (spec §4.2)
@@ -47,13 +50,14 @@ export function EventForm({
   subject,
   booking,
   date,
+  portion,
   viewer,
   today,
   canEditProfile,
   onDone,
 }: Props) {
   const [values, setValues] = useState(() =>
-    booking ? existingBookingValues(booking) : newBookingValues(date ?? today),
+    booking ? existingBookingValues(booking) : newBookingValues(date ?? today, portion),
   );
   const [errors, setErrors] = useState<FormErrors>({});
   const [conflicts, setConflicts] = useState<ConflictDetail[]>([]);
@@ -90,7 +94,11 @@ export function EventForm({
       });
       setConflicts(outcome.conflicts);
       setProblem(outcome.problem);
-      if (outcome.saved) onDone();
+      if (!outcome.saved) return;
+      const store = useCalendarStore.getState();
+      store.announce(savedMessage(bookingInput, booking !== null, subject.name, lookup));
+      store.setLastCreatedId(outcome.createdId);
+      onDone();
     });
   }
 
@@ -157,12 +165,11 @@ export function EventForm({
         {booking && <BookingHistory audit={booking.audit} />}
       </div>
       <FormFooter
-        bookingId={booking?.id ?? null}
+        booking={booking}
         edits={edits}
         pending={pending}
         swapChanged={swapChanged}
         onSaveSwapOnly={() => send(null, false)}
-        onDone={onDone}
       />
     </form>
   );

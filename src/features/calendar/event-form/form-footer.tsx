@@ -1,27 +1,27 @@
 import { Button } from "@/components/ui/button";
 import { DialogClose } from "@/components/ui/dialog";
+import type { Booking } from "@/domain/events";
 import type { AllowedEdits } from "@/domain/time-rules";
 import { EditActions } from "./edit-actions";
 
 type Props = {
-  bookingId: string | null; // set when editing
+  booking: Booking | null; // set when editing
   edits: AllowedEdits;
   pending: boolean;
   swapChanged: boolean; // a day swap is waiting to be saved
   onSaveSwapOnly: () => void;
-  onDone: () => void;
 };
 
 // The form's buttons: Delete (when editing), then Cancel and Save on the right.
 export function FormFooter(props: Props) {
-  const { bookingId, edits, pending, swapChanged, onSaveSwapOnly, onDone } = props;
+  const { booking, edits, pending, swapChanged, onSaveSwapOnly } = props;
 
-  let submitLabel = bookingId ? "Save changes" : "Add event";
+  let submitLabel = booking ? "Save changes" : "Add event";
   if (pending) submitLabel = "Saving…";
 
   return (
     <div className="flex flex-wrap items-center gap-2 border-t px-6 py-4">
-      {bookingId && <EditActions bookingId={bookingId} edits={edits} onDone={onDone} />}
+      {booking && <EditActions booking={booking} edits={edits} />}
       <div className="ml-auto flex flex-wrap gap-2">
         {swapChanged && (
           <Button variant="outline" disabled={pending} onClick={onSaveSwapOnly}>

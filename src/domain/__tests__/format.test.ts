@@ -13,6 +13,7 @@ import {
   formatPeriodTitle,
   formatRangeSummary,
   formatShort,
+  formatShortRange,
   formatTimestamp,
   formatWeekdayDayMonth,
   formatWeekdayShort,
@@ -70,6 +71,16 @@ describe("formatRangeSummary (the live summary in the booking form)", () => {
   ] as const)("%s %s to %s %s → %s", (startDate, startHalf, endDate, endHalf, count, expected) => {
     const range = rangeOf({ startDate, startHalf, endDate, endHalf });
     expect(formatRangeSummary(range, count)).toBe(expected);
+  });
+});
+
+describe("formatShortRange (the delete confirmation's dates)", () => {
+  it.each([
+    ["2026-11-12", "2026-11-12", "Thu 12 Nov"],
+    ["2026-11-09", "2026-11-11", "Mon 9 – Wed 11 Nov"],
+    ["2026-10-30", "2026-11-03", "Fri 30 Oct – Tue 3 Nov"],
+  ])("%s to %s → %s", (from, to, expected) => {
+    expect(formatShortRange(from, to)).toBe(expected);
   });
 });
 

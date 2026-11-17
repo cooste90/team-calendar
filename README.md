@@ -10,14 +10,14 @@ A team availability calendar showing who's in and who's off. The full plan is in
 | 1 · Domain logic | T05–T09: dates, half days, working patterns, booking rules, permissions, public holidays, tallies, grid model | Done |
 | 2 · Data and auth | T10–T14: database schema and migrations, sign-in, first-time sign-in, seed data, server actions and data loading | Done |
 | 3 · Calendar UI | T15–T21: app shell, grid, team groups, keyboard, Key, filters | Done |
-| 4 · Bookings | T22–T25: create and modify services, the booking form, grid interactions (T22–T24 done) | Next: T25, grid interactions |
-| 5–8 | Profile, admin, export, hardening | Not started |
+| 4 · Bookings | T22–T25: create and modify services, the booking form, grid interactions | Done |
+| 5–8 | Profile, admin, export, hardening | Next: T26, the user menu |
 
 What you can open today:
 - http://localhost:3000/sign-in: the sign-in page. With more than one business unit it asks first-time users which one they belong to. "Developer sign-in" takes you to the fake sign-in (dev only).
 - http://localhost:3000/dev-sign-in: sign in as one of the seeded people (see "Seeded accounts" below) or type in your own (dev only). A new person with no business unit picks one on the welcome page.
-- http://localhost:3000/: the calendar page: the header (business unit switcher, Week/Month, Previous/Next, month and year, Today; Alt+T, Alt+W, Alt+M, Alt+[ and Alt+]), the period title and the read-only grid (week and month, light and dark). Teams collapse and expand, and stay that way next time. Admins also see the Unassigned group, and names they can click (the profile itself comes in T27). Owen Hughes (Unassigned) sees a banner. The grid works from the keyboard: Tab in, arrow keys, Home/End, Page Up/Down, and `?` for the list of shortcuts. The Key shows the leave types, and the Teams and People filters narrow the grid (kept in the URL); on a narrow window both move into More. It sends you to `/sign-in` if you're not signed in.
-- http://localhost:3000/dev/design-system: every colour, leave chip and component, in light and dark, and the booking form with sample data until the grid opens it (T25) (dev only)
+- http://localhost:3000/: the calendar page: the header (business unit switcher, Week/Month, Previous/Next, month and year, Today; Alt+T, Alt+W, Alt+M, Alt+[ and Alt+]), the period title and the grid (week and month, light and dark). Click a free day (or press Enter on it) to book; click a day with bookings for its menu, or a bar for its details: Edit, Delete (with Undo), Remove this day, Delete remaining days. New bookings grow into place. Teams collapse and expand, and stay that way next time. Admins also see the Unassigned group, and names they can click (the profile itself comes in T27). Owen Hughes (Unassigned) sees a banner. The grid works from the keyboard: Tab in, arrow keys, Home/End, Page Up/Down, Enter or Space to book or open the day's menu, Delete, and `?` for the list of shortcuts. The Key shows the leave types, and the Teams and People filters narrow the grid (kept in the URL); on a narrow window both move into More. It sends you to `/sign-in` if you're not signed in.
+- http://localhost:3000/dev/design-system: every colour, leave chip and component, in light and dark (dev only)
 - http://localhost:3000/api/health: checks the app can reach the database
 
 ## Where the code lives
@@ -26,7 +26,7 @@ What you can open today:
 |---|---|
 | `src/domain/` | All the business rules as plain, fully tested TypeScript (no React or database). Start here to understand how the app thinks. |
 | `src/components/` | Shared React components; `ui/` holds the shadcn components |
-| `src/features/calendar/` | The calendar's screens: `header/`, `grid/`, `filters/`, `key/` and `event-form/` (the booking dialog), plus the one client store (`calendar-store.ts`) |
+| `src/features/calendar/` | The calendar's screens: `header/`, `grid/`, `filters/`, `key/`, `event-form/` (the booking dialog) and `grid-popover/` (the cell menu and booking details), plus the one client store (`calendar-store.ts`) and `booking-actions.ts` (delete, Undo and trim, shared by the form and the grid) |
 | `src/app/` | Next.js pages and API routes |
 | `src/server/` | Server-only code: the database client, sign-in (`auth.ts`, `auth-sync.ts`, `session.ts`), `queries/` (reads), `services/` (writes, in transactions), `actions/` (server actions), the audit log (`audit.ts`) and `today.ts` |
 | `src/lib/` | Small shared helpers, e.g. `env.ts`, which checks the settings in `.env` |

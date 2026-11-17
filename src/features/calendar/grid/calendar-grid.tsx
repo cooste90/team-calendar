@@ -18,13 +18,16 @@ import { canEditBookingsFor, canManageBusinessUnit } from "@/domain/permissions"
 import { setTeamCollapsed } from "@/server/actions/set-team-collapsed";
 import type { CalendarData } from "@/server/queries/calendar";
 import { useCalendarStore } from "../calendar-store";
+import { DeleteConfirmDialog } from "../delete-confirm-dialog";
 import { EventFormDialog } from "../event-form/event-form-dialog";
+import { GridPopover } from "../grid-popover/grid-popover";
 import { ShortcutsHelpDialog } from "../shortcuts-help-dialog";
 import { useCalendarFilters } from "../use-calendar-params";
 import { DayHeaderRow } from "./day-header";
 import { NoMatchesMessage } from "./no-matches-message";
 import { NoTeamsMessage } from "./no-teams-message";
 import { TeamGroup } from "./team-group";
+import { useCellActions } from "./use-cell-actions";
 import { useGridKeyboard } from "./use-grid-keyboard";
 
 type Props = {
@@ -115,7 +118,15 @@ export function CalendarGrid({ data, view, period }: Props) {
   };
   const focusedCell = useCalendarStore((store) => store.focusedCell);
   const tabStop = tabStopCell(layout, focusedCell, { personId: viewer.id, column: data.today });
-  const { gridRef, onKeyDown, onFocus } = useGridKeyboard({ layout, tabStop, view, period });
+  const { activateCell, deleteFromCell, onClick } = useCellActions(model, data);
+  const { onKeyDown, onFocus } = useGridKeyboard({
+    layout,
+    tabStop,
+    view,
+    period,
+    onActivate: activateCell,
+    onDelete: deleteFromCell,
+  });
 
   // Tell screen readers when the period changes, however it was changed.
   const periodText = formatPeriodAnnouncement(view, period);
@@ -150,10 +161,10 @@ export function CalendarGrid({ data, view, period }: Props) {
         >
           <div
             role="grid"
-            ref={gridRef}
             aria-label={`Team calendar, ${formatPeriodTitle(view, period)}`}
             onKeyDown={onKeyDown}
             onFocus={onFocus}
+            onClick={onClick}
             // A new key on each view change restarts the 150ms fade-in (design system §6).
             key={view}
             className="fade-in min-w-[56.25rem] animate-in duration-150"
@@ -174,7 +185,9 @@ export function CalendarGrid({ data, view, period }: Props) {
         </section>
       )}
       <ShortcutsHelpDialog />
+      <GridPopover data={data} model={model} />
       <EventFormDialog data={data} />
+      <DeleteConfirmDialog data={data} />
     </>
   );
 }

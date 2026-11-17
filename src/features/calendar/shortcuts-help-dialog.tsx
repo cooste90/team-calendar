@@ -11,7 +11,6 @@ import { useCalendarStore } from "./calendar-store";
 
 // Every keyboard shortcut (accessibility §3). The grid keys are handled in
 // grid/use-grid-keyboard.ts, the Alt shortcuts in header/use-calendar-shortcuts.ts.
-// T25 adds Enter, Space and Delete when cells get actions.
 const SECTIONS = [
   {
     title: "In the calendar grid",
@@ -21,6 +20,9 @@ const SECTIONS = [
       ["Home / End", "First or last day in the row"],
       ["Ctrl+Home / Ctrl+End", "First or last cell in the grid"],
       ["Page Up / Page Down", "Previous or next week or month"],
+      ["Enter / Space", "Add a booking, or open the day's bookings"],
+      ["Delete", "Delete the day's booking (when it has just one)"],
+      ["Esc", "Close a menu and go back to the day"],
       ["?", "Show these shortcuts"],
     ],
   },

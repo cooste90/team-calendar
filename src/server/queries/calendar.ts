@@ -105,3 +105,4 @@ export async function getCalendarData(
 
 // What the page passes to the client grid.
 export type CalendarData = Awaited<ReturnType<typeof getCalendarData>>;
+export type CalendarBooking = CalendarData["bookings"][number];

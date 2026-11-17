@@ -137,6 +137,15 @@ export function formatLongRange(from: CalendarDate, to: CalendarDate): string {
   return `${fromText} to ${formatWeekdayDayMonth(to)}`;
 }
 
+// "Mon 9 – Wed 11 Nov", "Fri 30 Oct – Tue 3 Nov", or "Thu 12 Nov" for a single date:
+// the delete confirmation's dates.
+export function formatShortRange(from: CalendarDate, to: CalendarDate): string {
+  if (from === to) return formatShort(from);
+  const sameMonth = from.slice(0, 7) === to.slice(0, 7);
+  const fromText = sameMonth ? formatDayHeader(from) : formatShort(from);
+  return `${fromText} – ${formatShort(to)}`;
+}
+
 // Added after a single date to say which part of the day: "Thu 12 Nov, morning".
 export const PORTION_SUFFIX = { FULL: "", AM: ", morning", PM: ", afternoon" };
 

@@ -22,7 +22,8 @@ type Props = {
 };
 
 // One person on one day. Its accessible name says everything about that day, so screen
-// reader users never need the bars. Actions on the cell come in T25.
+// reader users never need the bars. Clicks, Enter, Space and Delete are handled by the
+// grid (use-cell-actions.ts and use-grid-keyboard.ts), using data-person and data-column.
 export function GridCell({ cell, personId, isViewer, isTabStop }: Props) {
   return (
     <div
@@ -38,7 +39,7 @@ export function GridCell({ cell, personId, isViewer, isTabStop }: Props) {
       // A plain join, not cn(): cn would treat the hatch and the today colour as clashing
       // "bg-" classes and drop the hatch, but here they combine (stripes over a tint).
       className={[
-        "row-start-1 min-h-(--person-row-height) min-w-0 border-border-soft border-l hover:bg-cell-hover",
+        "row-start-1 min-h-(--person-row-height) min-w-0 cursor-pointer border-border-soft border-l hover:bg-cell-hover",
         HATCH[cell.availability],
         todayTint(cell.isToday, isViewer),
       ].join(" ")}

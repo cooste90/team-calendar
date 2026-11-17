@@ -9,7 +9,7 @@ import {
 } from "@/domain/events";
 import { formatShort } from "@/domain/format";
 import type { LeaveType } from "@/domain/leave-types";
-import { rangeOf, type SlotRange } from "@/domain/slots";
+import { type Portion, rangeOf, type SlotRange } from "@/domain/slots";
 
 export type FormValues = {
   type: LeaveType;
@@ -21,9 +21,11 @@ export type FormValues = {
 
 const FULL_DAYS: FormDays = { duration: "FULL", firstDay: "FULL", lastDay: "FULL" };
 
-// A new booking: annual leave for the whole of the clicked day (spec §5.5).
-export function newBookingValues(date: CalendarDate): FormValues {
-  return { type: "ANNUAL", startDate: date, endDate: date, days: FULL_DAYS, notes: "" };
+// A new booking: annual leave on the clicked day (spec §5.5), for the whole day unless
+// "Add to morning" or "Add to afternoon" was chosen.
+export function newBookingValues(date: CalendarDate, portion: Portion): FormValues {
+  const days = { ...FULL_DAYS, duration: portion };
+  return { type: "ANNUAL", startDate: date, endDate: date, days, notes: "" };
 }
 
 export function existingBookingValues(booking: BookingInput): FormValues {

@@ -1,9 +1,7 @@
-import type { CalendarData } from "@/server/queries/calendar";
-
-type Audit = CalendarData["bookings"][number]["audit"];
+import type { CalendarBooking } from "@/server/queries/calendar";
 
 // Who added a booking and who last changed it, and when (spec §5.5). Everyone can see it.
-export function BookingHistory({ audit }: { audit: Audit }) {
+export function BookingHistory({ audit }: { audit: CalendarBooking["audit"] }) {
   return (
     <div className="flex flex-col gap-0.5 text-muted-foreground text-xs">
       <span>

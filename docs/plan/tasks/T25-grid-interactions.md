@@ -73,3 +73,9 @@ Bring the grid to life. Clicking a cell books, clicking a bar shows details, a n
 ## Acceptance criteria
 - Every spec §5 interaction works end-to-end with mouse **and** keyboard; the UI never shows a stale state after an error.
 - No client-side copy of booking data exists outside the props from the server.
+
+## As built
+- **One popover** (`grid-popover/grid-popover.tsx`) for both the cell menu and a booking's details, opened through `gridPopover` in the store. It points at the **cell of the day that was clicked**, also for a bar click (the cell under the pointer), rather than at the bar. "Remove this day" uses that day, so no date select was needed.
+- **Shared delete, Undo, trim and remove-day** live in `booking-actions.ts`, used by the form and the popover. The multi-day confirmation is `delete-confirm-dialog.tsx`; from the form it opens on top of the form, and Cancel goes back to the form.
+- **Focus return:** popups put focus back on the store's `focusedCell` (`focusLastCell`), rather than giving `alert-dialog.tsx` the "whatever had focus" lines: a bar click has no focused opener, and the popover's Delete button is gone by the time the confirmation closes.
+- **Undo** also makes the restored bar grow back.
