@@ -1305,7 +1305,7 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
   - Agreed: keep "User menu for Tom Okafor, TO".
 
 ## T27 — Profile dialog: details and working pattern — 2026-11-18
-**Status:** done on `task/T27-profile-dialog`, waiting for the product owner to approve the screenshots before merging. No new dependencies.
+**Status:** done. The product owner approved the screenshots. No new dependencies.
 **Decided with the product owner first** (also in the task file): match the Add event dialog's look; the editor shows a *waiting* pattern change; one small preview cell per day; Leave history and Upcoming leave are hidden until T28.
 **What I built:**
 - **`ProfileDialog`** (`src/features/profile/profile-dialog.tsx`): a modal over the grid, opened by `?profile=me` or `?person=<id>` (the user menu's My profile and the grid's admin name links), with `?tab=details|pattern`.
@@ -1358,3 +1358,4 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 
 **Questions for the product owner:**
 - **Please approve the look** (screenshots sent in chat) before merging.
+  - Approved.
