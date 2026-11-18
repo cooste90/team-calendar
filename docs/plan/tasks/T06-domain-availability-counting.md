@@ -20,7 +20,7 @@ Pure functions that answer "is this person working on this half-day?" and "how m
 - `countWorkingDays(range: SlotRange, availabilityLookup): number`: 0.5 per working slot.
 - `workingSlots(range, lookup)` and `nonWorkingSlots(range, lookup)`, used for hatching inside bars and for "not counted" hints.
 - `describeExcludedDays(range, lookup)`: a short human hint for the form, e.g. `"Sat 14 and Sun 15 are not working days, so they are not counted."`, `"Wed 11 is a morning-only day."`, or `""` if nothing was excluded.
-- `planPatternChange(versions, newPattern, today)`: returns the version to upsert, `{ effectiveFrom: nextSunday(today), pattern }`. If a version already exists for that Sunday it is replaced. Returns `null` if the new pattern equals the pattern that would be in force from that Sunday anyway.
+- `planPatternChange(versions, newPattern, today)`: returns the version to upsert, `{ effectiveFrom: nextSunday(today), pattern }`. If a version already exists for that Sunday it is replaced. Returns `null` if the new pattern equals the pattern that would be in force from that Sunday anyway. *(Changed in T27: `null` now means "the same as the pattern in force today", so saving today's pattern again cancels a pending change.)*
 
 ## Tests
 These spec examples **must** each be a named test:

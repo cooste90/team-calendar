@@ -29,7 +29,9 @@ export function SegmentedControl({
       onValueChange={(newValue) => {
         if (newValue) onValueChange(newValue);
       }}
-      className="gap-0 rounded-xl border bg-surface-2 p-[3px]"
+      // flex-wrap: on a narrow screen or zoomed in, the buttons go onto a second line
+      // rather than off the edge (WCAG 1.4.10).
+      className="flex-wrap gap-0 rounded-xl border bg-surface-2 p-[3px]"
     >
       {options.map((option) => (
         <ToggleGroupItem

@@ -2,6 +2,8 @@
 
 **Phase:** 5 · **Depends on:** T27 · **Size:** M
 
+**From T27:** the dialog is `src/features/profile/profile-dialog.tsx`. It only shows Details and Working pattern: `?tab=history` and `?tab=upcoming` fall back to Details (see `const tab = …`). Add the two `TabsTrigger`/`TabsContent` pairs there and let the tab through. `getProfile` in `src/server/queries/profile.ts` already does the permission check and is `cache()`d, so `getProfileLeave` can sit next to it. The page calls `getOpenProfile` (in `src/app/(app)/page.tsx`) for the profile.
+
 ## Goal
 The two read-only profile tabs: tallies with their supporting bookings, and the upcoming list.
 

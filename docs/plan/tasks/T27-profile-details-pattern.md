@@ -4,6 +4,12 @@
 
 **From T26:** the user menu's "My profile" already links to `?profile=me` (`src/features/calendar/header/user-menu.tsx`). Nothing reads it yet. For the profile header's avatar, `initialsOf` is in `src/domain/display-name.ts`, and the gradient avatar style is `avatarClass` in `user-menu.tsx`. That makes three uses (menu trigger, menu header, profile), so move it into a small shared `src/components/initials-avatar.tsx` then. T30's user rows will need it too.
 
+**Decided with the product owner (2026-11-18):**
+1. **Look:** there's no profile screen in the mockup. Match the Add event dialog (width, title, spacing, full screen on phones), with the tabs under the header. Screenshots in light and dark go to the product owner before merging.
+2. **A waiting pattern change:** the editor shows the *waiting* pattern, with the notice "Your new pattern starts on Sunday 22 November" ("Priya's new pattern…" for an admin). Otherwise a second save would quietly drop the first change. "Cancel pending change" puts the editor back to the current pattern.
+3. **The preview strip:** one small grid-style cell at the end of each day's row, with a morning and an afternoon half. A half that isn't worked is hatched, as on the grid. It's hidden from screen readers, because the radios say the same.
+4. **Leave history and Upcoming leave:** hidden until T28 builds them. `?tab=history` or `?tab=upcoming` shows Details until then.
+
 ## Goal
 "My profile" and the admin's view of anyone's profile, as a modal over the grid with its own URL, covering details and working pattern.
 
@@ -48,3 +54,12 @@
 
 ## Acceptance criteria
 - One `ProfileDialog` component serves both "My profile" and the admin view; the dialog semantics and focus return are correct.
+
+## As built
+- **Files:** `src/features/profile/` (`profile-dialog`, `details-tab`, `pattern-tab`, `profile-not-allowed`), `src/server/queries/profile.ts` (`getProfile`), `src/server/services/availability.ts` (`updateWorkingPattern`, `cancelPendingPattern`), `src/server/services/profile.ts` (`updatePreferredName`), three actions, `src/lib/schemas/{profile,availability}.ts`, and the shared `src/components/initials-avatar.tsx`.
+- **The page** works out the profile from `?profile=me` or `?person=<id>`. `getProfile` returns null for anyone the viewer can't edit (or who doesn't exist); then the page renders `ProfileNotAllowed`, which shows the toast and removes the param. The browser tab title becomes "My profile · WestCal" or "Priya Shah's profile · WestCal".
+- **Closing** (×, Esc, clicking outside) clears `profile`, `person` and `tab` with `history: "replace"`. Switching tabs also replaces, so Back closes the dialog rather than stepping through tabs.
+- **Header:** avatar, display name, and "BU · team". The Details tab lists only the SSO fields (name, email, employee number), under "Managed by your organisation's directory". BU and team are set in WestCal, not the directory, so they're only in the header.
+- **Saving a pattern** deletes any waiting version and saves the new one (unless it's today's pattern, which just cancels). Then it reconciles the public holidays from next Sunday. `planPatternChange` now compares with today's pattern (see the T06 note).
+- **Saved messages** show as a toast and are also read out by an `<output>` inside the dialog: a modal hides the rest of the page, toasts included, from screen readers.
+- **Pattern rows** use the shared `SegmentedControl` (a radiogroup per day), which now wraps on narrow screens.

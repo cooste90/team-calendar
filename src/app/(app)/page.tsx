@@ -2,27 +2,43 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { personFilterOptions, teamFilterOptions } from "@/domain/filter-options";
 import { formatDocumentTitlePeriod, formatPeriodTitle } from "@/domain/format";
-import { canEditBookingsFor } from "@/domain/permissions";
+import { type Actor, canEditBookingsFor } from "@/domain/permissions";
 import { readSavedView, resolveCalendarView } from "@/features/calendar/calendar-view";
 import { FilterSummary } from "@/features/calendar/filters/filter-summary";
 import { CalendarGrid } from "@/features/calendar/grid/calendar-grid";
 import { AppHeader } from "@/features/calendar/header/app-header";
 import { NavigationProgress, PendingArea } from "@/features/calendar/header/navigation-transition";
 import { UnassignedBanner } from "@/features/calendar/unassigned-banner";
+import { ProfileDialog } from "@/features/profile/profile-dialog";
+import { ProfileNotAllowed } from "@/features/profile/profile-not-allowed";
 import { UNASSIGNED_BANNER_COOKIE } from "@/lib/search-params";
 import { getBusinessUnitBySlug, getVisibleBusinessUnits } from "@/server/queries/business-units";
 import { getCalendarData } from "@/server/queries/calendar";
+import { getProfile } from "@/server/queries/profile";
 import { getUserMenuDetails } from "@/server/queries/user-menu";
 import { requireUser } from "@/server/session";
+import { serverToday } from "@/server/today";
 
-// e.g. "Week of 8 Nov 2026 · West Operations · WestCal" (accessibility §1).
+// e.g. "Week of 8 Nov 2026 · West Operations · WestCal", or "My profile · WestCal" while
+// the profile is open (accessibility §1).
 export async function generateMetadata({ searchParams }: PageProps<"/">): Promise<Metadata> {
   const actor = await requireUser();
   const { params, view, period } = await resolveCalendarView(searchParams);
+  const profile = await getOpenProfile(actor, params);
+  if (profile) {
+    return { title: `${profile.title} · WestCal` };
+  }
   const businessUnit = await getBusinessUnitBySlug(actor, params.bu);
   return {
     title: `${formatDocumentTitlePeriod(view, period.from)} · ${businessUnit.name} · WestCal`,
   };
+}
+
+// The profile the URL asks for (?profile=me or ?person=<id>), if the viewer may see it.
+function getOpenProfile(actor: Actor, params: { profile: "me" | null; person: string | null }) {
+  const userId = params.profile === "me" ? actor.id : params.person;
+  if (!userId) return null;
+  return getProfile(actor, userId, serverToday());
 }
 
 // The calendar: header, title and grid. The data is loaded here on the server, so the
@@ -39,6 +55,8 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
   // Admins can book in their BU whether or not they're in a team, so they never see it.
   const showUnassignedBanner =
     !canEditBookingsFor(actor, actor) && !(await cookies()).has(UNASSIGNED_BANNER_COOKIE);
+  const profile = await getOpenProfile(actor, params);
+  const profileRequested = params.profile !== null || params.person !== null;
 
   return (
     <>
@@ -64,6 +82,9 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
           <CalendarGrid data={data} view={view} period={period} />
         </PendingArea>
       </main>
+      {/* key: a different person's profile starts with fresh forms. */}
+      {profile && <ProfileDialog key={profile.id} profile={profile} />}
+      {profileRequested && !profile && <ProfileNotAllowed />}
     </>
   );
 }

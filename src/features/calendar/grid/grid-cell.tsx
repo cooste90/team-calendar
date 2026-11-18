@@ -2,8 +2,9 @@ import type { WorkDay } from "@/domain/availability";
 import type { GridCell as GridCellModel } from "@/domain/grid-model-types";
 
 // Hatching shows the hours someone doesn't work: the whole day, or the afternoon
-// (morning-only day) or the morning (afternoon-only day).
-const HATCH: Record<WorkDay, string> = {
+// (morning-only day) or the morning (afternoon-only day). The profile's working pattern
+// preview uses it too.
+export const HATCH: Record<WorkDay, string> = {
   FULL: "",
   OFF: "bg-hatch",
   AM: "bg-hatch-right",

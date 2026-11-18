@@ -5,7 +5,16 @@ import { type CalendarDate, isCalendarDate, makeDate, type View, weekday } from 
 import { fromSlot, isSingleDay, portionOf, type SlotRange } from "./slots";
 
 const SHORT_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const LONG_DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+// Also used for the rows of the working pattern editor.
+export const LONG_DAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
 const SHORT_MONTHS = [
   "Jan",
   "Feb",

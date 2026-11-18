@@ -1,16 +1,26 @@
-// Day swaps (spec §4.2): "I'm working this day" or "I'm not working this day" on one
-// date. After a change, the person's public holiday copy on that date is brought in line
-// (spec §6.5), in the same transaction.
+// Who works when, after a change (spec §4): a day swap on one date, or a new weekly
+// pattern from next Sunday. Either way the person's public holiday copies are brought in
+// line (spec §6.5), in the same transaction.
 import "server-only";
-import { availabilityLookup, type WorkDay } from "@/domain/availability";
-import { type CalendarDate, toDbDate } from "@/domain/dates";
+import {
+  availabilityLookup,
+  type PatternVersion,
+  planPatternChange,
+  type WeeklyPattern,
+  type WorkDay,
+} from "@/domain/availability";
+import { type CalendarDate, nextSunday, toDbDate } from "@/domain/dates";
 import { ForbiddenError } from "@/domain/errors";
 import { type Actor, canEditProfileOf } from "@/domain/permissions";
-import { type PersonSnapshot, planReconcileForPerson } from "@/domain/public-holidays";
+import {
+  type PersonSnapshot,
+  type PublicHoliday,
+  planReconcileForPerson,
+} from "@/domain/public-holidays";
 import { validateCreate, validateOverrideChange } from "@/domain/time-rules";
 import type { Prisma } from "@/generated/prisma/client";
 import { db, lockUsers } from "../db";
-import { toOverride, toPatternVersion, toPublicHoliday } from "../mappers";
+import { toOverride, toPatternColumns, toPatternVersion, toPublicHoliday } from "../mappers";
 import { loadOverlapping, loadPerson } from "./booking-queries";
 import { saveBookingChanges } from "./save-booking-changes";
 
@@ -23,15 +33,9 @@ export async function setAvailabilityOverride(
   today: CalendarDate,
 ) {
   await db.$transaction(async (tx) => {
-    // 1. Who can change someone's working days: the person, or an admin of their BU.
-    const person = await loadPerson(tx, userId);
-    if (!canEditProfileOf(actor, person)) {
-      throw new ForbiddenError("You can't change this person's working days.");
-    }
-    // 2. Lock them, because their public holiday copy may change in step 5.
-    await lockUsers(tx, [userId]);
-    // 3. A new day swap can go as far back as a new booking. One that exists can only be
-    //    changed or removed from today on (spec §4.2).
+    await checkAndLock(tx, actor, userId);
+    // A new day swap can go as far back as a new booking. One that exists can only be
+    // changed or removed from today on (spec §4.2).
     const dbDate = toDbDate(date);
     const key = { userId_date: { userId, date: dbDate } };
     const existing = await tx.availabilityOverride.findUnique({ where: key });
@@ -40,7 +44,6 @@ export async function setAvailabilityOverride(
     } else {
       validateCreate(date, actor.role, today);
     }
-    // 4. Save it.
     if (value === null && existing) {
       await tx.availabilityOverride.delete({ where: key });
     } else if (value !== null) {
@@ -50,28 +53,106 @@ export async function setAvailabilityOverride(
         update: { value },
       });
     }
-    // 5. A public holiday that day: add, change or remove their copy to match. The
-    //    planner leaves past days and detached copies alone.
+    // A public holiday that day: add, change or remove their copy to match. The planner
+    // leaves past days and detached copies alone.
     const holidays = await tx.publicHoliday.findMany({ where: { date: dbDate } });
-    if (holidays.length === 0) return;
-    const snapshot = await loadSnapshot(tx, userId, date);
-    const changes = planReconcileForPerson(snapshot, holidays.map(toPublicHoliday), today);
-    await saveBookingChanges(tx, changes, actor.id);
+    await reconcileHolidays(tx, actor.id, userId, holidays.map(toPublicHoliday), today);
   });
 }
 
-// What the public holiday planner needs to know about the person on that date: only
-// that day's swap and bookings, and their exclusions (a few per year).
+// A new weekly pattern, from next Sunday (spec §4.1). It replaces a change already
+// waiting for that Sunday; saving today's pattern again cancels it.
+export async function updateWorkingPattern(
+  actor: Actor,
+  userId: string,
+  pattern: WeeklyPattern,
+  today: CalendarDate,
+) {
+  await db.$transaction(async (tx) => {
+    await checkAndLock(tx, actor, userId);
+    const versions = await tx.workingPattern.findMany({ where: { userId } });
+    const change = planPatternChange(versions.map(toPatternVersion), pattern, today);
+    await replacePendingPattern(tx, actor.id, userId, change, today);
+  });
+}
+
+// "Cancel pending change": the pattern in force today carries on.
+export async function cancelPendingPattern(actor: Actor, userId: string, today: CalendarDate) {
+  await db.$transaction(async (tx) => {
+    await checkAndLock(tx, actor, userId);
+    await replacePendingPattern(tx, actor.id, userId, null, today);
+  });
+}
+
+// Only the person or an admin of their BU can change their working days. They're locked
+// because their public holiday copies may change.
+async function checkAndLock(tx: Prisma.TransactionClient, actor: Actor, userId: string) {
+  const person = await loadPerson(tx, userId);
+  if (!canEditProfileOf(actor, person)) {
+    throw new ForbiddenError("You can't change this person's working days.");
+  }
+  await lockUsers(tx, [userId]);
+}
+
+// Removes any waiting pattern, saves the new one (if any), and then brings the public
+// holidays from next Sunday in line with it.
+async function replacePendingPattern(
+  tx: Prisma.TransactionClient,
+  actorId: string,
+  userId: string,
+  change: PatternVersion | null,
+  today: CalendarDate,
+) {
+  await tx.workingPattern.deleteMany({
+    where: { userId, effectiveFrom: { gt: toDbDate(today) } },
+  });
+  if (change) {
+    await tx.workingPattern.create({
+      data: {
+        userId,
+        effectiveFrom: toDbDate(change.effectiveFrom),
+        ...toPatternColumns(change.pattern),
+      },
+    });
+  }
+  const from = nextSunday(today);
+  const holidays = await tx.publicHoliday.findMany({
+    where: { date: { gte: toDbDate(from) } },
+    orderBy: { date: "asc" },
+  });
+  await reconcileHolidays(tx, actorId, userId, holidays.map(toPublicHoliday), from);
+}
+
+// Adds, changes or removes the person's copies of these holidays (sorted by date) to
+// match their working days. Copies they moved or deleted themselves are left alone.
+async function reconcileHolidays(
+  tx: Prisma.TransactionClient,
+  actorId: string,
+  userId: string,
+  holidays: PublicHoliday[],
+  fromDate: CalendarDate,
+) {
+  if (holidays.length === 0) return;
+  const dates = { startDate: holidays[0].date, endDate: holidays[holidays.length - 1].date };
+  const snapshot = await loadSnapshot(tx, userId, dates);
+  const changes = planReconcileForPerson(snapshot, holidays, fromDate);
+  await saveBookingChanges(tx, changes, actorId);
+}
+
+// What the public holiday planner needs to know about the person between these dates:
+// their patterns, day swaps and bookings, and their exclusions (a few per year).
 async function loadSnapshot(
   tx: Prisma.TransactionClient,
   userId: string,
-  date: CalendarDate,
+  dates: { startDate: CalendarDate; endDate: CalendarDate },
 ): Promise<PersonSnapshot> {
   const user = await tx.user.findUniqueOrThrow({
     where: { id: userId },
     select: {
       patterns: true,
-      overrides: { where: { date: toDbDate(date) } },
+      overrides: {
+        where: { date: { gte: toDbDate(dates.startDate), lte: toDbDate(dates.endDate) } },
+      },
       phExclusions: { select: { publicHolidayId: true } },
     },
   });
@@ -81,7 +162,7 @@ async function loadSnapshot(
       user.patterns.map(toPatternVersion),
       user.overrides.map(toOverride),
     ),
-    bookings: await loadOverlapping(tx, userId, { startDate: date, endDate: date }),
+    bookings: await loadOverlapping(tx, userId, dates),
     exclusions: user.phExclusions.map((exclusion) => exclusion.publicHolidayId),
   };
 }

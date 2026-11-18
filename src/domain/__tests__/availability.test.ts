@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   availabilityLookup,
+  currentAndPendingPattern,
   DEFAULT_PATTERN,
   DEFAULT_PATTERN_EFFECTIVE_FROM,
   planPatternChange,
@@ -63,6 +64,34 @@ describe("worksSlot", () => {
   });
 });
 
+describe("currentAndPendingPattern", () => {
+  const history = [
+    { effectiveFrom: DEFAULT_PATTERN_EFFECTIVE_FROM, pattern: DEFAULT_PATTERN },
+    { effectiveFrom: "2026-11-08", pattern: FOUR_DAY_WEEK },
+  ];
+
+  it.each([
+    ["no change waiting", history, FOUR_DAY_WEEK, null],
+    [
+      "a change waiting for next Sunday",
+      [...history, { effectiveFrom: "2026-11-15", pattern: SATURDAYS_TOO }],
+      FOUR_DAY_WEEK,
+      SATURDAYS_TOO,
+    ],
+    ["no pattern saved at all", [], DEFAULT_PATTERN, null],
+  ])("%s", (_case, versions, current, pending) => {
+    // Thursday 12 November 2026.
+    expect(currentAndPendingPattern(versions, "2026-11-12")).toEqual({ current, pending });
+  });
+
+  it("a change that started today is the current pattern, not a waiting one", () => {
+    expect(currentAndPendingPattern(history, "2026-11-08")).toEqual({
+      current: FOUR_DAY_WEEK,
+      pending: null,
+    });
+  });
+});
+
 describe("planPatternChange", () => {
   // Changes apply from the next Sunday, even when today is a Sunday.
   it.each([
@@ -88,9 +117,17 @@ describe("planPatternChange", () => {
     });
   });
 
-  it("returns null when the pattern from next Sunday would already be the same", () => {
+  it("returns null for the pattern in force today, so a waiting change is cancelled", () => {
     expect(planPatternChange([], DEFAULT_PATTERN, "2026-11-12")).toBeNull();
     const pending = [{ effectiveFrom: "2026-11-15", pattern: FOUR_DAY_WEEK }];
-    expect(planPatternChange(pending, FOUR_DAY_WEEK, "2026-11-12")).toBeNull();
+    expect(planPatternChange(pending, DEFAULT_PATTERN, "2026-11-12")).toBeNull();
+  });
+
+  it("saving the waiting pattern again keeps it waiting", () => {
+    const pending = [{ effectiveFrom: "2026-11-15", pattern: FOUR_DAY_WEEK }];
+    expect(planPatternChange(pending, FOUR_DAY_WEEK, "2026-11-12")).toEqual({
+      effectiveFrom: "2026-11-15",
+      pattern: FOUR_DAY_WEEK,
+    });
   });
 });

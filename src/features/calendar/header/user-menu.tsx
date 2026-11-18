@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import { useId } from "react";
+import { InitialsAvatar } from "@/components/initials-avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,11 +20,6 @@ import {
 import { serializeCalendarParams } from "@/lib/search-params";
 import { signOut } from "@/server/actions/sign-out";
 import type { UserMenuDetails } from "@/server/queries/user-menu";
-
-// The avatar from the mockup. It looks the same in both themes: white text has at least
-// 4.5:1 contrast on both ends of the gradient (the light theme's primary and sunset).
-const avatarClass =
-  "grid shrink-0 place-items-center rounded-full bg-[linear-gradient(135deg,#4f46e5,#c2410c)] font-semibold text-[0.8125rem] text-white forced-colors:border forced-colors:border-[CanvasText]";
 
 const itemClass = "h-9 gap-2.5 px-2.5 [&_svg]:text-muted-foreground";
 
@@ -52,16 +48,14 @@ export function UserMenu({ user }: { user: UserMenuDetails }) {
         <button
           type="button"
           aria-label={`User menu for ${user.name}, ${user.initials}`}
-          className={`${avatarClass} size-9`}
+          className="rounded-full"
         >
-          {user.initials}
+          <InitialsAvatar initials={user.initials} className="size-9" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72 p-1.5">
         <div className="mb-1.5 flex items-center gap-3 border-b px-2.5 pt-2.5 pb-3">
-          <span aria-hidden="true" className={`${avatarClass} size-10`}>
-            {user.initials}
-          </span>
+          <InitialsAvatar initials={user.initials} className="size-10" />
           <div className="min-w-0 text-muted-foreground text-xs">
             <p className="font-semibold text-foreground text-sm">{user.name}</p>
             <p className="truncate">{user.email}</p>

@@ -170,7 +170,7 @@ Append one entry per task, newest at the bottom. Keep entries short and factual.
 **Deviations from plan:**
 - **One lookup instead of two functions.** `resolveAvailability` and `availabilityForRange` are replaced by `availabilityLookup(versions, overrides)`. It sorts the history and indexes overrides once, then returns a `(date) => WorkDay` function. That's what `countWorkingDays`, tallies (T09) and the form hint (T24) all take, so there's one way to ask "does this person work on date X?" and it's cheap to call for every cell.
 - **A pattern is a plain list.** `WeeklyPattern` is a 7-item `WorkDay[]` (Sunday first) instead of `Record<0..6, WorkDay>`: it's simpler to read and write.
-- **No-change check includes pending versions.** `planPatternChange` compares against the pattern in force from next Sunday *including* any pending version. So changing back to the current pattern after saving a pending one still saves (it overwrites the pending version).
+- **No-change check includes pending versions.** `planPatternChange` compares against the pattern in force from next Sunday *including* any pending version. So changing back to the current pattern after saving a pending one still saves (it overwrites the pending version). *(Reversed in T27: it now compares against the pattern in force today, so saving today's pattern again cancels the pending change.)*
 **Follow-ups:** the Prisma `WorkingPattern` model stores `sun … sat` columns. T10 or T27 needs a tiny pair of converters (`[row.sun, row.mon, …]` and back) in the query or service layer, not in the domain.
 **Questions for the product owner:** none.
 
@@ -1303,3 +1303,58 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
   - Tried: the theme buttons were spaced apart, and the menu now stays open after choosing a theme.
 - **Check one call:** the avatar's screen-reader label now ends with the initials ("…, TO").
   - Agreed: keep "User menu for Tom Okafor, TO".
+
+## T27 — Profile dialog: details and working pattern — 2026-11-18
+**Status:** done on `task/T27-profile-dialog`, waiting for the product owner to approve the screenshots before merging. No new dependencies.
+**Decided with the product owner first** (also in the task file): match the Add event dialog's look; the editor shows a *waiting* pattern change; one small preview cell per day; Leave history and Upcoming leave are hidden until T28.
+**What I built:**
+- **`ProfileDialog`** (`src/features/profile/profile-dialog.tsx`): a modal over the grid, opened by `?profile=me` or `?person=<id>` (the user menu's My profile and the grid's admin name links), with `?tab=details|pattern`.
+  - The title is "My profile" or "Priya Shah's profile", and the browser tab title matches ("My profile · WestCal").
+  - The header shows the avatar, name, and "BU · team".
+  - Closing and switching tabs replace the history entry, so Back closes it. A hard refresh keeps it open.
+- **Details tab:** the preferred first name (optional; letters in any alphabet, spaces, hyphens and apostrophes; up to 40; empty clears it). The SSO name, email and employee number are read-only under "Managed by your organisation's directory".
+- **Working pattern tab:** a row per day (Sun → Sat), each a `SegmentedControl` radiogroup (Full day / Morning / Afternoon / Not working) with a grid-style preview cell. A waiting change shows as "Your new pattern starts on Sunday 22 November." with "Cancel pending change". Save says "Save — applies from Sunday 22 November".
+- **Not allowed:** someone who isn't the person, their BU's admin or a super admin gets no dialog. The toast "You can't view that profile" shows instead, and the param is removed. Nothing about the person is sent.
+- **Server:** `getProfile` (query), `updatePreferredName`, `updateWorkingPattern` and `cancelPendingPattern` (services), and three thin actions. Pattern saves lock the person, replace the waiting version, and reconcile public holidays from next Sunday, all in one transaction. The day-swap service now shares the permission check, lock and reconcile with them.
+- **Shared:** `InitialsAvatar` (`src/components/initials-avatar.tsx`), now used by the user menu too. `workDaySchema` and `weeklyPatternSchema` are in `src/lib/schemas/availability.ts`. `LONG_DAYS` is exported from `format.ts`, and `HATCH` from `grid-cell.tsx`.
+
+**Tests:**
+- **Unit:** `currentAndPendingPattern`, `planPatternChange` (updated, see below) and the preferred name schema.
+- **Integration** (`tests/integration/profile.test.ts`, 15):
+  - who can change a profile (self, admin of the BU, super admin; not a teammate or another BU's admin) and who gets the data;
+  - preferred name save and clear;
+  - a change starts next Sunday; saving twice replaces it; saving today's pattern cancels it; Cancel pending change;
+  - public holiday copies are removed and added, a deleted one isn't added back, and holidays before Sunday aren't touched.
+- **Component** (`profile-dialog.test.tsx`, 17): header; tab fallback until T28; tab in the URL; closing clears the URL; name save, clear and validation; one radiogroup per day; save; waiting notice (own and admin wording); cancel; server error; axe on both tabs.
+- **E2E** (`tests/e2e/profile.spec.ts`, 7):
+  - My profile from the user menu → name change → the grid shows it → clear it;
+  - an admin opens a colleague from a name link → changes their pattern → reload keeps it → Back closes it → Forward and cancel;
+  - a USER visiting `?person=` gets no dialog;
+  - axe on both tabs in both themes.
+  - These use Fatima Rahman and Callum Reid, whom no other test signs in as, so parallel tests don't see the changes.
+- **All passing:** `pnpm check` (621), integration (118) and the whole Chromium suite (62).
+
+**Key files:** `src/features/profile/*`, `src/server/queries/profile.ts`, `src/server/services/{availability,profile}.ts`, `src/server/actions/{update-preferred-name,update-working-pattern,cancel-pending-pattern}.ts`, `src/lib/schemas/{profile,availability}.ts`, `src/app/(app)/page.tsx`, `src/server/session.ts`.
+**Simplicity pass** (my own re-read, then `/simplify` with four reviewers):
+- **The "compare with today's pattern" rule lives in the domain**, not in a database filter in the service.
+- **`requireUser` and `getProfile` use `cache()`,** so the profile is loaded once per request, not once for the title and again for the page. Caching `requireUser` also makes the existing `getBusinessUnitBySlug` cache work across the title and page, which it didn't before.
+- **Reused what exists:** `LONG_DAYS`, `toPatternColumns` in tests, one `workDaySchema` (also used by the day-swap action), and `user.name` for the SSO name.
+- **Smaller fixes:** `pendingPattern` is just the pattern, because a waiting change always starts on `nextChangeDate`. One component test that couldn't fail was dropped, and the `aria-describedby` one-liner was simplified.
+- **Skipped:**
+  - **Moving `HATCH` into `components/`:** it has two users.
+  - **Sharing the dialog's full-screen-on-phones classes with the event form:** this is the second copy, and T29–T31 may make it the fourth.
+  - **Bounding the holiday query in the reconcile:** a few rows a year.
+
+**Deviations from plan:**
+- **`planPatternChange` now compares with the pattern in force today** (T06 compared with the one from next Sunday, waiting change included). So saving today's pattern again cancels a waiting change instead of saving a copy of today's pattern. Notes added to T06's task file and entry.
+- **BU and team are only in the header,** not repeated in the Details list. They come from WestCal, not the directory, so they don't belong under "Managed by your organisation's directory".
+- **Saved messages are also read out inside the dialog.** While a modal is open, screen readers can't reach the toast, so the dialog has its own `<output>`.
+- **`SegmentedControl` wraps** (`flex-wrap`), so four options fit at 320px. The header and booking form controls get the same reflow.
+
+**Follow-ups:**
+- **T28:** add the two tabs (note in its task file).
+- **T29/T30:** a third dialog with the same full-screen-on-phones classes; share them when they reach the fourth copy. T30's user rows can use `InitialsAvatar`.
+- **Seen but not from this task:** a `pg` warning, "Calling client.query() when the client is already executing a query", appears in the dev server and integration logs. It probably comes from the `Promise.all` in `getCalendarData`. Worth a look in T34.
+
+**Questions for the product owner:**
+- **Please approve the look** (screenshots sent in chat) before merging.

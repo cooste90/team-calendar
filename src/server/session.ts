@@ -18,7 +18,9 @@ export const getCurrentUser = cache(async () => {
   return { id, role, businessUnitId: businessUnitId ?? null, teamId: teamId ?? null };
 });
 
-export async function requireUser(): Promise<Actor> {
+// cache() also means every caller in a request gets the same Actor object, so queries
+// cached by their arguments (getBusinessUnitBySlug, getProfile) are found again.
+export const requireUser = cache(async (): Promise<Actor> => {
   const user = await getCurrentUser();
   if (!user) {
     redirect("/sign-in");
@@ -27,7 +29,7 @@ export async function requireUser(): Promise<Actor> {
     redirect("/welcome");
   }
   return { id: user.id, role: user.role, businessUnitId: user.businessUnitId, teamId: user.teamId };
-}
+});
 
 export async function requireRole(...roles: Role[]): Promise<Actor> {
   const actor = await requireUser();

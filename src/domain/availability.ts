@@ -59,16 +59,28 @@ export function worksSlot(workDay: WorkDay, half: HalfDay): boolean {
   return workDay === half;
 }
 
+// What the profile's pattern editor shows (spec §4.1): the pattern in force today, and
+// the change waiting to start next Sunday, if one has been saved. Changes are only ever
+// saved for next Sunday, so a waiting one always starts then.
+export function currentAndPendingPattern(
+  versions: PatternVersion[],
+  today: CalendarDate,
+): { current: WeeklyPattern; pending: WeeklyPattern | null } {
+  const sorted = newestFirst(versions);
+  const pending = sorted.find((version) => version.effectiveFrom > today);
+  return { current: patternOn(today, sorted), pending: pending?.pattern ?? null };
+}
+
 // Pattern changes start from the next Sunday, so past day counts never change.
-// Returns the version to save (replacing any pending one for that Sunday), or null
-// if the pattern from that Sunday would already be the same.
+// Returns the version to save, which replaces any change already waiting for that
+// Sunday. Returns null if the new pattern is the one in force today: then nothing needs
+// to wait, and saving it cancels a waiting change.
 export function planPatternChange(
   versions: PatternVersion[],
   newPattern: WeeklyPattern,
   today: CalendarDate,
 ): PatternVersion | null {
-  const effectiveFrom = nextSunday(today);
-  const current = patternOn(effectiveFrom, newestFirst(versions));
+  const current = patternOn(today, newestFirst(versions));
   if (current.join() === newPattern.join()) return null;
-  return { effectiveFrom, pattern: newPattern };
+  return { effectiveFrom: nextSunday(today), pattern: newPattern };
 }
