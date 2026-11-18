@@ -80,14 +80,16 @@ export function UserMenu({ user }: { user: UserMenuDetails }) {
           aria-labelledby={themeLabelId}
           value={theme}
           onValueChange={setTheme}
-          className="mx-2.5 mb-2 flex rounded-xl border bg-surface-2 p-[3px]"
+          className="mx-2.5 mb-2 flex gap-1 rounded-xl border bg-surface-2 p-[3px]"
         >
           {/* Radix's RadioItem is used directly: the shadcn one adds a tick, but here the
-              chosen theme is shown filled, like the segmented control. */}
+              chosen theme is shown filled, like the segmented control.
+              preventDefault keeps the menu open, so people can flick between themes. */}
           {themes.map(({ value, label, icon: Icon }) => (
             <DropdownMenuPrimitive.RadioItem
               key={value}
               value={value}
+              onSelect={(event) => event.preventDefault()}
               className="flex h-7 flex-1 cursor-default select-none items-center justify-center gap-1.5 rounded-[9px] text-muted-foreground text-sm outline-hidden focus:text-foreground focus:ring-2 focus:ring-ring data-[state=checked]:bg-surface data-[state=checked]:text-foreground data-[state=checked]:shadow-[0_1px_2px_rgba(0,0,0,0.1),0_0_0_1px_var(--border)] forced-colors:data-[state=checked]:outline forced-colors:data-[state=checked]:outline-[Highlight]"
             >
               <Icon aria-hidden="true" className="size-3.5" />

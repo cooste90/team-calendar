@@ -1263,7 +1263,7 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 - **`UserMenu`** (`src/features/calendar/header/user-menu.tsx`), at the end of the header in place of the Sign out button. It's never moved into More.
   - **The trigger** is the mockup's gradient avatar with initials, labelled "User menu for Tom Okafor, TO".
   - **The header block** shows the name, email and "West Operations · Finance Operations · Admin". Regular users get no role label.
-  - **Theme:** a Light / Dark / System row (`menuitemradio` items in a group labelled "Theme"). next-themes remembers the choice in this browser.
+  - **Theme:** a Light / Dark / System row (`menuitemradio` items in a group labelled "Theme"). next-themes remembers the choice in this browser. Choosing a theme keeps the menu open, so people can flick between them (product owner's request). The buttons have a 4px gap so the focus ring doesn't spill onto the next one.
   - **My profile** links to `?profile=me`; **Admin** (admins and super admins only) links to `?admin=teams`. Nothing reads either param yet (T27, T29).
   - **Sign out** calls the T11 action.
 - **`getUserMenuDetails(actor, businessUnitName)`** (`src/server/queries/user-menu.ts`): one small user lookup. It returns the name, initials, email, details line and `canOpenAdmin` (`canManageBusinessUnit` for the person's own BU).
@@ -1272,7 +1272,7 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 
 **Tests:**
 - **Unit:** `initialsOf` and `roleLabel` tables. `src/domain` is still at 100%.
-- **Component** (`user-menu.test.tsx`, 10): what it shows; Admin only for admins; the theme group and its current value; choosing Dark sets the class and saves it; the link targets keep the calendar's URL; Sign out calls the action; Enter, arrows and Esc; axe.
+- **Component** (`user-menu.test.tsx`, 11): what it shows; Admin only for admins; the theme group and its current value; choosing Dark sets the class and saves it; the menu stays open after choosing a theme; the link targets keep the calendar's URL; Sign out calls the action; Enter, arrows and Esc; axe.
 - **E2E** (`user-menu.spec.ts`, 4): Dark is still on after a reload; an admin sees "· Admin" and the Admin link opens `?admin=teams`; axe with the menu open in both themes. Also new: axe with the More menu open in both themes (`header.spec.ts`).
   - `signInAs` now waits for the user menu, and a new `signOut(page)` helper replaces the old Sign out clicks.
   - The whole Chromium suite passes (55).
@@ -1300,4 +1300,5 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 
 **Questions for the product owner:**
 - **Please try the menu by hand:** click the avatar, switch theme and reload, and use the keyboard (Tab to the avatar, Enter, arrows, Esc).
+  - Tried: the theme buttons were spaced apart, and the menu now stays open after choosing a theme.
 - **Check one call:** the avatar's screen-reader label now ends with the initials ("…, TO").

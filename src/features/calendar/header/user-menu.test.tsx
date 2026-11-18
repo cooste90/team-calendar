@@ -73,13 +73,21 @@ describe("the user menu", () => {
   });
 
   it("choosing Dark switches the theme and remembers it on this device", async () => {
-    const { events, trigger } = await openMenu(priya);
+    const { events } = await openMenu(priya);
     await events.click(screen.getByRole("menuitemradio", { name: "Dark" }));
 
     expect(document.documentElement).toHaveClass("dark");
     expect(localStorage.getItem("theme")).toBe("dark");
-    await events.click(trigger);
     expect(screen.getByRole("menuitemradio", { name: "Dark" })).toBeChecked();
+  });
+
+  it("the menu stays open after choosing a theme, so people can try each one", async () => {
+    const { events } = await openMenu(priya);
+    await events.click(screen.getByRole("menuitemradio", { name: "Dark" }));
+    await events.click(screen.getByRole("menuitemradio", { name: "Light" }));
+
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+    expect(document.documentElement).toHaveClass("light");
   });
 
   it.each([
