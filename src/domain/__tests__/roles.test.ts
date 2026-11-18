@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { computeRole } from "../roles";
+import { computeRole, roleLabel } from "../roles";
 
 const settings = { ADMIN_GROUP_NAME: "CALENDAR_ADMIN", SUPER_ADMIN_EMPLOYEE_NUMBERS: ["100001"] };
 
@@ -42,4 +42,12 @@ it.each([
   },
 ])("$rule", ({ employeeNumber, formalGroups, role }) => {
   expect(computeRole({ employeeNumber, formalGroups }, settings)).toBe(role);
+});
+
+it.each([
+  { role: "USER", label: null },
+  { role: "ADMIN", label: "Admin" },
+  { role: "SUPER_ADMIN", label: "Super admin" },
+] as const)("the role label for $role is $label", ({ role, label }) => {
+  expect(roleLabel(role)).toBe(label);
 });

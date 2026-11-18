@@ -2,6 +2,8 @@
 
 **Phase:** 6 · **Depends on:** T28 · **Size:** M
 
+**From T26:** the user menu's "Admin" item (admins and super admins only) already links to `?admin=teams` (`src/features/calendar/header/user-menu.tsx`). Nothing reads it yet.
+
 ## Goal
 The admin dialog (modal with its own URL), and team management: create, rename, delete and reorder.
 

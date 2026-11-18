@@ -12,6 +12,7 @@ import { UnassignedBanner } from "@/features/calendar/unassigned-banner";
 import { UNASSIGNED_BANNER_COOKIE } from "@/lib/search-params";
 import { getBusinessUnitBySlug, getVisibleBusinessUnits } from "@/server/queries/business-units";
 import { getCalendarData } from "@/server/queries/calendar";
+import { getUserMenuDetails } from "@/server/queries/user-menu";
 import { requireUser } from "@/server/session";
 
 // e.g. "Week of 8 Nov 2026 · West Operations · WestCal" (accessibility §1).
@@ -42,6 +43,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
   return (
     <>
       <AppHeader
+        user={await getUserMenuDetails(actor, ownBusinessUnit.name)}
         businessUnits={businessUnits}
         ownBusinessUnitSlug={ownBusinessUnit.slug}
         defaultView={await readSavedView()}

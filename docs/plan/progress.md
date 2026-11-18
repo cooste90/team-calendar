@@ -1256,3 +1256,48 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 **Questions for the product owner:**
 - **Please try it by hand:** click a free day, a day with bookings, and a bar; delete and Undo; and the keyboard path (Tab into the grid, Enter, Delete, Esc).
 - **Check two calls:** keyboard Delete ignores a booking that has already started, and Undo makes the restored bar grow.
+
+## T26 — User menu and theme selector — 2026-11-18
+**Status:** done. No new dependencies. Phase 5 has started.
+**What I built:**
+- **`UserMenu`** (`src/features/calendar/header/user-menu.tsx`), at the end of the header in place of the Sign out button. It's never moved into More.
+  - **The trigger** is the mockup's gradient avatar with initials, labelled "User menu for Tom Okafor, TO".
+  - **The header block** shows the name, email and "West Operations · Finance Operations · Admin". Regular users get no role label.
+  - **Theme:** a Light / Dark / System row (`menuitemradio` items in a group labelled "Theme"). next-themes remembers the choice in this browser.
+  - **My profile** links to `?profile=me`; **Admin** (admins and super admins only) links to `?admin=teams`. Nothing reads either param yet (T27, T29).
+  - **Sign out** calls the T11 action.
+- **`getUserMenuDetails(actor, businessUnitName)`** (`src/server/queries/user-menu.ts`): one small user lookup. It returns the name, initials, email, details line and `canOpenAdmin` (`canManageBusinessUnit` for the person's own BU).
+- **Domain:** `initialsOf` (`display-name.ts`) and `roleLabel` (`roles.ts`: "Admin", "Super admin", or nothing).
+- **Dropdown menus aren't modal any more** (`src/components/ui/dropdown-menu.tsx` defaults to `modal={false}`). This covers the user menu and More.
+
+**Tests:**
+- **Unit:** `initialsOf` and `roleLabel` tables. `src/domain` is still at 100%.
+- **Component** (`user-menu.test.tsx`, 10): what it shows; Admin only for admins; the theme group and its current value; choosing Dark sets the class and saves it; the link targets keep the calendar's URL; Sign out calls the action; Enter, arrows and Esc; axe.
+- **E2E** (`user-menu.spec.ts`, 4): Dark is still on after a reload; an admin sees "· Admin" and the Admin link opens `?admin=teams`; axe with the menu open in both themes. Also new: axe with the More menu open in both themes (`header.spec.ts`).
+  - `signInAs` now waits for the user menu, and a new `signOut(page)` helper replaces the old Sign out clicks.
+  - The whole Chromium suite passes (55).
+- **Screenshots** of the open menu in light and dark match the mockup.
+
+**Key files:** `src/features/calendar/header/{user-menu,app-header}.tsx`, `src/server/queries/user-menu.ts`, `src/domain/{display-name,roles}.ts`, `src/components/ui/dropdown-menu.tsx`, `src/app/(app)/page.tsx`, `tests/e2e/{user-menu.spec,sign-in,header.spec,auth.spec}.ts`.
+**Simplicity pass** (my own re-read, then `/simplify` with four reviewers):
+- **The theme option is written inline** in the `map`, not as a separate component and props type.
+- **The query takes the BU name from the page** rather than looking the BU up again.
+- **My profile and Admin are plain links,** built the same way as the grid's profile links, instead of a second way of changing the URL. They also open in a new tab.
+- **The non-modal fix is in the shared wrapper,** not on one menu, so More and any later menu get it too.
+- **Skipped:**
+  - **Running the page's queries in parallel** (`Promise.all`): one small extra lookup, and the page reads top to bottom.
+  - **Dropping the admin e2e test** as a repeat of the component tests: it's the only test of the real query's role label and `canOpenAdmin`.
+  - **Using shadcn's `Avatar`:** the gradient replaces most of its styles. T27 makes a shared avatar on the third use (note in its task file).
+
+**Deviations from plan:**
+- **The label includes the initials** ("User menu for Tom Okafor, TO", not "User menu for Tom Okafor"). Axe's label-in-name rule (WCAG 2.5.3) fails when the visible "TO" isn't in the name, and hiding the initials doesn't help. It's also better for speech users, who can say "click TO". Axe ignores text in brackets, so it's after a comma.
+- **The avatar gradient is #4f46e5 → #c2410c** (the light theme's primary and sunset) in both themes. The mockup's #6d64f5 start gives white text only 4.4:1.
+
+**Follow-ups:**
+- **T27:** reads `?profile=me`, and moves the avatar into a shared component (note in its task file).
+- **T29:** reads `?admin=teams` (note in its task file).
+- **T35:** the accessibility statement link goes in this menu (its task file says "user menu footer").
+
+**Questions for the product owner:**
+- **Please try the menu by hand:** click the avatar, switch theme and reload, and use the keyboard (Tab to the avatar, Enter, arrows, Esc).
+- **Check one call:** the avatar's screen-reader label now ends with the initials ("…, TO").

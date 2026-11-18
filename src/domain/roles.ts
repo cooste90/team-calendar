@@ -21,3 +21,11 @@ export function computeRole(
   }
   return "USER";
 }
+
+// The role shown after a person's BU and team, e.g. in the user menu. Regular users
+// get no label (T26).
+export function roleLabel(role: Role): string | null {
+  if (role === "ADMIN") return "Admin";
+  if (role === "SUPER_ADMIN") return "Super admin";
+  return null;
+}

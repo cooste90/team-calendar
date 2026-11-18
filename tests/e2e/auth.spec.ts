@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signInAs } from "./sign-in";
+import { signInAs, signOut } from "./sign-in";
 
 // Tom Okafor is the seeded West Operations admin (dev profile in the CALENDAR_ADMIN group).
 
@@ -9,8 +9,7 @@ test("an admin signs in on the dev page, lands on the calendar, then signs out",
   await signInAs(page, "Tom Okafor");
   await expect(page).toHaveURL("/");
 
-  await page.getByRole("button", { name: "Sign out" }).click();
-  await expect(page).toHaveURL("/sign-in");
+  await signOut(page);
 
   // The session is really gone, not just the page.
   await page.goto("/");

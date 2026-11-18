@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { expectNoA11yViolations } from "./a11y";
-import { signInAs } from "./sign-in";
+import { signInAs, signOut } from "./sign-in";
 
 const title = (page: Page) => page.getByRole("heading", { level: 1 });
 
@@ -44,7 +44,7 @@ test("a regular user can't see the hidden BU; a super admin can", async ({ page 
   await expect(page).toHaveURL(/bu=north-finance/);
   await expect(page.getByText("North Finance · all teams · all people")).toBeVisible();
 
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await signOut(page);
   await signInAs(page, "Grace Adeyemi");
   await expect(switcher.getByRole("option")).toHaveText([
     "Corporate Services (hidden)",
@@ -68,7 +68,7 @@ test("at 320px wide the header wraps without scrolling the page sideways", async
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
   expect(overflow).toBe(0);
-  for (const name of ["Previous week", "Next week", "Today", "More", "Sign out"]) {
+  for (const name of ["Previous week", "Next week", "Today", "More", "User menu for Tom Okafor"]) {
     await expect(page.getByRole("button", { name })).toBeInViewport();
   }
 
@@ -78,6 +78,16 @@ test("at 320px wide the header wraps without scrolling the page sideways", async
   await page.getByRole("menuitem", { name: "Key" }).click();
   await expect(page.getByRole("dialog", { name: "Leave types" })).toBeInViewport();
 });
+
+for (const theme of ["light", "dark"] as const) {
+  test(`the open More menu has no accessibility violations (${theme})`, async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 800 });
+    await signInAs(page, "Tom Okafor");
+    await page.getByRole("button", { name: "More" }).click();
+    await expect(page.getByRole("menu")).toBeVisible();
+    await expectNoA11yViolations(page, { theme });
+  });
+}
 
 test("the Key opens on hover, stays open while hovered, and Esc closes it", async ({ page }) => {
   await signInAs(page, "Priya Shah");

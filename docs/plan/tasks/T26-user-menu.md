@@ -29,3 +29,10 @@ The avatar menu from the mockup: who you are, theme choice, and links to your pr
 
 ## Acceptance criteria
 - Matches the mockup and is fully keyboard operable (arrows, Esc, typeahead).
+
+## As built
+- **The trigger's label is "User menu for Tom Okafor, TO".** It includes the initials people see, so axe's label-in-name rule (WCAG 2.5.3) passes and speech users can say "click TO". (Axe ignores text in brackets, so "(TO)" doesn't count.)
+- **Dropdown menus aren't modal.** The shared `ui/dropdown-menu.tsx` wrapper now defaults to `modal={false}`, for this menu and More. A modal Radix menu marks the rest of the page `aria-hidden` while it can still be focused, which axe reports. Esc and clicking outside still close it.
+- **The theme row** uses Radix's `RadioItem` directly, styled like the segmented control, without shadcn's tick. Up/Down arrows move through it like any other item.
+- **My profile and Admin are links** (`?profile=me` / `?admin=teams`, built with `serializeCalendarParams` like the grid's profile links). A link adds a history entry, so Back will close the dialogs.
+- **The details come from `getUserMenuDetails(actor, businessUnitName)`** (`src/server/queries/user-menu.ts`): name, initials, email, "BU · team · role" and `canOpenAdmin` (`canManageBusinessUnit` for the person's own BU). `initialsOf` and `roleLabel` are in `src/domain`.

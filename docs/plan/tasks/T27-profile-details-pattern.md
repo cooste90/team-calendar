@@ -2,6 +2,8 @@
 
 **Phase:** 5 · **Depends on:** T26 · **Size:** L
 
+**From T26:** the user menu's "My profile" already links to `?profile=me` (`src/features/calendar/header/user-menu.tsx`). Nothing reads it yet. For the profile header's avatar, `initialsOf` is in `src/domain/display-name.ts`, and the gradient avatar style is `avatarClass` in `user-menu.tsx`. That makes three uses (menu trigger, menu header, profile), so move it into a small shared `src/components/initials-avatar.tsx` then. T30's user rows will need it too.
+
 ## Goal
 "My profile" and the admin's view of anyone's profile, as a modal over the grid with its own URL, covering details and working pattern.
 

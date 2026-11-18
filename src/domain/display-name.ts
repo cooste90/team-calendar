@@ -12,6 +12,11 @@ export function displayName(person: PersonName): string {
   return `${displayFirstName(person)} ${person.surname}`;
 }
 
+// "TO" for Tom Okafor, shown on the user menu's avatar.
+export function initialsOf(person: PersonName): string {
+  return `${displayFirstName(person).charAt(0)}${person.surname.charAt(0)}`.toUpperCase();
+}
+
 const collator = new Intl.Collator("en-GB");
 
 // People are listed by surname, then first name (spec §2.3). Use with Array.sort.
