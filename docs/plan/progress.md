@@ -1302,3 +1302,4 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 - **Please try the menu by hand:** click the avatar, switch theme and reload, and use the keyboard (Tab to the avatar, Enter, arrows, Esc).
   - Tried: the theme buttons were spaced apart, and the menu now stays open after choosing a theme.
 - **Check one call:** the avatar's screen-reader label now ends with the initials ("…, TO").
+  - Agreed: keep "User menu for Tom Okafor, TO".
