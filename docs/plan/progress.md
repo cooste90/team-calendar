@@ -1401,9 +1401,10 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 - **List lines always show the month** ("Wed 19 – Thu 20 Nov · 2 days"), unlike the booking form's summary, because the list has no dates on screen to say which month.
 - **The day count on each line is the whole booking.** The tally counts only the part inside its window, so a booking that crosses the window's start shows more days than it adds to the tally.
 
-**Follow-ups:**
-- **Flaky test:** `event-form.test.tsx` "Replace it" (a `waitFor` on `createBookingAction`, 1 second by default) fails under the full suite's load, more often with a dev server running, and passes alone. Worth a look in T34.
+**Fixed along the way:** `event-form.test.tsx` "Replace it" failed under the full suite's load, especially with a dev server running. It waits for the save with `waitFor`, which gives up after 1 second. `tests/component-setup.ts` now gives every `findBy…` and `waitFor` 3 seconds (`asyncUtilTimeout`), so the same slowdown can't break other tests either.
 
 **Questions for the product owner:**
 - **Please approve the look** (screenshots sent in chat) before merging.
   - Looks good, with one correction: **public holidays count from 1 January, like annual leave,** not over the last 12 months. That's one setting in `leave-types.ts`, so the card now reads like annual leave ("1 day taken · 1 day booked", "Public holiday · 2026"). The spec (§3, §7) and T09's task file are corrected, and there's a new domain test for the rule.
+  - Then: **the tally cards were too big** (five of them took half the tab). They now have less padding and smaller text (title 12px, numbers 14px), keeping all three lines. "That's better."
+  - All passing after both changes: `pnpm check` (649, twice in a row), integration (121) and the whole Chromium suite (67). Not merged yet.
