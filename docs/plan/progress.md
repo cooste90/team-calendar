@@ -1361,7 +1361,7 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
   - Approved.
 
 ## T28 — Leave history tallies and upcoming leave — 2026-11-19
-**Status:** done, waiting for the product owner's approval. No new dependencies.
+**Status:** done. The product owner approved it after two changes (public holidays count from 1 January; smaller tally cards). No new dependencies.
 **Decided with the product owner first** (also in the task file): no seed fixture; the exact numbers are proven in component tests instead. Past bookings go in closed `<details>` sections, one per type. Upcoming leave includes every type.
 **What I built:**
 - **Leave history tab:**
@@ -1407,4 +1407,5 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 - **Please approve the look** (screenshots sent in chat) before merging.
   - Looks good, with one correction: **public holidays count from 1 January, like annual leave,** not over the last 12 months. That's one setting in `leave-types.ts`, so the card now reads like annual leave ("1 day taken · 1 day booked", "Public holiday · 2026"). The spec (§3, §7) and T09's task file are corrected, and there's a new domain test for the rule.
   - Then: **the tally cards were too big** (five of them took half the tab). They now have less padding and smaller text (title 12px, numbers 14px), keeping all three lines. "That's better."
-  - All passing after both changes: `pnpm check` (649, twice in a row), integration (121) and the whole Chromium suite (67). Not merged yet.
+  - All passing after both changes: `pnpm check` (649, twice in a row), integration (121) and the whole Chromium suite (67).
+  - Approved, and merged.
