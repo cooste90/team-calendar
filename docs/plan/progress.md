@@ -1406,3 +1406,4 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 
 **Questions for the product owner:**
 - **Please approve the look** (screenshots sent in chat) before merging.
+  - Looks good, with one correction: **public holidays count from 1 January, like annual leave,** not over the last 12 months. That's one setting in `leave-types.ts`, so the card now reads like annual leave ("1 day taken · 1 day booked", "Public holiday · 2026"). The spec (§3, §7) and T09's task file are corrected, and there's a new domain test for the rule.
