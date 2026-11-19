@@ -80,7 +80,8 @@ function tallyTitle(tally: Tally) {
   return `${info.label} · last 12 months`;
 }
 
-// "12.5 days taken · 6 days booked" for annual leave, "2 days" for the others.
+// "12.5 days taken · 6 days booked" for annual leave and public holidays, "2 days" for
+// the others.
 function tallyNumbers(tally: Tally) {
   if (tally.booked === undefined) return formatCount(tally.taken);
   return `${formatCount(tally.taken)} taken · ${formatCount(tally.booked)} booked`;

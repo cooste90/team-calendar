@@ -97,7 +97,7 @@ WestCal is a team availability calendar for a business unit (BU) of about 50 peo
 | WBD | Wellbeing Day | Yes: rolling 12 months |
 | OT | Other | No |
 | WFH | Working From Home | No (it looks the same as other types; it is just not counted) |
-| PH | Public Holiday | Yes: rolling 12 months |
+| PH | Public Holiday | Yes: calendar year from 1 January |
 
 The types are fixed and not admin-editable. Colours are in `02-design-system.md`.
 
@@ -219,7 +219,8 @@ The dialog has these sections:
 2. **Working pattern**: a 7-day editor (Sun–Sat) with FULL / AM / PM / OFF for each day, with the message "Changes apply from Sunday 15 November".
 3. **Leave history**: tallies plus the past bookings behind them.
    - AL: **calendar year from 1 January**, shown as taken so far and booked for the rest of the year.
-   - SL, PL, WBD, PH: **rolling 12 months** ending today, shown as taken.
+   - PH: **calendar year from 1 January**, shown like AL (taken so far and booked for the rest of the year). Corrected by the product owner in T28; it was rolling 12 months.
+   - SL, PL, WBD: **rolling 12 months** ending today, shown as taken.
    - FL, SK, OT and WFH are not tallied.
    - Below the tallies, a list of the past bookings in those windows, grouped by type.
 4. **Upcoming leave**: future bookings, **read-only**. Editing happens on the grid.

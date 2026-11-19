@@ -62,7 +62,12 @@ describe("computeTallies", () => {
       { type: "SPECIAL", window: { from: "2025-11-13", to: "2026-11-12" }, taken: 0 },
       { type: "PARENTAL", window: { from: "2025-11-13", to: "2026-11-12" }, taken: 0 },
       { type: "WELLBEING", window: { from: "2025-11-13", to: "2026-11-12" }, taken: 0 },
-      { type: "PUBLIC_HOLIDAY", window: { from: "2025-11-13", to: "2026-11-12" }, taken: 0 },
+      {
+        type: "PUBLIC_HOLIDAY",
+        window: { from: "2026-01-01", to: "2026-12-31" },
+        taken: 0,
+        booked: 0,
+      },
     ]);
   });
 
@@ -75,6 +80,17 @@ describe("computeTallies", () => {
     const newYear = makeBooking("ANNUAL", "2026-12-28", "2027-01-08"); // Mon 28 Dec to Fri 8 Jan
     expect(tallyFor("ANNUAL", [newYear], "2026-12-01")).toMatchObject({ taken: 0, booked: 4 });
     expect(tallyFor("ANNUAL", [newYear], "2027-01-15")).toMatchObject({ taken: 6, booked: 0 });
+  });
+
+  it("public holidays count from 1 January, like annual leave, not the last 12 months", () => {
+    const lastDecember = makeBooking("PUBLIC_HOLIDAY", "2025-12-25", "2025-12-25"); // last year
+    const may = makeBooking("PUBLIC_HOLIDAY", "2026-05-04", "2026-05-04");
+    const christmas = makeBooking("PUBLIC_HOLIDAY", "2026-12-25", "2026-12-25"); // still to come
+    expect(tallyFor("PUBLIC_HOLIDAY", [lastDecember, may, christmas], "2026-11-12")).toMatchObject({
+      window: { from: "2026-01-01", to: "2026-12-31" },
+      taken: 1,
+      booked: 1,
+    });
   });
 
   it("the rolling window starts the day after the same date last year", () => {

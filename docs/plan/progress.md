@@ -1402,7 +1402,7 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 - **The day count on each line is the whole booking.** The tally counts only the part inside its window, so a booking that crosses the window's start shows more days than it adds to the tally.
 
 **Follow-ups:**
-- **Flaky test:** `event-form.test.tsx` "Replace it" (a `waitFor` on `createBookingAction`) failed twice under the full suite's load and passed alone and on rerun. Worth a look in T34.
+- **Flaky test:** `event-form.test.tsx` "Replace it" (a `waitFor` on `createBookingAction`, 1 second by default) fails under the full suite's load, more often with a dev server running, and passes alone. Worth a look in T34.
 
 **Questions for the product owner:**
 - **Please approve the look** (screenshots sent in chat) before merging.

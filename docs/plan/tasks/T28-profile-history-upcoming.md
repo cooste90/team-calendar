@@ -43,6 +43,7 @@ The two read-only profile tabs: tallies with their supporting bookings, and the 
 - **No seed fixture.** The seed is random and relative to today, and its public holidays cut into bookings, so fixed expected numbers would be fragile. The component tests prove the exact numbers instead (hand-written bookings run through the real `leaveSummary`). The e2e test checks a seeded person's tabs have the right shape, plus axe.
 - **Past bookings are in `<details>` sections, one per type, closed at first,** so the tally cards stay in view.
 - **Upcoming leave lists every type,** WFH included, as the spec says "future bookings".
+- **Public holidays count from 1 January, like annual leave** (a correction at review; the spec said rolling 12 months). So their card shows taken and booked, like annual leave.
 
 ## As built
 - **`leaveSummary(bookings, lookup, today)`** (`src/domain/tallies.ts`) works out everything the two tabs show:

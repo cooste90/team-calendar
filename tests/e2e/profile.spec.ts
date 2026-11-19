@@ -107,7 +107,7 @@ test("the leave tabs show a tally for every counted type, and upcoming leave rea
     "Special leave · last 12 months",
     "Parental leave · last 12 months",
     "Wellbeing day · last 12 months",
-    "Public holiday · last 12 months",
+    /^Public holiday · \d{4}$/,
   ]);
   await expect(dialog.getByRole("definition").first()).toHaveText(
     new RegExp(`^${days} taken · ${days} booked$`),

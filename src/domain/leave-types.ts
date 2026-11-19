@@ -89,7 +89,7 @@ export const leaveTypes: Record<LeaveType, LeaveTypeInfo> = {
     type: "PUBLIC_HOLIDAY",
     code: "PH",
     label: "Public holiday",
-    tallyWindow: "rolling12Months",
+    tallyWindow: "calendarYear",
     className: "bg-leave-ph text-leave-ph-fg",
   },
 };

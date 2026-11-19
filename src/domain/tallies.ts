@@ -10,7 +10,8 @@ import { intersect, rangeOf, toSlot } from "./slots";
 
 type DateWindow = { from: CalendarDate; to: CalendarDate };
 
-// Annual leave counts the calendar year. The others count the 12 months ending today.
+// Annual leave and public holidays count the calendar year. The others count the 12
+// months ending today.
 export function tallyWindows(
   today: CalendarDate,
 ): Record<"calendarYear" | "rolling12Months", DateWindow> {
@@ -20,8 +21,8 @@ export function tallyWindows(
   };
 }
 
-// `window` is the dates the tally covers. `booked` is only for annual leave: days
-// booked from tomorrow to 31 December.
+// `window` is the dates the tally covers. `booked` is only for the calendar-year types
+// (annual leave and public holidays): days booked from tomorrow to 31 December.
 export type Tally = { type: LeaveType; window: DateWindow; taken: number; booked?: number };
 
 // Days of a type inside a date window. A booking crossing the window's edge only

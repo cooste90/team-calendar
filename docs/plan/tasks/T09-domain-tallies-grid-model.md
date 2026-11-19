@@ -19,6 +19,7 @@ Pure functions for profile tallies and for turning raw calendar data into exactl
 - `computeTallies(bookings, availabilityLookup, today)` returns a list in display order, `{ type, taken, booked? }[]` (as built), with:
   - `ANNUAL: { taken, booked }`, where taken = days on dates ≤ today within the year and booked = days after today until 31 Dec;
   - `SPECIAL`, `PARENTAL`, `WELLBEING`, `PUBLIC_HOLIDAY`: `{ taken }` over the rolling window.
+  - **Changed in T28:** the product owner corrected `PUBLIC_HOLIDAY` to the calendar year, like `ANNUAL` (`{ taken, booked }`). It's one setting in `leave-types.ts`.
   - Untallied types (FL, SK, OT, WFH) are excluded.
   - A booking that crosses a window edge counts **only the slots inside it**.
 - `historyGroups(bookings, today)`: past bookings inside each tallied window, grouped by type, newest first.

@@ -3,8 +3,8 @@ import type { Actor } from "@/domain/permissions";
 import { getProfileLeave } from "@/server/queries/profile";
 import { annualLeave, createPeople, insertRow } from "./helpers/people";
 
-// Today is Wednesday 12 June 2030. Annual leave counts from 1 January 2030; the other
-// tallied types count the 12 months from 13 June 2029, which is the earlier start.
+// Today is Wednesday 12 June 2030. Annual leave and public holidays count from 1 January
+// 2030; the other tallied types count the 12 months from 13 June 2029, the earlier start.
 // Upcoming leave is loaded up to 12 June 2032.
 const TODAY = "2030-06-12";
 

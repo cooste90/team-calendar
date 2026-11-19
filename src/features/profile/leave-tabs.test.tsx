@@ -45,6 +45,10 @@ const bookings = [
   booking("SPECIAL", ["2025-11-19", "AM"], ["2025-11-20", "PM"]),
   booking("SPECIAL", ["2025-11-18", "AM"], ["2025-11-18", "PM"]), // the day before: left out
   booking("WELLBEING", ["2026-11-19", "PM"], ["2026-11-19", "PM"]), // this afternoon
+  // Public holidays count from 1 January, so last Christmas is left out.
+  booking("PUBLIC_HOLIDAY", ["2025-12-25", "AM"], ["2025-12-25", "PM"]),
+  booking("PUBLIC_HOLIDAY", ["2026-08-31", "AM"], ["2026-08-31", "PM"]),
+  booking("PUBLIC_HOLIDAY", ["2026-12-25", "AM"], ["2026-12-25", "PM"]), // still to come
   booking("SICKNESS", ["2026-11-16", "AM"], ["2026-11-20", "PM"], "Flu"), // not tallied
 ];
 
@@ -76,7 +80,7 @@ describe("the Leave history tab", () => {
     ["Special leave · last 12 months", "1 day", "20 Nov 2025 – 19 Nov 2026"],
     ["Parental leave · last 12 months", "0 days", "20 Nov 2025 – 19 Nov 2026"],
     ["Wellbeing day · last 12 months", "0.5 days", "20 Nov 2025 – 19 Nov 2026"],
-    ["Public holiday · last 12 months", "0 days", "20 Nov 2025 – 19 Nov 2026"],
+    ["Public holiday · 2026", "1 day taken · 1 day booked", "1 Jan – 31 Dec 2026"],
   ])("the %s card says %s, for %s", (title, numbers, window) => {
     renderHistory(bookings);
     expect(card(title)).toEqual([numbers, window]);
@@ -96,6 +100,7 @@ describe("the Leave history tab", () => {
       "Mon 29 Dec – Fri 2 Jan · 5 days",
     ]);
     expect(bookingLines("Special leave")).toEqual(["Wed 19 – Thu 20 Nov · 2 days"]);
+    expect(bookingLines("Public holiday")).toEqual(["Mon 31 Aug · 1 day"]);
   });
 
   it("a type with nothing taken says so", () => {
@@ -130,9 +135,9 @@ describe("the Upcoming leave tab", () => {
     expect(within(sickness).getByText("Ongoing")).toBeInTheDocument();
     expect(wellbeing).toHaveTextContent("Thu 19 Nov, afternoon · 0.5 days");
     expect(within(wellbeing).queryByText("Ongoing")).toBeNull();
-    expect(within(december).getByRole("listitem")).toHaveTextContent(
-      "Mon 21 Dec – Fri 1 Jan · 10 days",
-    );
+    const [annual, christmas] = within(december).getAllByRole("listitem");
+    expect(annual).toHaveTextContent("Mon 21 Dec – Fri 1 Jan · 10 days");
+    expect(christmas).toHaveTextContent("Fri 25 Dec · 1 day");
   });
 
   it("is read-only: no buttons, and a hint to use the calendar", () => {
