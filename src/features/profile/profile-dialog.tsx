@@ -12,20 +12,23 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { LeaveSummary } from "@/domain/tallies";
 import { calendarSearchParams } from "@/lib/search-params";
 import type { ProfileData } from "@/server/queries/profile";
 import { DetailsTab } from "./details-tab";
+import { HistoryTab } from "./history-tab";
 import { PatternTab } from "./pattern-tab";
+import { UpcomingTab } from "./upcoming-tab";
+
+type Props = { profile: ProfileData; leave: LeaveSummary };
 
 // The profile (spec §7), for the viewer or, for an admin, someone else. It's a modal
 // over the grid with its own URL (?profile=me or ?person=<id>, and ?tab=), so a link
 // can open it and Back closes it. The page renders it when the URL asks for it.
-export function ProfileDialog({ profile }: { profile: ProfileData }) {
+export function ProfileDialog({ profile, leave }: Props) {
   const [params, setParams] = useQueryStates(calendarSearchParams);
   const [announcement, setAnnouncement] = useState("");
   const open = params.profile !== null || params.person !== null;
-  // Leave history and Upcoming leave come in T28. Until then, those tabs show Details.
-  const tab = params.tab === "pattern" ? "pattern" : "details";
 
   function close() {
     // Replace, not push, so Back doesn't reopen it. shallow: false re-renders the page
@@ -63,18 +66,26 @@ export function ProfileDialog({ profile }: { profile: ProfileData }) {
           </div>
         </DialogHeader>
         <Tabs
-          value={tab}
+          value={params.tab}
+          // parse turns the plain string Radix hands back into one of the four tab names.
           onValueChange={(value) =>
-            setParams({ tab: value === "pattern" ? "pattern" : "details" }, { history: "replace" })
+            setParams({ tab: calendarSearchParams.tab.parse(value) }, { history: "replace" })
           }
           className="min-h-0 flex-1 gap-0"
         >
-          <TabsList variant="line" className="mx-6 h-10 w-auto justify-start border-b">
-            <TabsTrigger value="details" className="flex-none px-2.5">
+          {/* On phones the four tabs wrap onto a second row. */}
+          <TabsList variant="line" className="mx-6 w-auto justify-start border-b">
+            <TabsTrigger value="details" className="px-2.5">
               Details
             </TabsTrigger>
-            <TabsTrigger value="pattern" className="flex-none px-2.5">
+            <TabsTrigger value="pattern" className="px-2.5">
               Working pattern
+            </TabsTrigger>
+            <TabsTrigger value="history" className="px-2.5">
+              Leave history
+            </TabsTrigger>
+            <TabsTrigger value="upcoming" className="px-2.5">
+              Upcoming leave
             </TabsTrigger>
           </TabsList>
           <TabsContent value="details" className="overflow-y-auto px-6 pt-5 pb-6">
@@ -82,6 +93,12 @@ export function ProfileDialog({ profile }: { profile: ProfileData }) {
           </TabsContent>
           <TabsContent value="pattern" className="overflow-y-auto px-6 pt-5 pb-6">
             <PatternTab profile={profile} onSaved={announce} />
+          </TabsContent>
+          <TabsContent value="history" className="overflow-y-auto px-6 pt-5 pb-6">
+            <HistoryTab history={leave.history} />
+          </TabsContent>
+          <TabsContent value="upcoming" className="overflow-y-auto px-6 pt-5 pb-6">
+            <UpcomingTab upcoming={leave.upcoming} />
           </TabsContent>
         </Tabs>
         {/* <output> is a polite live region (role "status"). */}

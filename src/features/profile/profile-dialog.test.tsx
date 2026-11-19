@@ -52,7 +52,7 @@ function open(profile: ProfileData, searchParams: Record<string, string> = { pro
       searchParams={searchParams}
       onUrlUpdate={(update) => urlUpdates.push(update)}
     >
-      <ProfileDialog profile={profile} />
+      <ProfileDialog profile={profile} leave={{ history: [], upcoming: [] }} />
     </NuqsTestingAdapter>,
   );
   return { events, urlUpdates, dialog: screen.getByRole("dialog", { name: profile.title }) };
@@ -70,9 +70,12 @@ describe("the profile dialog", () => {
     expect(screen.getByText("E10442")).toHaveClass("font-mono");
   });
 
-  it.each([["history"], ["upcoming"]])("?tab=%s shows Details until T28 builds it", (tab) => {
+  it.each([
+    ["history", "Leave history"],
+    ["upcoming", "Upcoming leave"],
+  ])("?tab=%s opens %s", (tab, name) => {
     open(tom, { profile: "me", tab });
-    expect(screen.getByRole("tab", { name: "Details" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name })).toHaveAttribute("aria-selected", "true");
   });
 
   it("choosing a tab puts it in the URL, replacing the history entry", async () => {

@@ -38,3 +38,17 @@ The two read-only profile tabs: tallies with their supporting bookings, and the 
 
 ## Acceptance criteria
 - Numbers match the domain functions exactly. The UI does no counting maths of its own.
+
+## Decided with the product owner
+- **No seed fixture.** The seed is random and relative to today, and its public holidays cut into bookings, so fixed expected numbers would be fragile. The component tests prove the exact numbers instead (hand-written bookings run through the real `leaveSummary`). The e2e test checks a seeded person's tabs have the right shape, plus axe.
+- **Past bookings are in `<details>` sections, one per type, closed at first,** so the tally cards stay in view.
+- **Upcoming leave lists every type,** WFH included, as the spec says "future bookings".
+
+## As built
+- **`leaveSummary(bookings, lookup, today)`** (`src/domain/tallies.ts`) works out everything the two tabs show:
+  - `history`: one entry per tallied type, as the tally (`computeTallies`, now with its `window`) plus the past bookings behind it, each with its working days;
+  - `upcoming`: bookings from today on, under month headings. Leave that has already started goes under this month and is marked ongoing.
+- **`getProfileLeave(actor, userId, today)`** (`src/server/queries/profile.ts`) asks `getProfile` for the permission (cached, so free) and returns null when it says no. It loads the bookings from the rolling window's start (never later than 1 January) to two years ahead, plus all the person's patterns and day swaps. The page loads it whenever a profile is open, so switching tabs is instant.
+- **`HistoryTab` and `UpcomingTab`** (`src/features/profile/`) only display. The tally cards are a `<dl>` (title, numbers, window dates). Each line uses the new `formatRangeWithMonth`, "Wed 19 – Thu 20 Nov · 2 days". The booking form's `formatRangeSummary` leaves the month off within one month, which is fine under the form's date fields but not in a list.
+- **Line tabs wrap onto a second row** on narrow screens (`src/components/ui/tabs.tsx`, `line` variant). Four tabs don't fit in one row on a phone.
+- **New formatters:** `formatDateWindow` ("1 Jan – 31 Dec 2026"), `formatMonthYear` ("November 2026", now also used by the month view's titles) and `formatBookings` ("3 bookings").

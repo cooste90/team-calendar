@@ -1359,3 +1359,50 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 **Questions for the product owner:**
 - **Please approve the look** (screenshots sent in chat) before merging.
   - Approved.
+
+## T28 — Leave history tallies and upcoming leave — 2026-11-19
+**Status:** done, waiting for the product owner's approval. No new dependencies.
+**Decided with the product owner first** (also in the task file): no seed fixture; the exact numbers are proven in component tests instead. Past bookings go in closed `<details>` sections, one per type. Upcoming leave includes every type.
+**What I built:**
+- **Leave history tab:**
+  - five tally cards (a `<dl>`): "Annual leave · 2026" with "12.5 days taken · 6 days booked", and "Special leave · last 12 months" with "2 days", each with its window's dates;
+  - the note "Flexi, sickness, other and working-from-home aren't tallied.";
+  - "Past bookings": one `<details>` per type (chip, label, "N bookings"), listing that window's past bookings newest first, each with its dates, working days and the first line of its notes. An empty type says "Nothing taken in this period."
+- **Upcoming leave tab:**
+  - the hint "To change a booking, use the calendar.";
+  - month headings, each with a list of bookings (chip and type, dates and days, notes, and an "Ongoing" badge for leave that has started);
+  - no buttons; "No upcoming leave." when empty.
+- **`leaveSummary`** (domain) builds both tabs' data from `computeTallies`, `historyGroups` and `upcomingBookings`, so the UI does no counting. `Tally` now carries its `window`.
+- **`getProfileLeave`** (query): the same permission as `getProfile`. It loads bookings from the start of the rolling 12 months to two years ahead.
+- **Formatters:** `formatRangeWithMonth`, `formatDateWindow`, `formatMonthYear` and `formatBookings`.
+- **The dialog's tabs** go through `?tab=history|upcoming`, and the line tabs wrap onto two rows on phones.
+
+**Tests:**
+- **Unit:** `leaveSummary` (every type present, days per booking, month grouping with ongoing under this month) and the new formatters. The `computeTallies` tests now include the window. `src/domain` is still at 100%.
+- **Component** (`leave-tabs.test.tsx`, 14): each card's numbers and window for fixture data covering an annual leave booking across 31 December, half days and the rolling window's first day; the not-tallied note; past bookings newest first with days and notes; empty types; all-empty; upcoming month headings and Ongoing; read-only (no buttons) with the hint; nothing coming up; axe on both tabs. `profile-dialog.test.tsx` now checks `?tab=history` and `?tab=upcoming` open those tabs.
+- **Integration** (`profile-leave.test.ts`, 3): only for people who may see the profile; a booking crossing the rolling window's start is loaded and only the part inside counts; upcoming stops at two years.
+- **E2E** (`profile.spec.ts`, +5): Callum's history shows all five cards with numbers in the right format and a section opens; Upcoming is in the URL, with the hint and no buttons; axe on both new tabs in both themes.
+- **All passing:** `pnpm check` (648), integration (121) and the whole Chromium suite (67).
+- **Screenshots** at 1280, 375 and 320px, checked before asking for approval.
+
+**Key files:** `src/domain/{tallies,format}.ts`, `src/server/queries/profile.ts`, `src/features/profile/{history-tab,upcoming-tab,profile-dialog}.tsx`, `src/components/ui/tabs.tsx`, `src/app/(app)/page.tsx`, `tests/integration/profile-leave.test.ts`, `tests/e2e/profile.spec.ts`.
+**Simplicity pass** (my own re-read, then `/simplify` with four reviewers):
+- **The wrapping lives in the tabs component's `line` variant,** not as overrides in the dialog that fought the component's own height classes.
+- **The bookings load from the rolling window's start.** That start is never later than 1 January, so the query doesn't need to compare the two windows.
+- **"N bookings" is in `format.ts`** with its siblings `formatCount` and `formatPeople`, with tests. `DateWindow` stays private to `tallies.ts`.
+- **Skipped:**
+  - **Dropping the permission check from `getProfileLeave`** because the page already has the profile: the task asks for the check in the query, and it's free (`getProfile` is cached).
+  - **A named option instead of `formatRangeDates`' true/false:** it's a private helper behind two named functions.
+  - **Reusing `loadOverlapping`** (services, transaction-scoped) for the bookings filter, and **bounding the day swaps query** (a booking can start before the window; the grid loads them all too).
+  - **Keeping empty groups in `historyGroups`** so `leaveSummary` could pair the lists by position: matching by type is plainer.
+
+**Deviations from plan:**
+- **No seed fixture with expected numbers** (see above).
+- **List lines always show the month** ("Wed 19 – Thu 20 Nov · 2 days"), unlike the booking form's summary, because the list has no dates on screen to say which month.
+- **The day count on each line is the whole booking.** The tally counts only the part inside its window, so a booking that crosses the window's start shows more days than it adds to the tally.
+
+**Follow-ups:**
+- **Flaky test:** `event-form.test.tsx` "Replace it" (a `waitFor` on `createBookingAction`) failed twice under the full suite's load and passed alone and on rerun. Worth a look in T34.
+
+**Questions for the product owner:**
+- **Please approve the look** (screenshots sent in chat) before merging.

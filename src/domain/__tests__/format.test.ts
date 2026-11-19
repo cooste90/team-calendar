@@ -1,17 +1,21 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatBookings,
   formatCount,
   formatDateInput,
+  formatDateWindow,
   formatDayHeader,
   formatDocumentTitlePeriod,
   formatFilterName,
   formatFilterSummary,
   formatLong,
   formatLongRange,
+  formatMonthYear,
   formatPeople,
   formatPeriodAnnouncement,
   formatPeriodTitle,
   formatRangeSummary,
+  formatRangeWithMonth,
   formatShort,
   formatShortRange,
   formatTimestamp,
@@ -55,6 +59,16 @@ describe("formatPeople", () => {
   });
 });
 
+describe("formatBookings", () => {
+  it.each([
+    [1, "1 booking"],
+    [0, "0 bookings"],
+    [3, "3 bookings"],
+  ])("%d → %s", (count, expected) => {
+    expect(formatBookings(count)).toBe(expected);
+  });
+});
+
 describe("formatRangeSummary (the live summary in the booking form)", () => {
   it.each([
     ["2026-11-12", "AM", "2026-11-12", "PM", 1, "Thu 12 Nov · 1 day"],
@@ -71,6 +85,19 @@ describe("formatRangeSummary (the live summary in the booking form)", () => {
   ] as const)("%s %s to %s %s → %s", (startDate, startHalf, endDate, endHalf, count, expected) => {
     const range = rangeOf({ startDate, startHalf, endDate, endHalf });
     expect(formatRangeSummary(range, count)).toBe(expected);
+  });
+});
+
+describe("formatRangeWithMonth (the profile's lists)", () => {
+  it.each([
+    ["2026-11-12", "AM", "2026-11-12", "AM", 0.5, "Thu 12 Nov, morning · 0.5 days"],
+    // Same month: the month is still on the end.
+    ["2026-11-10", "AM", "2026-11-15", "PM", 4, "Tue 10 – Sun 15 Nov · 4 days"],
+    ["2026-11-12", "PM", "2026-11-17", "PM", 3.5, "Thu 12 PM – Tue 17 Nov · 3.5 days"],
+    ["2026-10-30", "AM", "2026-11-03", "PM", 3, "Fri 30 Oct – Tue 3 Nov · 3 days"],
+  ] as const)("%s %s to %s %s → %s", (startDate, startHalf, endDate, endHalf, count, expected) => {
+    const range = rangeOf({ startDate, startHalf, endDate, endHalf });
+    expect(formatRangeWithMonth(range, count)).toBe(expected);
   });
 });
 
@@ -111,6 +138,24 @@ describe("formatDocumentTitlePeriod", () => {
     ["month", "2026-11-01", "November 2026"],
   ] as const)("%s from %s → %s", (view, from, expected) => {
     expect(formatDocumentTitlePeriod(view, from)).toBe(expected);
+  });
+});
+
+describe("formatMonthYear (Upcoming leave's month headings)", () => {
+  it.each([
+    ["2026-11-01", "November 2026"],
+    ["2027-01-15", "January 2027"],
+  ])("%s → %s", (date, expected) => {
+    expect(formatMonthYear(date)).toBe(expected);
+  });
+});
+
+describe("formatDateWindow (the dates a leave tally covers)", () => {
+  it.each([
+    ["2026-01-01", "2026-12-31", "1 Jan – 31 Dec 2026"],
+    ["2025-11-13", "2026-11-12", "13 Nov 2025 – 12 Nov 2026"],
+  ])("%s to %s → %s", (from, to, expected) => {
+    expect(formatDateWindow({ from, to })).toBe(expected);
   });
 });
 

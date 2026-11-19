@@ -1,12 +1,17 @@
 import "server-only";
 import { cache } from "react";
-import { currentAndPendingPattern, type WeeklyPattern } from "@/domain/availability";
-import { type CalendarDate, nextSunday } from "@/domain/dates";
+import {
+  availabilityLookup,
+  currentAndPendingPattern,
+  type WeeklyPattern,
+} from "@/domain/availability";
+import { addMonths, type CalendarDate, nextSunday, toDbDate } from "@/domain/dates";
 import { displayName, initialsOf } from "@/domain/display-name";
 import { type Actor, canEditProfileOf } from "@/domain/permissions";
+import { type LeaveSummary, leaveSummary, tallyWindows } from "@/domain/tallies";
 import { UNASSIGNED_GROUP_NAME } from "@/domain/teams";
 import { db } from "../db";
-import { toPatternVersion } from "../mappers";
+import { toBooking, toOverride, toPatternVersion } from "../mappers";
 
 export type ProfileData = {
   id: string;
@@ -75,3 +80,35 @@ export const getProfile = cache(
     };
   },
 );
+
+// The Leave history and Upcoming leave tabs (spec §7), for the same people as getProfile
+// (asking it again costs nothing, as it's cached). Loads the bookings from the start of
+// the rolling 12 months (never later than 1 January) to two years ahead, and the person's
+// working days to count them.
+export async function getProfileLeave(
+  actor: Actor,
+  userId: string,
+  today: CalendarDate,
+): Promise<LeaveSummary | null> {
+  if (!(await getProfile(actor, userId, today))) return null;
+
+  const from = tallyWindows(today).rolling12Months.from;
+  const user = await db.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: {
+      patterns: true,
+      overrides: true,
+      events: {
+        where: {
+          endDate: { gte: toDbDate(from) },
+          startDate: { lte: toDbDate(addMonths(today, 24)) },
+        },
+      },
+    },
+  });
+  const lookup = availabilityLookup(
+    user.patterns.map(toPatternVersion),
+    user.overrides.map(toOverride),
+  );
+  return leaveSummary(user.events.map(toBooking), lookup, today);
+}

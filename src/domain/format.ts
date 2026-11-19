@@ -168,6 +168,11 @@ export function formatPeople(count: number): string {
   return count === 1 ? "1 person" : `${count} people`;
 }
 
+// "1 booking", "3 bookings", "0 bookings"
+export function formatBookings(count: number): string {
+  return count === 1 ? "1 booking" : `${count} bookings`;
+}
+
 // A filter button's name for screen readers: "Teams", or "Teams, 2 selected"
 // (accessibility §2).
 export function formatFilterName(label: string, count: number): string {
@@ -186,21 +191,32 @@ export function formatFilterSummary(teamNames: string[], peopleCount: number): s
 // The live summary under the dates in the booking form, e.g. "Thu 10 – Tue 15 · 4 days".
 // `count` is the number of working days, worked out elsewhere.
 export function formatRangeSummary(range: SlotRange, count: number): string {
+  return `${formatRangeDates(range, false)} · ${formatCount(count)}`;
+}
+
+// The same, but always ending with the month, e.g. "Thu 10 – Tue 15 Nov · 4 days": for
+// the profile's lists, where there are no dates on screen to say which month it is.
+export function formatRangeWithMonth(range: SlotRange, count: number): string {
+  return `${formatRangeDates(range, true)} · ${formatCount(count)}`;
+}
+
+function formatRangeDates(range: SlotRange, monthOnEnd: boolean): string {
   const start = fromSlot(range.start);
   const end = fromSlot(range.end);
 
   if (isSingleDay(range)) {
-    const portionText = PORTION_SUFFIX[portionOf(range)];
-    return `${formatShort(start.date)}${portionText} · ${formatCount(count)}`;
+    return formatShort(start.date) + PORTION_SUFFIX[portionOf(range)];
   }
 
-  // Within one month the month name is left off both ends: "Thu 10 – Tue 15".
+  // Within one month the month name is left off the start, and off the end too unless
+  // monthOnEnd: "Thu 10 – Tue 15".
   const sameMonth = start.date.slice(0, 7) === end.date.slice(0, 7);
-  const format = sameMonth ? formatDayHeader : formatShort;
+  const startFormat = sameMonth ? formatDayHeader : formatShort;
+  const endFormat = sameMonth && !monthOnEnd ? formatDayHeader : formatShort;
   // A half first day starts in the afternoon (PM); a half last day ends in the morning (AM).
-  const startText = format(start.date) + (start.half === "PM" ? " PM" : "");
-  const endText = format(end.date) + (end.half === "AM" ? " AM" : "");
-  return `${startText} – ${endText} · ${formatCount(count)}`;
+  const startText = startFormat(start.date) + (start.half === "PM" ? " PM" : "");
+  const endText = endFormat(end.date) + (end.half === "AM" ? " AM" : "");
+  return `${startText} – ${endText}`;
 }
 
 // The page title for the period on screen:
@@ -216,7 +232,7 @@ export function formatPeriodTitle(
 
   // formatPeriodAnnouncement swaps the " – " below for " to ", so keep it the only dash.
   if (view === "month") {
-    return `${LONG_MONTHS[from.monthIndex]} ${from.year}`;
+    return formatMonthYear(range.from);
   }
   if (from.year !== to.year) {
     return `${from.day} ${LONG_MONTHS[from.monthIndex]} ${from.year} – ${toText}`;
@@ -241,9 +257,31 @@ export function formatPeriodAnnouncement(
 // The period part of the browser tab title (accessibility §1):
 // "Week of 8 Nov 2026" or "November 2026".
 export function formatDocumentTitlePeriod(view: View, from: CalendarDate): string {
-  const { year, monthIndex, day } = parts(from);
   if (view === "month") {
-    return `${LONG_MONTHS[monthIndex]} ${year}`;
+    return formatMonthYear(from);
   }
-  return `Week of ${day} ${SHORT_MONTHS[monthIndex]} ${year}`;
+  return `Week of ${formatDayMonthYear(from)}`;
+}
+
+// "November 2026": month view's title, and the month headings in Upcoming leave.
+export function formatMonthYear(date: CalendarDate): string {
+  const { year, monthIndex } = parts(date);
+  return `${LONG_MONTHS[monthIndex]} ${year}`;
+}
+
+// "8 Nov 2026"
+function formatDayMonthYear(date: CalendarDate): string {
+  const { year, monthIndex, day } = parts(date);
+  return `${day} ${SHORT_MONTHS[monthIndex]} ${year}`;
+}
+
+// The dates a leave tally covers: "1 Jan – 31 Dec 2026", or "13 Nov 2025 – 12 Nov 2026"
+// when they cross a year.
+export function formatDateWindow(window: { from: CalendarDate; to: CalendarDate }): string {
+  const from = parts(window.from);
+  const to = parts(window.to);
+  if (from.year !== to.year) {
+    return `${formatDayMonthYear(window.from)} – ${formatDayMonthYear(window.to)}`;
+  }
+  return `${from.day} ${SHORT_MONTHS[from.monthIndex]} – ${formatDayMonthYear(window.to)}`;
 }

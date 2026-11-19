@@ -92,8 +92,41 @@ test("a regular user can't open someone else's profile from a link", async ({ pa
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
+// The seed's bookings are random, so this checks the tabs' shape. The exact numbers are
+// proven against the counting rules in leave-tabs.test.tsx.
+test("the leave tabs show a tally for every counted type, and upcoming leave read-only", async ({
+  page,
+}) => {
+  await signInAs(page, "Callum Reid");
+  await page.goto("/?profile=me&tab=history");
+  const dialog = page.getByRole("dialog", { name: "My profile" });
+  const days = String.raw`\d+(\.5)? days?`;
+
+  await expect(dialog.getByRole("term")).toHaveText([
+    /^Annual leave · \d{4}$/,
+    "Special leave · last 12 months",
+    "Parental leave · last 12 months",
+    "Wellbeing day · last 12 months",
+    "Public holiday · last 12 months",
+  ]);
+  await expect(dialog.getByRole("definition").first()).toHaveText(
+    new RegExp(`^${days} taken · ${days} booked$`),
+  );
+
+  // Each type's past bookings open and close without leaving the tab.
+  const annual = dialog.locator("details").first();
+  await annual.locator("summary").click();
+  await expect(annual).toHaveAttribute("open");
+
+  await dialog.getByRole("tab", { name: "Upcoming leave" }).click();
+  await expect(page).toHaveURL(/tab=upcoming/);
+  const panel = dialog.getByRole("tabpanel", { name: "Upcoming leave" });
+  await expect(panel.getByText("To change a booking, use the calendar.")).toBeVisible();
+  await expect(panel.getByRole("button")).toHaveCount(0);
+});
+
 for (const theme of ["light", "dark"] as const) {
-  for (const tab of ["details", "pattern"]) {
+  for (const tab of ["details", "pattern", "history", "upcoming"]) {
     test(`the profile's ${tab} tab has no accessibility violations (${theme})`, async ({
       page,
     }) => {

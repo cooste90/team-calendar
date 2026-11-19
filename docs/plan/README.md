@@ -91,7 +91,7 @@ Size key: **S** ≈ small, under 300 lines changed · **M** ≈ 300–800 · **L
 ### Phase 5 — Profile and user menu
 - [x] [T26](tasks/T26-user-menu.md) User menu and theme selector · **S**
 - [x] [T27](tasks/T27-profile-details-pattern.md) Profile dialog, details, working pattern · **L**
-- [ ] [T28](tasks/T28-profile-history-upcoming.md) Leave history tallies and upcoming leave · **M**
+- [x] [T28](tasks/T28-profile-history-upcoming.md) Leave history tallies and upcoming leave · **M**
 
 ### Phase 6 — Admin
 - [ ] [T29](tasks/T29-admin-teams.md) Admin dialog shell and Teams tab · **M**

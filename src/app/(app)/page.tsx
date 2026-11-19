@@ -14,7 +14,7 @@ import { ProfileNotAllowed } from "@/features/profile/profile-not-allowed";
 import { UNASSIGNED_BANNER_COOKIE } from "@/lib/search-params";
 import { getBusinessUnitBySlug, getVisibleBusinessUnits } from "@/server/queries/business-units";
 import { getCalendarData } from "@/server/queries/calendar";
-import { getProfile } from "@/server/queries/profile";
+import { getProfile, getProfileLeave } from "@/server/queries/profile";
 import { getUserMenuDetails } from "@/server/queries/user-menu";
 import { requireUser } from "@/server/session";
 import { serverToday } from "@/server/today";
@@ -56,6 +56,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
   const showUnassignedBanner =
     !canEditBookingsFor(actor, actor) && !(await cookies()).has(UNASSIGNED_BANNER_COOKIE);
   const profile = await getOpenProfile(actor, params);
+  const leave = profile && (await getProfileLeave(actor, profile.id, serverToday()));
   const profileRequested = params.profile !== null || params.person !== null;
 
   return (
@@ -83,7 +84,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
         </PendingArea>
       </main>
       {/* key: a different person's profile starts with fresh forms. */}
-      {profile && <ProfileDialog key={profile.id} profile={profile} />}
+      {profile && leave && <ProfileDialog key={profile.id} profile={profile} leave={leave} />}
       {profileRequested && !profile && <ProfileNotAllowed />}
     </>
   );
