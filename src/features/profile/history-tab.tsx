@@ -16,11 +16,11 @@ export function HistoryTab({ history }: { history: TallyWithBookings[] }) {
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-2">
-        <dl className="grid gap-2.5 sm:grid-cols-2">
+        <dl className="grid gap-2 sm:grid-cols-2">
           {history.map((tally) => (
-            <div key={tally.type} className="flex flex-col gap-0.5 rounded-xl border px-3.5 py-3">
-              <dt className="font-semibold text-[0.8125rem]">{tallyTitle(tally)}</dt>
-              <dd className="font-[650] text-base tabular-nums">{tallyNumbers(tally)}</dd>
+            <div key={tally.type} className="flex flex-col rounded-lg border px-3 py-2">
+              <dt className="font-semibold text-xs">{tallyTitle(tally)}</dt>
+              <dd className="font-[650] text-sm tabular-nums">{tallyNumbers(tally)}</dd>
               <dd className="text-muted-foreground text-xs tabular-nums">
                 {formatDateWindow(tally.window)}
               </dd>
