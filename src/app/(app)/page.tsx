@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { personFilterOptions, teamFilterOptions } from "@/domain/filter-options";
 import { formatDocumentTitlePeriod, formatPeriodTitle } from "@/domain/format";
-import { type Actor, canEditBookingsFor } from "@/domain/permissions";
+import { type Actor, canEditBookingsFor, canManageBusinessUnit } from "@/domain/permissions";
+import { AdminDialog } from "@/features/admin/admin-dialog";
 import { readSavedView, resolveCalendarView } from "@/features/calendar/calendar-view";
 import { FilterSummary } from "@/features/calendar/filters/filter-summary";
 import { CalendarGrid } from "@/features/calendar/grid/calendar-grid";
@@ -15,6 +16,7 @@ import { UNASSIGNED_BANNER_COOKIE } from "@/lib/search-params";
 import { getBusinessUnitBySlug, getVisibleBusinessUnits } from "@/server/queries/business-units";
 import { getCalendarData } from "@/server/queries/calendar";
 import { getProfile, getProfileLeave } from "@/server/queries/profile";
+import { getAdminTeams } from "@/server/queries/teams";
 import { getUserMenuDetails } from "@/server/queries/user-menu";
 import { requireUser } from "@/server/session";
 import { serverToday } from "@/server/today";
@@ -29,6 +31,9 @@ export async function generateMetadata({ searchParams }: PageProps<"/">): Promis
     return { title: `${profile.title} · WestCal` };
   }
   const businessUnit = await getBusinessUnitBySlug(actor, params.bu);
+  if (params.admin && canManageBusinessUnit(actor, businessUnit.id)) {
+    return { title: `Admin · ${businessUnit.name} · WestCal` };
+  }
   return {
     title: `${formatDocumentTitlePeriod(view, period.from)} · ${businessUnit.name} · WestCal`,
   };
@@ -58,6 +63,8 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
   const profile = await getOpenProfile(actor, params);
   const leave = profile && (await getProfileLeave(actor, profile.id, serverToday()));
   const profileRequested = params.profile !== null || params.person !== null;
+  // ?admin= manages the BU on screen. Someone who can't manage it gets no dialog (null).
+  const adminTeams = params.admin && (await getAdminTeams(actor, businessUnit.id));
 
   return (
     <>
@@ -86,6 +93,15 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
       {/* key: a different person's profile starts with fresh forms. */}
       {profile && leave && <ProfileDialog key={profile.id} profile={profile} leave={leave} />}
       {profileRequested && !profile && <ProfileNotAllowed />}
+      {/* key: another BU's teams start with fresh forms. */}
+      {adminTeams && (
+        <AdminDialog
+          key={businessUnit.id}
+          businessUnit={businessUnit}
+          businessUnits={businessUnits.filter((unit) => canManageBusinessUnit(actor, unit.id))}
+          teams={adminTeams}
+        />
+      )}
     </>
   );
 }

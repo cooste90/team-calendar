@@ -2,6 +2,8 @@
 
 **Phase:** 6 · **Depends on:** T29 · **Size:** M
 
+**From T29:** `AdminDialog` (`src/features/admin/admin-dialog.tsx`) shows only the Teams tab, and any `admin` value opens it. Add the Users tab trigger, a `tab` prop from the `admin` param, and `onValueChange` that sets `admin` (as the profile dialog does with `tab`). The dialog's full-screen-on-phones classes are in their third copy (profile, booking form, admin); share them if a fourth appears.
+
 ## Goal
 Admins can see everyone in the BU, grouped by team, move people between teams, open profiles and delete users. Super admins can also move people between BUs.
 

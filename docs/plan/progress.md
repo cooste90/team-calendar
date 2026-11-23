@@ -1409,3 +1409,48 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
   - Then: **the tally cards were too big** (five of them took half the tab). They now have less padding and smaller text (title 12px, numbers 14px), keeping all three lines. "That's better."
   - All passing after both changes: `pnpm check` (649, twice in a row), integration (121) and the whole Chromium suite (67).
   - Approved, and merged.
+## T29 — Admin dialog shell and Teams tab — 2026-11-23
+**Status:** done, waiting for the product owner to approve the screenshots before merging. No new dependencies.
+**Decided with the product owner first** (also in the task file): only the Teams tab until T30–T32 add the others; the look matches the profile dialog (the mockup has no admin design); deleting always asks, even for an empty team; a plain ADMIN viewing another BU with `?admin=` gets no dialog and no message.
+**What I built:**
+- **`AdminDialog`** (`src/features/admin/admin-dialog.tsx`): a modal over the grid opened by `?admin=` (the user menu's Admin link), for the BU in the URL. The title is "Admin · Corporate Services", and so is the tab title ("Admin · Corporate Services · WestCal"). Closing replaces the history entry, so Back closes it. Super admins get the BU switcher in the dialog header (the header's `BusinessUnitSwitcher`, given only the BUs the viewer can manage, so it hides itself for an ADMIN). Switching BU clears the filters, as in the header.
+- **Teams tab** (`teams-tab.tsx`, `team-row.tsx`, `new-team-form.tsx`, `rename-team-form.tsx`, `delete-team-dialog.tsx`):
+  - a New team form (1–60 characters, `teamNameSchema` in `src/lib/schemas/team.ts`); the team goes at the end;
+  - the teams in order, each with its size and four icon buttons: Rename (inline; Enter saves, Esc or Cancel keeps the old name), Move up, Move down (disabled at the ends) and Delete;
+  - Unassigned last, with its size and "Built-in. New people land here.", with no controls;
+  - Delete asks "Delete Finance Operations?" with "Its 4 members will move to Unassigned." (or "It has no members.").
+  - Every change is read out by the dialog's own `<output>`. After a move, focus stays on the moved team's button (on the other move button if it reached the top or bottom). After a rename it goes back to Rename, and after a delete to the New team box.
+- **Server:** `getAdminTeams` (query; null unless `canManageBusinessUnit`), `createTeam`, `renameTeam`, `moveTeam` (swaps `sortOrder` with its neighbour in a transaction) and `deleteTeam` (members to Unassigned, then delete, in a transaction) in `src/server/services/teams.ts`, and four thin actions. Names are checked case-insensitively within the BU; the existing unique index catches exact copies.
+
+**Tests:**
+- **Unit:** `teamNameSchema` table.
+- **Integration** (`tests/integration/teams.test.ts`, 14): create at the end; rename (including to another case of its own name); a duplicate in any case is rejected when creating and renaming; the same name in another BU is fine; move down and back up; first up and last down change nothing; delete moves members to Unassigned; not found; another BU's admin and a regular user are forbidden, a super admin is allowed anywhere; the query's permission and data.
+- **Component** (`admin-dialog.test.tsx`, 18): title and tab; closing clears the URL; BU choice only with more than one BU, and switching clears filters; list, sizes and Unassigned; disabled ends; Move down and reaching the top keep focus and announce "… moved to position 2 of 3."; add, server duplicate error, empty name; rename and focus; Esc cancels a rename without closing; delete wording (4 members, 1 member, empty), Cancel, Delete team; axe with and without the confirmation.
+- **E2E** (`tests/e2e/admin-teams.spec.ts`, 4): Callum Reid adds → renames → moves with the keyboard → the grid order changes after closing → deletes Records Management → its people are counted under Unassigned; Tom Okafor gets no dialog for North Finance; Grace Adeyemi switches BU in the dialog; axe on the tab and the confirmation in both themes. They only touch Records Management and a new team, so the profile tests (Callum's own team, Legal) aren't affected.
+- **All passing:** `pnpm check` (674, four runs in a row), integration (135) and the whole Chromium suite (71).
+- **Screenshots** at 1280 (light, dark, renaming, delete confirmation), 375 and 320px.
+
+**Key files:** `src/features/admin/*`, `src/server/services/teams.ts`, `src/server/queries/teams.ts`, `src/server/actions/{create,rename,move,delete}-team.ts`, `src/lib/schemas/team.ts`, `src/app/(app)/page.tsx`, `tests/integration/teams.test.ts`, `tests/e2e/admin-teams.spec.ts`.
+**Simplicity pass** (my own re-read, then `/simplify` with four reviewers):
+- **Reused the header's `BusinessUnitSwitcher`** instead of a second select: given only the BUs the viewer can manage, it hides itself for an ADMIN, so there's no role check in the dialog.
+- **Forms send the trimmed name** they checked (`checked.data`), so one value is used throughout. `TEAM_NAME_MAX_LENGTH` is no longer exported (one user). `unassignedCount` is destructured like `teams`. A comment explains the `id: { not: undefined }` when creating.
+- **`autoFocus` on the rename box** instead of an effect: Radix's focus trap moves focus to the dialog when the focused Rename button disappears, and `autoFocus` focuses the box before that happens.
+- **Skipped:**
+  - **Sharing the dialog's full-screen-on-phones classes** (third copy, with the profile and booking dialogs) and the form check-and-save steps (third copy with the Details tab): both under the fourth-repeat rule. T30–T32 will likely reach it.
+  - **Working out the team sizes from the calendar's data** instead of two small queries while the dialog is open: it would tie the dialog to how the grid loads.
+  - **The "state updates after `await` in a transition" fix** (see Fixed along the way).
+
+**Deviations from plan:**
+- **No `tab` prop on `AdminDialog` yet:** with only Teams, any `admin` value opens it. T30 adds the prop with the Users tab.
+- **A dialog description,** "Changes show on everyone's calendar straight away.", and a hint above the list, "The calendar lists teams in this order.". Every dialog here has a description; please check the wording.
+- **At 320px the buttons wrap under the team name** rather than squeezing it.
+
+**Fixed along the way:** `event-form.test.tsx` "Replace it" (and "Change dates") failed every time once this task's tests made the suite busier. The conflict alert can render while the first save's transition is still pending, with its buttons disabled, and the test clicked in that moment. Both tests now wait for the button to be enabled. The root cause is app-wide: state set after an `await` inside `startTransition` isn't part of the transition (React 19), so for a moment the UI shows the result with `pending` still true. Every form does this (booking form, profile tabs, the new admin forms). A person can't click that fast, so it's harmless, but **T34** could wrap those updates in their own `startTransition` everywhere at once (note added to its task file).
+
+**Follow-ups:**
+- **T30:** add the Users tab and a `tab` prop (`onValueChange` sets `admin`); the dialog's classes reach their fourth copy.
+- **Two admins saving the exact same new team name at the same moment** get "Something went wrong" (the unique index), not the friendly message. Rare enough to leave.
+
+**Questions for the product owner:**
+- **Please approve the look** (screenshots in chat) before merging.
+- **Should a team be allowed to be called "Unassigned"?** The spec doesn't say. Today it's allowed and would sit above the real Unassigned group.

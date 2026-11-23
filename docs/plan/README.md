@@ -94,7 +94,7 @@ Size key: **S** ≈ small, under 300 lines changed · **M** ≈ 300–800 · **L
 - [x] [T28](tasks/T28-profile-history-upcoming.md) Leave history tallies and upcoming leave · **M**
 
 ### Phase 6 — Admin
-- [ ] [T29](tasks/T29-admin-teams.md) Admin dialog shell and Teams tab · **M**
+- [x] [T29](tasks/T29-admin-teams.md) Admin dialog shell and Teams tab · **M**
 - [ ] [T30](tasks/T30-admin-users.md) Users tab: move team, delete user, move BU · **M**
 - [ ] [T31](tasks/T31-admin-public-holidays.md) Public holidays tab and bulk services · **L**
 - [ ] [T32](tasks/T32-admin-business-units.md) Business units tab (super admin) · **S**

@@ -4,6 +4,12 @@
 
 **From T26:** the user menu's "Admin" item (admins and super admins only) already links to `?admin=teams` (`src/features/calendar/header/user-menu.tsx`). Nothing reads it yet.
 
+**Decided with the product owner (2026-11-23):**
+- **Only the Teams tab for now.** Users, Public holidays and Business units are hidden until T30–T32 add them, as T27 did with the profile's tabs. Until then any `admin` value opens Teams.
+- **The look matches the profile dialog** (the mockup has no admin design): the same size, title, line tabs and full screen on phones. Screenshots are approved before merging.
+- **Deleting always asks first,** even for an empty team ("Delete Legal? It has no members.").
+- **A plain ADMIN viewing another BU** with `?admin=` gets no dialog and no message (the param is ignored).
+
 ## Goal
 The admin dialog (modal with its own URL), and team management: create, rename, delete and reorder.
 

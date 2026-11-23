@@ -18,6 +18,7 @@ Every edge state is designed, and the app feels finished and smooth.
 3. **Session expiry:** when an action returns `UNAUTHENTICATED`, show the dialog "Your session has ended" with a "Sign in again" button that keeps the current URL as `callbackURL`. Page loads already redirect to `/sign-in` through `requireUser()`.
 4. **Polish pass:**
    - Check focus restoration on every dialog and popover close.
+   - **From T29:** state set after an `await` inside `startTransition` isn't part of the transition (React 19), so a form briefly shows its result (e.g. the booking form's clash alert) with `pending` still true and its buttons disabled. Wrap those updates in their own `startTransition` in every form at once (booking form, profile tabs, admin forms), then drop the "wait until enabled" lines in `event-form.test.tsx`.
    - No layout shift when fonts load (next/font metrics).
    - Hover and press micro-interactions (150ms) consistent across buttons.
    - Tooltips on every icon-only button.
