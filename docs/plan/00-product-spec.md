@@ -41,6 +41,7 @@ WestCal is a team availability calendar for a business unit (BU) of about 50 peo
 ### 1.4 Teams and Unassigned
 - A user is in **exactly one team, or Unassigned**.
 - **Unassigned** is a built-in group per BU (modelled as "no team"). It is always **last**, cannot be edited, renamed, deleted or reordered, and users cannot be moved *into* it by hand. People only arrive there by first sign-in, by their team being deleted, or by a BU move.
+- No team can be called "Unassigned", in any case, so it can't be mistaken for the built-in group.
 - Regular users **cannot see** the Unassigned group on the grid. Admins (of that BU) and super admins can.
 - An **unassigned user** sees the grid without themselves, plus a banner: "An admin needs to add you to a team before you can book." They **cannot create bookings**. They **can** edit their profile (preferred name, working pattern).
 

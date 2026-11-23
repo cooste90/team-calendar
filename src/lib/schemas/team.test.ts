@@ -15,6 +15,8 @@ describe("team name", () => {
     ["", "Enter a team name."],
     ["   ", "Enter a team name."],
     ["T".repeat(61), "Team names can be up to 60 characters."],
+    ["Unassigned", `"Unassigned" is built in, so a team can't use that name.`],
+    [" unassigned ", `"Unassigned" is built in, so a team can't use that name.`],
   ])("%j is rejected", (input, message) => {
     const result = teamNameSchema.safeParse(input);
     expect(result.success).toBe(false);

@@ -9,6 +9,7 @@
 - **The look matches the profile dialog** (the mockup has no admin design): the same size, title, line tabs and full screen on phones. Screenshots are approved before merging.
 - **Deleting always asks first,** even for an empty team ("Delete Legal? It has no members.").
 - **A plain ADMIN viewing another BU** with `?admin=` gets no dialog and no message (the param is ignored).
+- **No team can be called "Unassigned"** in any case (decided after review; spec §1.4).
 
 ## Goal
 The admin dialog (modal with its own URL), and team management: create, rename, delete and reorder.

@@ -1410,7 +1410,7 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
   - All passing after both changes: `pnpm check` (649, twice in a row), integration (121) and the whole Chromium suite (67).
   - Approved, and merged.
 ## T29 — Admin dialog shell and Teams tab — 2026-11-23
-**Status:** done, waiting for the product owner to approve the screenshots before merging. No new dependencies.
+**Status:** done. The product owner approved the look and the copy, and asked for one change (no team called "Unassigned"). No new dependencies.
 **Decided with the product owner first** (also in the task file): only the Teams tab until T30–T32 add the others; the look matches the profile dialog (the mockup has no admin design); deleting always asks, even for an empty team; a plain ADMIN viewing another BU with `?admin=` gets no dialog and no message.
 **What I built:**
 - **`AdminDialog`** (`src/features/admin/admin-dialog.tsx`): a modal over the grid opened by `?admin=` (the user menu's Admin link), for the BU in the URL. The title is "Admin · Corporate Services", and so is the tab title ("Admin · Corporate Services · WestCal"). Closing replaces the history entry, so Back closes it. Super admins get the BU switcher in the dialog header (the header's `BusinessUnitSwitcher`, given only the BUs the viewer can manage, so it hides itself for an ADMIN). Switching BU clears the filters, as in the header.
@@ -1453,4 +1453,7 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 
 **Questions for the product owner:**
 - **Please approve the look** (screenshots in chat) before merging.
+  - Approved, with the dialog description and list hint as written.
 - **Should a team be allowed to be called "Unassigned"?** The spec doesn't say. Today it's allowed and would sit above the real Unassigned group.
+  - No. The spec (§1.4) now says so, and `teamNameSchema` rejects it in any case ("\"Unassigned\" is built in, so a team can't use that name."), so the forms and the server actions both check it. Two new schema tests. `pnpm check` passes (676).
+  - Merged.
