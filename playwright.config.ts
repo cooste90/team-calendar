@@ -27,7 +27,13 @@ export default defineConfig({
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: /\.perf\.spec\.ts$/ },
     { name: "firefox", use: { ...devices["Desktop Firefox"] }, testIgnore: /\.perf\.spec\.ts$/ },
-    { name: "perf", use: { ...devices["Desktop Chrome"] }, testMatch: /\.perf\.spec\.ts$/ },
+    // One file at a time: each perf file loads the large seed into the same database.
+    {
+      name: "perf",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /\.perf\.spec\.ts$/,
+      workers: 1,
+    },
   ],
   webServer: {
     // Always the dev server: dev-only pages (dev sign-in, the design gallery) are switched

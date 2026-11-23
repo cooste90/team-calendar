@@ -8,6 +8,7 @@ import {
   formatDocumentTitlePeriod,
   formatFilterName,
   formatFilterSummary,
+  formatHolidayImpact,
   formatLong,
   formatLongRange,
   formatMonthYear,
@@ -66,6 +67,41 @@ describe("formatBookings", () => {
     [3, "3 bookings"],
   ])("%d → %s", (count, expected) => {
     expect(formatBookings(count)).toBe(expected);
+  });
+});
+
+describe("formatHolidayImpact (the warning before a public holiday change)", () => {
+  const start = "This applies to every business unit:";
+  const stay = "Copies people moved or deleted themselves stay as they are.";
+  it.each([
+    [
+      "create",
+      214,
+      37,
+      `${start} 214 people will get this holiday. 37 existing bookings will be replaced (parental leave is kept).`,
+    ],
+    [
+      "create",
+      1,
+      1,
+      `${start} 1 person will get this holiday. 1 existing booking will be replaced (parental leave is kept).`,
+    ],
+    [
+      "create",
+      50,
+      0,
+      `${start} 50 people will get this holiday. No existing bookings will be replaced.`,
+    ],
+    [
+      "move",
+      48,
+      2,
+      `${start} 48 people will have it moved to the new date. 2 existing bookings will be replaced (parental leave is kept). ${stay}`,
+    ],
+    ["delete", 214, 0, `${start} 214 people will lose this holiday. ${stay}`],
+    ["rename", 0, 0, `${start} the holiday is renamed on everyone's calendar.`],
+  ] as const)("%s, %d people, %d replaced", (kind, people, bookingsReplaced, expected) => {
+    expect(formatHolidayImpact(kind, { people, bookingsReplaced })).toBe(expected);
   });
 });
 

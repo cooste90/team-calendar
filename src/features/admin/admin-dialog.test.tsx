@@ -35,7 +35,7 @@ beforeEach(() => {
 
 const tom: Actor = { id: "tom", role: "ADMIN", businessUnitId: "west", teamId: "finance" };
 
-// The Users tab has its own tests (users-tab.test.tsx), so it has nobody here.
+// The Users and Public holidays tabs have their own tests, so they have nothing here.
 function dialogFor(teams: AdminTeams, businessUnits = [west]) {
   return (
     <NavigationTransitionProvider>
@@ -45,6 +45,8 @@ function dialogFor(teams: AdminTeams, businessUnits = [west]) {
         businessUnits={businessUnits}
         teams={teams}
         users={[]}
+        holidays={[]}
+        today="2026-11-23"
       />
     </NavigationTransitionProvider>
   );

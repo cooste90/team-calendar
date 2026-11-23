@@ -9,12 +9,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { CalendarDate } from "@/domain/dates";
 import type { Actor } from "@/domain/permissions";
+import type { PublicHoliday } from "@/domain/public-holidays";
 import { BusinessUnitSwitcher } from "@/features/calendar/header/business-unit-switcher";
 import { useCalendarParams } from "@/features/calendar/use-calendar-params";
 import { calendarSearchParams } from "@/lib/search-params";
 import type { AdminTeams } from "@/server/queries/teams";
 import type { AdminUser } from "@/server/queries/users";
+import { HolidaysTab } from "./holidays-tab";
 import { TeamsTab } from "./teams-tab";
 import { UsersTab } from "./users-tab";
 
@@ -26,15 +29,26 @@ type Props = {
   businessUnits: BusinessUnitOption[]; // every BU the viewer may manage
   teams: AdminTeams;
   users: AdminUser[];
+  holidays: PublicHoliday[]; // global, the same in every BU
+  today: CalendarDate;
 };
 
-// The admin dialog (spec §9): a modal over the grid with its own URL (?admin=teams or
-// ?admin=users), so Back closes it. It manages the BU the calendar is showing. Public
-// holidays and Business units come in T31–T32; until then those URLs open Teams.
-export function AdminDialog({ viewer, businessUnit, businessUnits, teams, users }: Props) {
+// The admin dialog (spec §9): a modal over the grid with its own URL (?admin=teams,
+// ?admin=users or ?admin=holidays), so Back closes it. Teams and Users are for the BU the
+// calendar is showing. Business units comes in T32; until then ?admin=units opens Teams.
+export function AdminDialog({
+  viewer,
+  businessUnit,
+  businessUnits,
+  teams,
+  users,
+  holidays,
+  today,
+}: Props) {
   const [params, setParams] = useCalendarParams();
   const [announcement, setAnnouncement] = useState("");
-  const tab = params.admin === "users" ? "users" : "teams";
+  let tab: "teams" | "users" | "holidays" = "teams";
+  if (params.admin === "users" || params.admin === "holidays") tab = params.admin;
 
   function close() {
     // Replace, not push, so Back doesn't reopen it.
@@ -74,7 +88,7 @@ export function AdminDialog({ viewer, businessUnit, businessUnits, teams, users 
         </DialogHeader>
         <Tabs
           value={tab}
-          // Both tabs' data is already here, so switching only changes the URL (shallow).
+          // Every tab's data is already here, so switching only changes the URL (shallow).
           // parse turns the plain string Radix hands back into one of the tab names.
           onValueChange={(value) =>
             setParams(
@@ -91,6 +105,9 @@ export function AdminDialog({ viewer, businessUnit, businessUnits, teams, users 
             <TabsTrigger value="users" className="px-2.5">
               Users
             </TabsTrigger>
+            <TabsTrigger value="holidays" className="px-2.5">
+              Public holidays
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="teams" className="overflow-y-auto px-6 pt-5 pb-6">
             <TeamsTab businessUnitId={businessUnit.id} data={teams} onAnnounce={setAnnouncement} />
@@ -104,6 +121,9 @@ export function AdminDialog({ viewer, businessUnit, businessUnits, teams, users 
               users={users}
               onAnnounce={setAnnouncement}
             />
+          </TabsContent>
+          <TabsContent value="holidays" className="overflow-y-auto px-6 pt-5 pb-6">
+            <HolidaysTab holidays={holidays} today={today} onAnnounce={setAnnouncement} />
           </TabsContent>
         </Tabs>
         {/* <output> is a polite live region. While the dialog is open, screen readers

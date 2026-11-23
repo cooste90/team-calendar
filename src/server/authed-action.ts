@@ -19,9 +19,12 @@ export type ActionResult<Data> = { ok: true; data: Data } | { ok: false; error: 
 
 // Signed out? requireUser redirects to /sign-in, just as it does for pages.
 // Permission checks belong in each handler, using the functions in src/domain/permissions.ts.
+// readOnly is for the rare action that only reads, like a preview: nothing changed, so
+// the page isn't reloaded.
 export function authedAction<Schema extends z.ZodType, Data>(
   schema: Schema,
   handler: (input: z.output<Schema>, actor: Actor) => Promise<Data>,
+  { readOnly = false } = {},
 ) {
   return async (input: z.input<Schema>): Promise<ActionResult<Data>> => {
     const actor = await requireUser();
@@ -35,7 +38,7 @@ export function authedAction<Schema extends z.ZodType, Data>(
         };
       }
       const data = await handler(parsed.data, actor);
-      refresh();
+      if (!readOnly) refresh();
       return { ok: true, data };
     } catch (error) {
       // Let Next.js handle its own redirect() and notFound() signals.

@@ -16,6 +16,7 @@ import { UNASSIGNED_BANNER_COOKIE } from "@/lib/search-params";
 import { getBusinessUnitBySlug, getVisibleBusinessUnits } from "@/server/queries/business-units";
 import { getCalendarData } from "@/server/queries/calendar";
 import { getProfile, getProfileLeave } from "@/server/queries/profile";
+import { getAdminPublicHolidays } from "@/server/queries/public-holidays";
 import { getAdminTeams } from "@/server/queries/teams";
 import { getUserMenuDetails } from "@/server/queries/user-menu";
 import { getAdminUsers } from "@/server/queries/users";
@@ -67,6 +68,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
   // ?admin= manages the BU on screen. Someone who can't manage it gets no dialog (null).
   const adminTeams = params.admin && (await getAdminTeams(actor, businessUnit.id));
   const adminUsers = adminTeams && (await getAdminUsers(actor, businessUnit.id));
+  const adminHolidays = adminTeams && (await getAdminPublicHolidays(actor));
 
   return (
     <>
@@ -96,7 +98,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
       {profile && leave && <ProfileDialog key={profile.id} profile={profile} leave={leave} />}
       {profileRequested && !profile && <ProfileNotAllowed />}
       {/* key: another BU's teams start with fresh forms. */}
-      {adminTeams && adminUsers && (
+      {adminTeams && adminUsers && adminHolidays && (
         <AdminDialog
           key={businessUnit.id}
           viewer={actor}
@@ -104,6 +106,8 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
           businessUnits={businessUnits.filter((unit) => canManageBusinessUnit(actor, unit.id))}
           teams={adminTeams}
           users={adminUsers}
+          holidays={adminHolidays}
+          today={data.today}
         />
       )}
     </>

@@ -2,6 +2,12 @@
 
 **Phase:** 6 · **Depends on:** T30 · **Size:** L
 
+**Decided with the product owner (2026-11-23):**
+- **The preview shows two totals** (people affected, existing bookings replaced) in the sentence below. No per-BU breakdown and no split count, so `previewPublicHolidayImpact` returns just those two numbers.
+- **A rename still asks first,** with no numbers: "the holiday is renamed on everyone's calendar".
+- **A rename relabels only copies still showing the old name;** a note someone typed on their copy is kept.
+- **Any date from today is allowed,** weekends included.
+
 ## Goal
 Global public holiday management that applies the T08 planners to everyone, safely and quickly, with clear warnings.
 

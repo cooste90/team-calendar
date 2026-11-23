@@ -1506,3 +1506,56 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 **Questions for the product owner:**
 - **Please approve the look** (screenshots in chat) before merging.
   - Approved ("all good, I like it"), and merged.
+
+## T31 — Admin Public holidays tab and bulk services — 2026-11-23
+**Status:** done, waiting for the product owner to approve the screenshots before merging. No new dependencies.
+**Decided with the product owner first** (also in the task file): the preview shows two totals (people affected, bookings replaced), with no per-BU list or split count; a rename still asks first, without numbers; a rename relabels only copies still showing the old name; any date from today is allowed, weekends included.
+**What I built:**
+- **Public holidays tab** (`holidays-tab.tsx`): "Public holidays apply to every business unit." and **Add public holiday**; **Upcoming** (name, `formatLong` date, Edit and Delete); **Past public holidays (N)** in a closed `<details>`, by year, newest year first, with nothing to change.
+- **Add / edit** (`holiday-form-dialog.tsx`): name and date (the booking form's `DatePickerField`, from today), then **Continue** shows the confirm step with the impact sentence, e.g. "This applies to every business unit: 196 people will get this holiday. 19 existing bookings will be replaced (parental leave is kept)." **Back** returns to the form; **Add holiday** / **Save changes** saves exactly the change that was previewed. A new date says copies will move; a new name alone says "the holiday is renamed on everyone's calendar".
+- **Delete** (`delete-holiday-dialog.tsx`): "Delete Christmas Day?" with "202 people will lose this holiday. Copies people moved or deleted themselves stay as they are." Delete waits until the numbers have loaded.
+- Each save shows a toast and is read out inside the dialog; the grid and its header chips refresh.
+- **Services** (`src/server/services/public-holidays.ts`): one `savePublicHolidayChange` and one `previewPublicHolidayChange` for create, update (move and/or rename) and delete. Both run the same `checkChange` (any admin; not in the past; one holiday per date; past holidays locked) and the same `planChange` (the T08 planners), so the preview always matches what's saved. The save is one transaction (30s timeout): lock everyone, plan, `saveBookingChanges`, then the holiday row. A rename also relabels copies whose notes still equal the old name.
+- **`loadEveryone`** (`public-holiday-snapshots.ts`): everyone's snapshot in a handful of queries (users with patterns, day swaps on the dates and their exclusions for this holiday, and the bookings on the dates).
+- **Domain:** `isPastHoliday`, `holidayImpact` (people whose bookings change, and other bookings removed or shortened; the holiday's own copies don't count) and `formatHolidayImpact`. **Schema:** `holidayNameSchema` and `holidayChangeSchema`.
+- **`authedAction` has a `readOnly` option,** so the preview action doesn't reload the page.
+- **Audit:** one JSON log line per change with the numbers and how long it took.
+
+**Performance** (large seed, 1,000 people, on the service): adding a holiday on a Tuesday for 954 working people with 83 bookings replaced took 0.43–0.54s; moving it 0.44–0.48s; deleting 0.25s. The target was under 2s. A new perf check (`tests/e2e/public-holidays.perf.spec.ts`, in `pnpm test:perf`) times Add holiday to the "added" message, page reload included: 903ms on the dev server.
+
+**Tests:**
+- **Unit:** `isPastHoliday`, `holidayImpact` (annual leave replaced; parental kept; a moved or deleted copy isn't "replaced"), `formatHolidayImpact` (each kind, singular and plural, nothing replaced), the schemas, and `authedAction`'s `readOnly`. `src/domain` is still at 100%.
+- **Integration** (`tests/integration/public-holidays.test.ts`, 10): a new holiday splits annual leave, gives a half day to a mornings-only worker, nothing on a day off and nothing over parental leave; someone joining afterwards gets it; the preview equals the save for create, move and delete; a move moves untouched copies (overwriting the new date), gives it to someone off on the old date and working the new one, and leaves detached copies; a rename relabels and keeps a typed note; a delete removes untouched copies and keeps detached ones; past holidays are PAST_LOCKED; a past date or a taken date is rejected; a USER is FORBIDDEN and any admin is allowed.
+- **Component** (`holidays-tab.test.tsx`, 12): upcoming rows and buttons; past folded away by year with no buttons; add with the impact first and save only on confirm; three form errors that never reach the server; the server's reason (date taken); a move warns that copies move; a rename asks without numbers; Back; delete with its numbers and focus back on Add; axe on the tab and both dialogs.
+- **E2E** (`tests/e2e/admin-holidays.spec.ts`, 3): Grace adds "Founders' Day" on a free Friday about a month ahead → the confirm shows the impact → the header chip shows the name, a full-timer gets a full day and a mornings-only person gets a morning → she deletes it and the copies go; axe on the tab, the add dialog and the delete confirmation in both themes.
+- **All passing:** `pnpm check` (735), integration (157), the whole Chromium suite (78, twice in a row) and `pnpm test:perf` (2).
+- **Screenshots** at 1280 (the tab, past holidays, add form, confirm step, delete, dark), 375 and 320px.
+
+**Key files:** `src/features/admin/{holidays-tab,holiday-form-dialog,delete-holiday-dialog,admin-dialog}.tsx`, `src/server/services/{public-holidays,public-holiday-snapshots}.ts`, `src/server/actions/{preview,save}-public-holiday-change.ts`, `src/server/queries/public-holidays.ts`, `src/domain/{public-holidays,format}.ts`, `src/lib/schemas/public-holiday.ts`, `src/server/{authed-action,audit}.ts`, `tests/integration/public-holidays.test.ts`, `tests/e2e/{admin-holidays.spec,public-holidays.perf.spec}.ts`, `playwright.config.ts`.
+**Simplicity pass** (my own re-read, then `/simplify` with four reviewers):
+- **One service function for each of preview and save** instead of create/update/delete functions, so they can't drift apart. My first draft passed "before" and "after" holidays around; `checkChange` now returns the holiday as it is (a new one with an empty id) and `planChange` works from that and the change.
+- **`planChange` loads everyone once** for create and delete (they differ only in the planner).
+- **`holidayImpact` filters the snapshots' bookings** instead of building a map with a fallback that could never be used (that branch also kept domain coverage under 100%).
+- **The form's confirm step saves exactly the change it previewed** (stored with its sentence), rather than reading the fields again. Plain `if`s replace a helper that mixed name and date checks.
+- **Perf files run one at a time** through `workers: 1` on the perf project in `playwright.config.ts` (each loads the large seed), not a flag on the npm script.
+- **Skipped:**
+  - **Waiting for every CSS transition in the shared axe helper** (to replace the delete test's wait for the button's opacity): it hangs, because the grid's off-screen team groups (`content-visibility: auto`) aren't drawn, so their transitions never finish. A global reduced-motion setting would break the "grows in" check in `grid-interactions.spec.ts`.
+  - **Moving the after-delete focus into the delete dialog:** the Teams and Users tabs do it in the tab, with the same `onCloseAutoFocus` prop.
+  - **Writing the form's error once above both steps:** it would move the message away from the fields.
+  - **Batching the user list for the lock, skipping the lock for renames, or loading fewer pattern versions:** a few milliseconds each at 0.45s.
+  - **Sharing snapshot building** with `availability.ts`'s `loadSnapshot` and the seed: one person over a range versus everyone on a few dates (third copy, different shapes).
+
+**Deviations from plan:**
+- **No batches of 250 users:** one query loads everyone (with Prisma's relation queries), and the whole save takes about half a second for 1,000 people.
+- **No separate `createPublicHoliday` / `updatePublicHoliday` / `deletePublicHoliday`:** one `savePublicHolidayChange` takes the change, so the preview and the save share every step.
+- **Name and date are edited together** in one form; a date change is a move, a name-only change is a rename.
+- **No atomicity test that forces a failure halfway:** the save is one transaction, and the checks run before anything is written.
+
+**Fixed along the way:** a dev server I started for screenshots had left a child process on port 3100 (Windows doesn't stop children when the parent is stopped), which later browser runs silently reused. I now check the port after stopping it.
+
+**Follow-ups:**
+- **T32:** add the Business units tab to `AdminDialog` (the `tab` line and a trigger).
+- **T34:** a toast and the dialog's own message both announce a save; fine for now, worth checking in the polish pass.
+
+**Questions for the product owner:**
+- **Please approve the look** (screenshots in chat) before merging.

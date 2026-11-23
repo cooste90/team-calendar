@@ -32,6 +32,13 @@ describe("authedAction", () => {
     expect(refresh).toHaveBeenCalledOnce();
   });
 
+  it("a read-only action (a preview) doesn't refresh the page", async () => {
+    const action = authedAction(schema, async (input) => input.name, { readOnly: true });
+
+    expect(await action({ name: "Preview" })).toEqual({ ok: true, data: "Preview" });
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
   it("reports invalid input as VALIDATION without running the handler", async () => {
     const handler = vi.fn();
     const action = authedAction(schema, handler);

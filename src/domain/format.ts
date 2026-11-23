@@ -173,6 +173,32 @@ export function formatBookings(count: number): string {
   return count === 1 ? "1 booking" : `${count} bookings`;
 }
 
+// The warning before an admin changes a public holiday (spec §6.1), e.g. "This applies to
+// every business unit: 214 people will get this holiday. 37 existing bookings will be
+// replaced (parental leave is kept)."
+export function formatHolidayImpact(
+  kind: "create" | "move" | "rename" | "delete",
+  impact: { people: number; bookingsReplaced: number },
+): string {
+  const start = "This applies to every business unit:";
+  const people = formatPeople(impact.people);
+  const detachedStay = "Copies people moved or deleted themselves stay as they are.";
+
+  if (kind === "rename") return `${start} the holiday is renamed on everyone's calendar.`;
+  if (kind === "delete") return `${start} ${people} will lose this holiday. ${detachedStay}`;
+
+  let replaced = "No existing bookings will be replaced.";
+  if (impact.bookingsReplaced > 0) {
+    const bookings =
+      impact.bookingsReplaced === 1
+        ? "1 existing booking"
+        : `${impact.bookingsReplaced} existing bookings`;
+    replaced = `${bookings} will be replaced (parental leave is kept).`;
+  }
+  if (kind === "create") return `${start} ${people} will get this holiday. ${replaced}`;
+  return `${start} ${people} will have it moved to the new date. ${replaced} ${detachedStay}`;
+}
+
 // A filter button's name for screen readers: "Teams", or "Teams, 2 selected"
 // (accessibility §2).
 export function formatFilterName(label: string, count: number): string {

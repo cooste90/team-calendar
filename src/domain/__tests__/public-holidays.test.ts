@@ -6,6 +6,8 @@ import {
 } from "../availability";
 import { type Booking, emptyChanges } from "../events";
 import {
+  holidayImpact,
+  isPastHoliday,
   type PersonSnapshot,
   type PublicHoliday,
   phSlotsFor,
@@ -367,5 +369,41 @@ describe("a person changing their own copy", () => {
     const handMade = { ...copy, publicHolidayId: null };
     expect(planUserEditsPhCopy(handMade)).toEqual(emptyChanges());
     expect(planUserDeletesPhCopy(handMade)).toEqual({ ...emptyChanges(), remove: ["copy"] });
+  });
+});
+
+describe("isPastHoliday (spec §6.1)", () => {
+  it.each([
+    ["yesterday", "2026-11-17", true],
+    ["today", "2026-11-18", false],
+    ["tomorrow", "2026-11-19", false],
+  ])("a holiday %s is past: %s", (_when, date, expected) => {
+    expect(isPastHoliday(date, "2026-11-18")).toBe(expected);
+  });
+});
+
+describe("holidayImpact: the numbers the admin confirms", () => {
+  const weekOff = makeBooking("al", "ANNUAL", "2026-11-16", "AM", "2026-11-20", "PM");
+  const parental = makeBooking("pl", "PARENTAL", "2026-11-18", "AM", "2026-11-18", "PM");
+  const copy = makeBooking("copy", "PUBLIC_HOLIDAY", "2026-11-18", "AM", "2026-11-18", "PM", "ph1");
+
+  it("a new holiday inside someone's annual leave: one person, one booking replaced", () => {
+    const people = [person(FULL_TIME, [weekOff])];
+    const changes = planPublicHolidayCreate(holiday, people);
+    expect(holidayImpact(changes, people, holiday.id)).toEqual({ people: 1, bookingsReplaced: 1 });
+  });
+
+  it("parental leave is kept, so nothing is replaced and nobody is affected", () => {
+    const people = [person(FULL_TIME, [parental])];
+    const changes = planPublicHolidayCreate(holiday, people);
+    expect(holidayImpact(changes, people, holiday.id)).toEqual({ people: 0, bookingsReplaced: 0 });
+  });
+
+  it("moving or deleting a copy doesn't count the copy as replaced", () => {
+    const people = [person(FULL_TIME, [copy])];
+    const moved = planPublicHolidayMove(holiday, "2026-11-18", "2026-11-19", people);
+    expect(holidayImpact(moved, people, holiday.id)).toEqual({ people: 1, bookingsReplaced: 0 });
+    const deleted = planPublicHolidayDelete(holiday, people);
+    expect(holidayImpact(deleted, people, holiday.id)).toEqual({ people: 1, bookingsReplaced: 0 });
   });
 });

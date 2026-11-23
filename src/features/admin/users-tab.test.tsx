@@ -77,6 +77,8 @@ function dialogFor(viewer: Actor, people: AdminUser[]) {
         businessUnits={viewer.role === "SUPER_ADMIN" ? [north, west] : [west]}
         teams={teams}
         users={people}
+        holidays={[]}
+        today="2026-11-23"
       />
     </NavigationTransitionProvider>
   );

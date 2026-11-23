@@ -1,5 +1,7 @@
 # T32 — Business units tab (super admin)
 
+**From T31:** `AdminDialog` (`src/features/admin/admin-dialog.tsx`) has Teams, Users and Public holidays tabs; `?admin=units` still opens Teams. Add the Business units trigger and its `tab` line (super admins only).
+
 **Phase:** 6 · **Depends on:** T31 · **Size:** S
 
 ## Goal

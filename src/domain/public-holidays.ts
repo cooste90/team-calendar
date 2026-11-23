@@ -199,6 +199,34 @@ export function planReconcileForPerson(
   ]);
 }
 
+// Holidays before today are history: they can't be edited or deleted, and a holiday
+// can't be added or moved to a past date (spec §6.1).
+export function isPastHoliday(date: CalendarDate, today: CalendarDate): boolean {
+  return date < today;
+}
+
+export type HolidayImpact = { people: number; bookingsReplaced: number };
+
+// The two numbers the admin sees before confirming a change (spec §6.1): how many people's
+// bookings change, and how many of their other bookings are replaced or shortened. Copies
+// of the holiday itself (moved or removed) aren't "replaced".
+export function holidayImpact(
+  changes: BookingChanges,
+  people: PersonSnapshot[],
+  holidayId: string,
+): HolidayImpact {
+  const changedIds = new Set([...changes.remove, ...changes.update.map((update) => update.id)]);
+  const changed = people
+    .flatMap((person) => person.bookings)
+    .filter((booking) => changedIds.has(booking.id));
+  const userIds = new Set([
+    ...changes.create.map((booking) => booking.userId),
+    ...changed.map((booking) => booking.userId),
+  ]);
+  const replaced = changed.filter((booking) => booking.publicHolidayId !== holidayId);
+  return { people: userIds.size, bookingsReplaced: replaced.length };
+}
+
 // A person edits or moves their copy: it becomes an ordinary booking, and they're
 // excluded from later admin changes to that holiday.
 export function planUserEditsPhCopy(booking: Booking): BookingChanges {
