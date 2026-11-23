@@ -1505,3 +1505,4 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 
 **Questions for the product owner:**
 - **Please approve the look** (screenshots in chat) before merging.
+  - Approved ("all good, I like it"), and merged.
