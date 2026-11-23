@@ -1609,7 +1609,7 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
   - Leave them separate for now, and decide again during T34 (note added to its task file).
 
 ## T33 — PDF attendance sheets — 2026-11-23
-**Status:** done, waiting for the product owner to approve the sheets before merging. Phase 7 (Export) is complete with it.
+**Status:** done. The product owner approved the sheets. This completes Phase 7 (Export).
 **New dependencies** (both named in the plan, pinned exactly): `@react-pdf/renderer` 4.9.0 (the architecture's PDF library; Next already treats it as an external server package, so no config change) and `pdf-parse` 2.4.5 (dev only, for reading the PDFs' text in tests). **Fonts:** Geist Regular, SemiBold and Bold TTF in `public/fonts`, copied from Vercel's official `geist` package (1.9.2), with its SIL Open Font License as `LICENSE-Geist.txt`.
 **What I built:**
 - **Sheet model** (`src/domain/attendance-sheet.ts`): `sheetDays` (today, or this or next Sunday–Saturday); `sheetCell` (a code when booked, a box when working, hatched when not, split into morning and afternoon when they differ; not working wins over a booking, so a week of leave shows the weekend as off); `sheetRows` (teams in admin order, people by surname, no Unassigned, no empty teams); and `paginate`, which splits rows into pages or columns by height and never leaves a team header at the bottom without 2 of its people.
@@ -1650,3 +1650,4 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 
 **Questions for the product owner:**
 - **Please approve the sheets** (images in chat) before merging.
+  - Approved, and merged. T34 waits for the product owner to say go.
