@@ -1459,7 +1459,7 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
   - Merged.
 
 ## T30 — Admin Users tab: move team, delete user, move BU — 2026-11-23
-**Status:** done, waiting for the product owner to approve the screenshots before merging. No new dependencies.
+**Status:** done. The product owner approved the look. No new dependencies.
 **Decided with the product owner first** (also in the task file): the Team select stays in the row and the other actions go in a "⋯" menu; admins manage everyone in their BU (other admins and super admins too), except deleting themselves; choosing a team saves straight away; the surname check ignores case and spaces at the ends.
 **What I built:**
 - **Users tab** (`users-tab.tsx`, `user-row.tsx`): a search box (name, SSO name, email or employee number, filtered in the browser); a section per team in admin order, then Unassigned, each with a count (sections with nobody showing are left out); and "No one matches …" when the search finds nobody.
