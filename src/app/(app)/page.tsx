@@ -4,6 +4,7 @@ import { personFilterOptions, teamFilterOptions } from "@/domain/filter-options"
 import { formatDocumentTitlePeriod, formatPeriodTitle } from "@/domain/format";
 import { type Actor, canEditBookingsFor, canManageBusinessUnit } from "@/domain/permissions";
 import { AdminDialog } from "@/features/admin/admin-dialog";
+import { BusinessUnitUnavailable } from "@/features/calendar/business-unit-unavailable";
 import { readSavedView, resolveCalendarView } from "@/features/calendar/calendar-view";
 import { FilterSummary } from "@/features/calendar/filters/filter-summary";
 import { CalendarGrid } from "@/features/calendar/grid/calendar-grid";
@@ -13,7 +14,11 @@ import { UnassignedBanner } from "@/features/calendar/unassigned-banner";
 import { ProfileDialog } from "@/features/profile/profile-dialog";
 import { ProfileNotAllowed } from "@/features/profile/profile-not-allowed";
 import { UNASSIGNED_BANNER_COOKIE } from "@/lib/search-params";
-import { getBusinessUnitBySlug, getVisibleBusinessUnits } from "@/server/queries/business-units";
+import {
+  getAdminBusinessUnits,
+  getBusinessUnitBySlug,
+  getVisibleBusinessUnits,
+} from "@/server/queries/business-units";
 import { getCalendarData } from "@/server/queries/calendar";
 import { getProfile, getProfileLeave } from "@/server/queries/profile";
 import { getAdminPublicHolidays } from "@/server/queries/public-holidays";
@@ -65,10 +70,13 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
   const profile = await getOpenProfile(actor, params);
   const leave = profile && (await getProfileLeave(actor, profile.id, serverToday()));
   const profileRequested = params.profile !== null || params.person !== null;
+  // The URL named a BU they can't see, so the page shows their own (spec §1.3).
+  const businessUnitUnavailable = params.bu !== null && params.bu !== businessUnit.slug;
   // ?admin= manages the BU on screen. Someone who can't manage it gets no dialog (null).
   const adminTeams = params.admin && (await getAdminTeams(actor, businessUnit.id));
   const adminUsers = adminTeams && (await getAdminUsers(actor, businessUnit.id));
   const adminHolidays = adminTeams && (await getAdminPublicHolidays(actor));
+  const allBusinessUnits = adminTeams && (await getAdminBusinessUnits(actor));
 
   return (
     <>
@@ -97,6 +105,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
       {/* key: a different person's profile starts with fresh forms. */}
       {profile && leave && <ProfileDialog key={profile.id} profile={profile} leave={leave} />}
       {profileRequested && !profile && <ProfileNotAllowed />}
+      {businessUnitUnavailable && <BusinessUnitUnavailable />}
       {/* key: another BU's teams start with fresh forms. */}
       {adminTeams && adminUsers && adminHolidays && (
         <AdminDialog
@@ -107,6 +116,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
           teams={adminTeams}
           users={adminUsers}
           holidays={adminHolidays}
+          allBusinessUnits={allBusinessUnits}
           today={data.today}
         />
       )}

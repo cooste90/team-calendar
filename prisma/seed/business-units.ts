@@ -1,5 +1,6 @@
 // The business units and teams to seed. "default" is about 200 people in 3 BUs; "large"
 // adds 3 more for about 1,000 people (for the grid performance check, T19).
+import { slugFor } from "@/domain/business-units";
 import { db } from "@/server/db";
 
 export type SeedSize = "default" | "large";
@@ -109,9 +110,8 @@ export async function createBusinessUnits(size: SeedSize): Promise<SeededBusines
   const seeded: SeededBusinessUnit[] = [];
 
   for (const plan of plans) {
-    const slug = plan.name.toLowerCase().replaceAll(" ", "-");
     const unit = await db.businessUnit.create({
-      data: { name: plan.name, slug, hidden: plan.hidden },
+      data: { name: plan.name, slug: slugFor(plan.name, []), hidden: plan.hidden },
     });
     const teams = [];
     for (const [index, name] of plan.teams.entries()) {

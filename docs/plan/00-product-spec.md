@@ -28,7 +28,8 @@ WestCal is a team availability calendar for a business unit (BU) of about 50 peo
 ### 1.3 Business units
 - BUs exist in the data model from day one.
 - Every user belongs to **exactly one BU**. Admins too.
-- Only **SUPER_ADMIN** can create, rename and delete BUs and set the **hidden** flag. Deleting a BU is blocked while it has users.
+- Only **SUPER_ADMIN** can create, rename and delete BUs and set the **hidden** flag. Deleting a BU is blocked while it has users; its (empty) teams are deleted with it.
+- A link to a BU the person can't see (hidden from them, deleted, or mistyped) says "This business unit is no longer available" and shows their own BU instead.
 - **Visibility:** any signed-in user can view any non-hidden BU's calendar. A **hidden** BU is visible only to its own members and to super admins.
 - **Editing** is never cross-BU, except for super admins.
 - **First sign-in BU choice:**

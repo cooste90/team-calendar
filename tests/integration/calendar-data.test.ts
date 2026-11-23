@@ -122,14 +122,14 @@ describe("getBusinessUnitBySlug", () => {
     expect(await getBusinessUnitBySlug(priya, null)).toMatchObject({ id: west.id, name: "West" });
   });
 
-  it("says a hidden BU doesn't exist to someone outside it, but not to a super admin", async () => {
-    await expect(getBusinessUnitBySlug(priya, "secret")).rejects.toThrow(NotFoundError);
+  it("gives a hidden BU only to its members and super admins; anyone else gets their own", async () => {
+    expect(await getBusinessUnitBySlug(priya, "secret")).toMatchObject({ id: west.id });
     const superAdmin: Actor = { ...priya, role: "SUPER_ADMIN" };
     expect(await getBusinessUnitBySlug(superAdmin, "secret")).toMatchObject({ id: secret.id });
   });
 
-  it("says an unknown slug doesn't exist", async () => {
-    await expect(getBusinessUnitBySlug(priya, "nowhere")).rejects.toThrow(NotFoundError);
+  it("gives the person's own BU for a slug that doesn't exist (deleted or mistyped)", async () => {
+    expect(await getBusinessUnitBySlug(priya, "nowhere")).toMatchObject({ id: west.id });
   });
 });
 

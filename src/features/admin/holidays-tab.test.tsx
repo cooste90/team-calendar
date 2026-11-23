@@ -52,6 +52,7 @@ function open() {
           teams={{ teams: [], unassignedCount: 0 }}
           users={[]}
           holidays={holidays}
+          allBusinessUnits={null}
           today={TODAY}
         />
       </NavigationTransitionProvider>

@@ -4,6 +4,13 @@
 
 **Phase:** 6 · **Depends on:** T31 · **Size:** S
 
+**Decided with the product owner (2026-11-23):**
+- **A BU can be deleted once it has no people;** its empty teams go with it ("Move or delete its 42 people first"). The spec and architecture §3.3 say so now.
+- **Hidden is a plain checkbox** in each row (like "I'm working this day"), saved as soon as it's ticked.
+- **Any `?bu=` the person can't see** (hidden from them, deleted or mistyped) shows "This business unit is no longer available" and their own BU. The spec (§1.3) says so now.
+- **Delete asks first:** "Delete Corporate Services? It has no people, and its 3 empty teams go with it."
+- **The slug never changes on rename,** so old links keep working.
+
 ## Goal
 Super admins manage business units: create, rename, toggle hidden and delete.
 

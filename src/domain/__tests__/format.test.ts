@@ -19,6 +19,7 @@ import {
   formatRangeWithMonth,
   formatShort,
   formatShortRange,
+  formatTeams,
   formatTimestamp,
   formatWeekdayDayMonth,
   formatWeekdayShort,
@@ -57,6 +58,16 @@ describe("formatPeople", () => {
     [6, "6 people"],
   ])("%d → %s", (count, expected) => {
     expect(formatPeople(count)).toBe(expected);
+  });
+});
+
+describe("formatTeams", () => {
+  it.each([
+    [1, "1 team"],
+    [0, "0 teams"],
+    [6, "6 teams"],
+  ])("%d → %s", (count, expected) => {
+    expect(formatTeams(count)).toBe(expected);
   });
 });
 

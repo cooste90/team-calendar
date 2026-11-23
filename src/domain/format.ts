@@ -168,6 +168,11 @@ export function formatPeople(count: number): string {
   return count === 1 ? "1 person" : `${count} people`;
 }
 
+// "1 team", "6 teams", "0 teams"
+export function formatTeams(count: number): string {
+  return count === 1 ? "1 team" : `${count} teams`;
+}
+
 // "1 booking", "3 bookings", "0 bookings"
 export function formatBookings(count: number): string {
   return count === 1 ? "1 booking" : `${count} bookings`;

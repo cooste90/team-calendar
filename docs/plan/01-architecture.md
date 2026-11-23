@@ -262,7 +262,7 @@ That's the whole guarantee. There's no database-level constraint, so the service
 ### 3.3 Deletion semantics
 - **Delete user**: events, patterns, overrides, exclusions and sessions cascade. Other people's events they created or changed keep `createdById` / `updatedById = null`, and the UI shows "a deleted user".
 - **Delete team**: members get `teamId = null` (Unassigned) inside the same transaction, before the delete.
-- **Delete BU**: blocked (`Restrict`) while it has users or teams. The service returns a friendly error.
+- **Delete BU**: blocked (`Restrict`) while it has users or teams. The service returns a friendly error while it has users, and deletes its empty teams first in the same transaction (decided in T32).
 
 ---
 

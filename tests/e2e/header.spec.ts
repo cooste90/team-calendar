@@ -35,9 +35,12 @@ test("Previous, Next and the keyboard shortcuts move through the weeks", async (
 });
 
 test("a regular user can't see the hidden BU; a super admin can", async ({ page }) => {
+  // Other tests add business units while this runs, so it checks the ones it knows about.
   await signInAs(page, "Priya Shah");
   const switcher = page.getByRole("combobox", { name: "Business unit" });
-  await expect(switcher.getByRole("option")).toHaveText(["North Finance", "West Operations"]);
+  await expect(switcher.getByRole("option", { name: "North Finance" })).toBeAttached();
+  await expect(switcher.getByRole("option", { name: "West Operations" })).toBeAttached();
+  await expect(switcher.getByRole("option", { name: /Corporate Services/ })).toHaveCount(0);
 
   // Switching BU shows that BU.
   await switcher.selectOption({ label: "North Finance" });
@@ -46,11 +49,9 @@ test("a regular user can't see the hidden BU; a super admin can", async ({ page 
 
   await signOut(page);
   await signInAs(page, "Grace Adeyemi");
-  await expect(switcher.getByRole("option")).toHaveText([
-    "Corporate Services (hidden)",
-    "North Finance",
-    "West Operations",
-  ]);
+  await expect(
+    switcher.getByRole("option", { name: "Corporate Services (hidden)" }),
+  ).toBeAttached();
 });
 
 for (const theme of ["light", "dark"] as const) {

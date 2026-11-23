@@ -1560,3 +1560,48 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 **Questions for the product owner:**
 - **Please approve the look** (screenshots in chat) before merging.
   - Approved ("yes all good"), and merged.
+
+## T32 — Business units tab (super admin) — 2026-11-23
+**Status:** done, waiting for the product owner to approve the screenshots before merging. No new dependencies. This completes Phase 6 (Admin).
+**Decided with the product owner first** (also in the task file, and the spec §1.3 and architecture §3.3 now say so): a BU can be deleted once it has no people, and its empty teams go with it; Hidden is a plain checkbox saved as soon as it's ticked; any `?bu=` the person can't see (hidden from them, deleted or mistyped) says "This business unit is no longer available" and shows their own BU; deleting asks first; the slug never changes on rename.
+**What I built:**
+- **Business units tab** (`business-units-tab.tsx`, `business-unit-row.tsx`, `new-business-unit-form.tsx`, `rename-business-unit-form.tsx`, `delete-business-unit-dialog.tsx`), only for super admins (an admin asking for `?admin=units` gets Teams): a New business unit form; every BU with "70 people · 8 teams", a **Hidden** checkbox (described by "Hidden units are only visible to their own members."), Rename (inline) and Delete.
+  - The checkbox ticks at once with React's `useOptimistic` and goes back if saving fails (it isn't disabled while saving, which would lose focus).
+  - Delete on an empty BU: "Delete South Health? It has no people, and its 3 empty teams go with it." With people: "West Operations can't be deleted yet. Move or delete its 51 people first." and only OK.
+- **Services** (`src/server/services/business-units.ts`, super admins only): `createBusinessUnit` (unique name in any case; slug from `slugFor`), `renameBusinessUnit` (slug kept), `setBusinessUnitHidden`, `deleteBusinessUnit` (refused while it has people; deletes its teams and the BU in one transaction). Four thin actions, and `getAdminBusinessUnits` with each BU's people and team counts.
+- **`slugFor`** (`src/domain/business-units.ts`): lower case, accents dropped, words joined by hyphens, "-2" and on if taken. The seed uses it too, instead of its own version.
+- **"No longer available":** `getBusinessUnitBySlug` now gives the person's own BU when the URL's BU is one they can't see, instead of throwing. The page notices the slug didn't match and renders `BusinessUnitUnavailable`, which shows the toast and takes `bu` (and its filters) out of the URL. A deleted or mistyped link no longer reaches an error page.
+- **Side effects:** the header switcher and the sign-in BU dropdown read the BUs on every load, so they follow changes with no extra code.
+- **`formatTeams`** next to `formatPeople`.
+
+**Tests:**
+- **Unit:** `slugFor` (spaces, symbols, accents, apostrophes, nothing usable, taken twice) and `formatTeams`. `src/domain` is still at 100%.
+- **Integration** (`tests/integration/business-units.test.ts`, 9): slugs and their uniqueness; rename keeps the slug; a duplicate name in any case is rejected; hiding changes `getVisibleBusinessUnits` for a non-member but not for a member or a super admin; delete refused with people; an empty BU goes with its teams; an admin of the BU is forbidden everything; the tab's counts. `calendar-data.test.ts`'s `getBusinessUnitBySlug` tests now expect the fallback.
+- **Component** (`business-units-tab.test.tsx`, 8): no tab for an admin (Teams instead); the list, counts, Hidden state and its description; ticking Hidden saves and announces; add; rename; delete an empty BU with focus back on New business unit; a BU with people can't be deleted; axe.
+- **E2E** (`tests/e2e/admin-business-units.spec.ts`, 3): Grace adds a BU → it's on the sign-in dropdown → she hides it → Priya doesn't see it in her switcher, and a link to it says it's no longer available and shows West Operations → Grace deletes it; axe on the tab and the blocked delete in both themes.
+- **All passing:** `pnpm check` (753), integration (166) and the whole Chromium suite (81, twice in a row before the last small fixes, then once more).
+- **Screenshots** at 1280 (the tab, an empty BU's delete, a blocked delete, dark, the "no longer available" toast) and 375px.
+
+**Key files:** `src/features/admin/{business-units-tab,business-unit-row,new-business-unit-form,rename-business-unit-form,delete-business-unit-dialog,admin-dialog}.tsx`, `src/features/calendar/business-unit-unavailable.tsx`, `src/server/services/business-units.ts`, `src/server/queries/business-units.ts`, `src/server/actions/{create,rename,delete}-business-unit.ts`, `src/server/actions/set-business-unit-hidden.ts`, `src/domain/{business-units,format}.ts`, `src/app/(app)/page.tsx`, `prisma/seed/business-units.ts`, `tests/integration/business-units.test.ts`, `tests/e2e/admin-business-units.spec.ts`.
+**Simplicity pass** (my own re-read, then `/simplify` with four reviewers):
+- **The AdminDialog chooses its tab from the URL,** falling back to Teams only when Business units isn't allowed, instead of a list of allowed tabs.
+- **The delete dialog's sentence** is a small function of plain `if`s, like the team dialog's `whatHappensToMembers`.
+- **Smaller fixes:** `formatTeams` instead of pluralising by hand; the standalone `startTransition`; a shorter `useOptimistic` comment and the setter renamed `setHiddenShown`; the page's query line matches the three above it; a one-use e2e helper inlined.
+- **Skipped:**
+  - **Merging the BU forms with the team forms** (`NewTeamForm`, `RenameTeamForm`): second copies, and a shared form would need the schema as a prop (the team name also refuses "Unassigned").
+  - **A shared confirmation-dialog shell:** the delete dialogs for teams, users, holidays and BUs are now four similar copies (~30 lines each), but each body differs (type-to-confirm, an impact preview, a "can't delete yet" mode). A shell would need about six props. Worth a separate decision; see the question below.
+  - **Sharing the services' `checkCanManage` / `checkNameIsFree`** with `teams.ts`, and `BusinessUnitUnavailable` with `ProfileNotAllowed`: second copies.
+
+**Deviations from plan:**
+- **A list, not a table,** like the Teams tab, so it fits a phone.
+- **Delete only needs the BU to have no people** (decided with the product owner): the task file said people or teams.
+- **The "no longer available" fallback covers deleted and mistyped BUs too** (decided with the product owner).
+
+**Fixed along the way:** `header.spec.ts` checked the BU switchers' exact options. With this task's test adding a BU in parallel, it now checks that Priya sees North Finance and West Operations but never Corporate Services, and that Grace sees Corporate Services (hidden). The exact list is covered by the integration test.
+
+**Follow-ups:**
+- **T34:** an error page is no longer reachable from a bad `?bu=`.
+
+**Questions for the product owner:**
+- **Please approve the look** (screenshots in chat) before merging.
+- **The four delete confirmations** (team, user, holiday, BU) share their outer shape. Merge them into one shared dialog in T34's simplicity sweep, or leave them as four readable copies?

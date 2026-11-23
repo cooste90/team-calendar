@@ -15,8 +15,10 @@ import type { PublicHoliday } from "@/domain/public-holidays";
 import { BusinessUnitSwitcher } from "@/features/calendar/header/business-unit-switcher";
 import { useCalendarParams } from "@/features/calendar/use-calendar-params";
 import { calendarSearchParams } from "@/lib/search-params";
+import type { AdminBusinessUnit } from "@/server/queries/business-units";
 import type { AdminTeams } from "@/server/queries/teams";
 import type { AdminUser } from "@/server/queries/users";
+import { BusinessUnitsTab } from "./business-units-tab";
 import { HolidaysTab } from "./holidays-tab";
 import { TeamsTab } from "./teams-tab";
 import { UsersTab } from "./users-tab";
@@ -30,12 +32,14 @@ type Props = {
   teams: AdminTeams;
   users: AdminUser[];
   holidays: PublicHoliday[]; // global, the same in every BU
+  allBusinessUnits: AdminBusinessUnit[] | null; // super admins only
   today: CalendarDate;
 };
 
 // The admin dialog (spec §9): a modal over the grid with its own URL (?admin=teams,
-// ?admin=users or ?admin=holidays), so Back closes it. Teams and Users are for the BU the
-// calendar is showing. Business units comes in T32; until then ?admin=units opens Teams.
+// ?admin=users, ?admin=holidays or ?admin=units), so Back closes it. Teams and Users are
+// for the BU the calendar is showing. Business units is for super admins only; anyone else
+// asking for it gets Teams.
 export function AdminDialog({
   viewer,
   businessUnit,
@@ -43,12 +47,13 @@ export function AdminDialog({
   teams,
   users,
   holidays,
+  allBusinessUnits,
   today,
 }: Props) {
   const [params, setParams] = useCalendarParams();
   const [announcement, setAnnouncement] = useState("");
-  let tab: "teams" | "users" | "holidays" = "teams";
-  if (params.admin === "users" || params.admin === "holidays") tab = params.admin;
+  let tab = params.admin ?? "teams";
+  if (tab === "units" && !allBusinessUnits) tab = "teams";
 
   function close() {
     // Replace, not push, so Back doesn't reopen it.
@@ -108,6 +113,11 @@ export function AdminDialog({
             <TabsTrigger value="holidays" className="px-2.5">
               Public holidays
             </TabsTrigger>
+            {allBusinessUnits && (
+              <TabsTrigger value="units" className="px-2.5">
+                Business units
+              </TabsTrigger>
+            )}
           </TabsList>
           <TabsContent value="teams" className="overflow-y-auto px-6 pt-5 pb-6">
             <TeamsTab businessUnitId={businessUnit.id} data={teams} onAnnounce={setAnnouncement} />
@@ -125,6 +135,11 @@ export function AdminDialog({
           <TabsContent value="holidays" className="overflow-y-auto px-6 pt-5 pb-6">
             <HolidaysTab holidays={holidays} today={today} onAnnounce={setAnnouncement} />
           </TabsContent>
+          {allBusinessUnits && (
+            <TabsContent value="units" className="overflow-y-auto px-6 pt-5 pb-6">
+              <BusinessUnitsTab units={allBusinessUnits} onAnnounce={setAnnouncement} />
+            </TabsContent>
+          )}
         </Tabs>
         {/* <output> is a polite live region. While the dialog is open, screen readers
             can't reach the rest of the page, so the dialog says what happened itself. */}

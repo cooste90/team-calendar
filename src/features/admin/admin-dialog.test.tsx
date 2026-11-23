@@ -46,6 +46,7 @@ function dialogFor(teams: AdminTeams, businessUnits = [west]) {
         teams={teams}
         users={[]}
         holidays={[]}
+        allBusinessUnits={null}
         today="2026-11-23"
       />
     </NavigationTransitionProvider>

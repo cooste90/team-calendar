@@ -78,6 +78,7 @@ function dialogFor(viewer: Actor, people: AdminUser[]) {
         teams={teams}
         users={people}
         holidays={[]}
+        allBusinessUnits={null}
         today="2026-11-23"
       />
     </NavigationTransitionProvider>
