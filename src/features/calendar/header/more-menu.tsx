@@ -1,6 +1,12 @@
 "use client";
 
-import { EllipsisIcon, LayoutGridIcon, ListFilterIcon, UsersIcon } from "lucide-react";
+import {
+  EllipsisIcon,
+  FileDownIcon,
+  LayoutGridIcon,
+  ListFilterIcon,
+  UsersIcon,
+} from "lucide-react";
 import { type ReactNode, type RefObject, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -12,17 +18,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { FilterOption } from "@/domain/filter-options";
 import { formatFilterName } from "@/domain/format";
+import { downloadAttendancePdf, EXPORT_RANGES } from "@/features/export/download-attendance-pdf";
 import { useCalendarStore } from "../calendar-store";
 import { FilterLabel } from "../filters/filter-builder";
 import { FilterPanel } from "../filters/filter-panel";
 import { KeyContent } from "../key/key-content";
 import { useCalendarFilters } from "../use-calendar-params";
 
-type Props = { teamOptions: FilterOption[]; personOptions: FilterOption[] };
+type Props = {
+  teamOptions: FilterOption[];
+  personOptions: FilterOption[];
+  exportSlug: string | null; // the BU to export; null when the viewer can't
+};
 
-// On a narrow header the filters and the Key (and Export, from T33) move into this menu,
-// so the header still fits at 320px (accessibility §1). Each one opens as a dialog.
-export function MoreMenu({ teamOptions, personOptions }: Props) {
+// On a narrow header the filters, the Key and Export move into this menu, so the header
+// still fits at 320px (accessibility §1). The filters and Key open as dialogs; the export
+// choices download straight away.
+export function MoreMenu({ teamOptions, personOptions, exportSlug }: Props) {
   const [opened, setOpened] = useState<"teams" | "people" | "key" | null>(null);
   const [filters, setFilters] = useCalendarFilters();
   const setShortcutsHelpOpen = useCalendarStore((store) => store.setShortcutsHelpOpen);
@@ -58,6 +70,16 @@ export function MoreMenu({ teamOptions, personOptions }: Props) {
             <LayoutGridIcon aria-hidden="true" />
             Key
           </DropdownMenuItem>
+          {exportSlug &&
+            EXPORT_RANGES.map(({ range, label }) => (
+              <DropdownMenuItem
+                key={range}
+                onSelect={() => downloadAttendancePdf(exportSlug, range)}
+              >
+                <FileDownIcon aria-hidden="true" />
+                Export PDF: {label.toLowerCase()}
+              </DropdownMenuItem>
+            ))}
         </DropdownMenuContent>
       </DropdownMenu>
 

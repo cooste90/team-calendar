@@ -146,6 +146,12 @@ export function formatLongRange(from: CalendarDate, to: CalendarDate): string {
   return `${fromText} to ${formatWeekdayDayMonth(to)}`;
 }
 
+// "Sunday 8 to Saturday 14 November 2026": a printed week (spec §10), with the year it
+// ends in.
+export function formatLongRangeWithYear(from: CalendarDate, to: CalendarDate): string {
+  return `${formatLongRange(from, to)} ${parts(to).year}`;
+}
+
 // "Mon 9 – Wed 11 Nov", "Fri 30 Oct – Tue 3 Nov", or "Thu 12 Nov" for a single date:
 // the delete confirmation's dates.
 export function formatShortRange(from: CalendarDate, to: CalendarDate): string {

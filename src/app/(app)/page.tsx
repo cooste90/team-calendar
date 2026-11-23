@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { personFilterOptions, teamFilterOptions } from "@/domain/filter-options";
 import { formatDocumentTitlePeriod, formatPeriodTitle } from "@/domain/format";
-import { type Actor, canEditBookingsFor, canManageBusinessUnit } from "@/domain/permissions";
+import {
+  type Actor,
+  canEditBookingsFor,
+  canExport,
+  canManageBusinessUnit,
+} from "@/domain/permissions";
 import { AdminDialog } from "@/features/admin/admin-dialog";
 import { BusinessUnitUnavailable } from "@/features/calendar/business-unit-unavailable";
 import { readSavedView, resolveCalendarView } from "@/features/calendar/calendar-view";
@@ -88,6 +93,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
         today={data.today}
         teamOptions={teamOptions}
         personOptions={personFilterOptions(data.teams, data.people)}
+        exportSlug={canExport(actor, businessUnit.id) ? businessUnit.slug : null}
       />
       <NavigationProgress />
       <main id="main" className="flex flex-1 flex-col">

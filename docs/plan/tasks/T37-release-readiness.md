@@ -2,6 +2,8 @@
 
 **Phase:** 8 · **Depends on:** T36 · **Size:** M
 
+**From T33:** the PDF route reads the Geist TTF fonts from disk at `public/fonts` (`src/features/export/pdf/fonts.ts`), so the production image must include that folder. Check an export works from the built container.
+
 ## Goal
 A release candidate the product owner can deploy to the internal Kubernetes and connect to corporate SSO, with documentation and a full acceptance walkthrough.
 

@@ -1,20 +1,42 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { downloadAttendancePdf } from "@/features/export/download-attendance-pdf";
 import { GridTestProviders } from "../grid/grid-test-providers";
 import { MoreMenu } from "./more-menu";
 
+vi.mock("@/features/export/download-attendance-pdf", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/features/export/download-attendance-pdf")>()),
+  downloadAttendancePdf: vi.fn(),
+}));
+
 const teamOptions = [{ id: "legal", name: "Legal", group: null }];
 
-function renderMenu() {
+// exportSlug is the BU an admin can export; null for everyone else.
+function renderMenu(exportSlug: string | null = null) {
   const user = userEvent.setup();
   render(
     <GridTestProviders searchParams={{ teams: "legal" }}>
-      <MoreMenu teamOptions={teamOptions} personOptions={[]} />
+      <MoreMenu teamOptions={teamOptions} personOptions={[]} exportSlug={exportSlug} />
     </GridTestProviders>,
   );
   return { user, moreButton: screen.getByRole("button", { name: "More" }) };
 }
+
+describe("Export PDF in the More menu", () => {
+  it("isn't there for someone who can't export", async () => {
+    const { user, moreButton } = renderMenu(null);
+    await user.click(moreButton);
+    expect(screen.queryByRole("menuitem", { name: /Export PDF/ })).toBeNull();
+  });
+
+  it("downloads the chosen sheet for the BU on screen", async () => {
+    const { user, moreButton } = renderMenu("west-operations");
+    await user.click(moreButton);
+    await user.click(screen.getByRole("menuitem", { name: "Export PDF: next week" }));
+    expect(downloadAttendancePdf).toHaveBeenCalledWith("west-operations", "next-week");
+  });
+});
 
 describe("the More menu on a narrow header", () => {
   it("More › Key shows the leave types in a dialog, and closing it goes back to More", async () => {

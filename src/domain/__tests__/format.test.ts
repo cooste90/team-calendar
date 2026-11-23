@@ -11,6 +11,7 @@ import {
   formatHolidayImpact,
   formatLong,
   formatLongRange,
+  formatLongRangeWithYear,
   formatMonthYear,
   formatPeople,
   formatPeriodAnnouncement,
@@ -218,6 +219,13 @@ describe("long dates for screen readers", () => {
     ["2026-10-30", "2026-11-03", "Friday 30 October to Tuesday 3 November"],
   ])("formatLongRange(%s, %s) → %s", (from, to, expected) => {
     expect(formatLongRange(from, to)).toBe(expected);
+  });
+
+  it.each([
+    ["2026-11-08", "2026-11-14", "Sunday 8 to Saturday 14 November 2026"],
+    ["2026-12-27", "2027-01-02", "Sunday 27 December to Saturday 2 January 2027"],
+  ])("formatLongRangeWithYear(%s, %s) → %s", (from, to, expected) => {
+    expect(formatLongRangeWithYear(from, to)).toBe(expected);
   });
 });
 

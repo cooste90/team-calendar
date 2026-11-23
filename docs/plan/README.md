@@ -100,7 +100,7 @@ Size key: **S** ≈ small, under 300 lines changed · **M** ≈ 300–800 · **L
 - [x] [T32](tasks/T32-admin-business-units.md) Business units tab (super admin) · **S**
 
 ### Phase 7 — Export
-- [ ] [T33](tasks/T33-pdf-export.md) PDF attendance sheets · **L**
+- [x] [T33](tasks/T33-pdf-export.md) PDF attendance sheets · **L**
 
 ### Phase 8 — Hardening and release
 - [ ] [T34](tasks/T34-states-polish.md) Loading, empty, error and forbidden states; polish · **M**

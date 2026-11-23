@@ -1607,3 +1607,46 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
   - Approved, and merged.
 - **The four delete confirmations** (team, user, holiday, BU) share their outer shape. Merge them into one shared dialog in T34's simplicity sweep, or leave them as four readable copies?
   - Leave them separate for now, and decide again during T34 (note added to its task file).
+
+## T33 — PDF attendance sheets — 2026-11-23
+**Status:** done, waiting for the product owner to approve the sheets before merging. Phase 7 (Export) is complete with it.
+**New dependencies** (both named in the plan, pinned exactly): `@react-pdf/renderer` 4.9.0 (the architecture's PDF library; Next already treats it as an external server package, so no config change) and `pdf-parse` 2.4.5 (dev only, for reading the PDFs' text in tests). **Fonts:** Geist Regular, SemiBold and Bold TTF in `public/fonts`, copied from Vercel's official `geist` package (1.9.2), with its SIL Open Font License as `LICENSE-Geist.txt`.
+**What I built:**
+- **Sheet model** (`src/domain/attendance-sheet.ts`): `sheetDays` (today, or this or next Sunday–Saturday); `sheetCell` (a code when booked, a box when working, hatched when not, split into morning and afternoon when they differ; not working wins over a booking, so a week of leave shows the weekend as off); `sheetRows` (teams in admin order, people by surname, no Unassigned, no empty teams); and `paginate`, which splits rows into pages or columns by height and never leaves a team header at the bottom without 2 of its people.
+- **Query** `getAttendanceSheet` (`src/server/queries/attendance-sheet.ts`): `canExport` only; reuses `getCalendarData` for the dates, so the sheet sees exactly what the grid does, ignoring filters.
+- **Route** `GET /api/export/attendance?bu=&range=today|this-week|next-week` (Node runtime): checks the session and `canExport` (403 otherwise; a BU the person can't see is refused, not swapped for their own), and answers `application/pdf` as an attachment named like `westcal-attendance-west-operations-2026-11-22.pdf`, with `Cache-Control: no-store`.
+- **PDFs** (`src/features/export/pdf/`), A4 portrait, from the mockup's "PrintSheet":
+  - **Week:** "WestCal" (text, no logo, as the spec says; the mockup had a logo), "Attendance check · West Operations", "Week of Sunday 22 to Saturday 28 November 2026", "Printed 23 Nov 2026, 19:48 by Tom Okafor"; a Name column and Sun–Sat; team header rows with sizes; 9pt boxes with a 1.2pt dark border; bold codes on light tints; 1pt hatching for days off; split days with a dashed divider; no highlight for today; the legend of every code, and "Page X of Y". The table header repeats on each page.
+  - **Today:** "Attendance check · West Operations · Monday 23 November 2026", people by team with one status cell each, in two columns when one would overflow.
+  - The page sizes are fixed (`BODY_HEIGHT` from A4 less the padding, a fixed-height header and footer), so `paginate` knows the room exactly.
+- **Header:** an **Export PDF** button (admins of the BU on screen) with Today / This week / Next week, and the same three in **More** on a narrow header. Choosing one shows "Preparing PDF…", saves the file under the server's name, then "PDF downloaded." (or "The PDF couldn't be made. Please try again.").
+
+**Tests:**
+- **Unit:** `sheetDays`, every cell kind (including a morning-only worker and a week of leave over the weekend), row order and grouping, and `paginate` (50 people on 1 page, 90 on 2, a team header never left alone, nothing to print); `formatLongRangeWithYear`. `src/domain` is still at 100%.
+- **Integration** (`tests/integration/attendance-sheet.test.ts`, 5, reading the PDFs' text with `pdf-parse`): the BU, the week line, all 7 day headers, teams and people in order, codes and "Page 1 of 1"; no Unassigned people; today's sheet names the day; only admins of the BU and super admins; and **the default seed's West Operations week prints on one A4 page** (the acceptance criterion).
+- **Component** (`export-menu.test.tsx` 3, `more-menu.test.tsx` +2): the three choices and the request each makes; the toasts and the saved file name; the server refusing; no Export in More for non-admins.
+- **E2E** (`tests/e2e/export.spec.ts`, 2): Tom exports this week and the download is a PDF over 10 KB with the right name; Priya has no Export PDF and the server answers her 403. The existing `auth.spec.ts` check (401 with no session) now hits the real route.
+- **All passing:** `pnpm check` (775), integration (171) and the whole Chromium suite (83).
+- **Seen:** the week and today sheets for the seed's West Operations, rendered to images, both on one page; the header and More menu at 1280 and 375px.
+
+**Key files:** `src/domain/attendance-sheet.ts`, `src/server/queries/attendance-sheet.ts`, `src/app/api/export/attendance/route.ts`, `src/features/export/pdf/{fonts.ts,sheet-parts.tsx,week-sheet.tsx,today-sheet.tsx,render-attendance-pdf.tsx}`, `src/features/export/{download-attendance-pdf.ts,export-menu.tsx}`, `src/features/calendar/header/{app-header,more-menu}.tsx`, `public/fonts/`, `tests/integration/attendance-sheet.test.ts`, `tests/e2e/export.spec.ts`.
+**Simplicity pass** (my own re-read, then `/simplify` with four reviewers):
+- **The page's room comes from the layout:** named A4 sizes, a fixed-height header and footer, and one `BODY_HEIGHT` (the first version had a hand-estimated sum copied into both sheets, already a few points out).
+- **Reused what's there:** `periodRange` for a week's days, `overlaps` for "does this booking cover the half-day", and a new `formatLongRangeWithYear` instead of slicing the year off a date in the PDF.
+- **Smaller fixes:** the hatching is one `Path` per cell instead of ~15 `Line`s (about 9,000 fewer elements for 300 people); the header takes `printedAt` and `printedBy`; both sheets handle "nobody to print" the same way; `paginate` is a plain `for` loop; the today sheet's row heights have their own name; plainer tests.
+- **Skipped:**
+  - **Building the rows from the grid model** (`buildGridModel`): the order and sorting rules are already shared functions (`byAdminOrder`, `compareBySurname`); the grid model also builds bars and labels the sheet doesn't need.
+  - **Setting the tight line height on the table instead of the page:** react-pdf ignores `lineHeight` set on a View (all the table text vanished), so it stays on the Page, with the header setting its own.
+  - **A dedicated query instead of `getCalendarData`**, and **running the "printed by" lookup in parallel:** a few milliseconds.
+
+**Deviations from plan:**
+- **The wordmark is text** ("WestCal"), as spec §10 says; the mockup showed the logo.
+- **The narrow header's More menu lists the three exports as items,** not a dialog or submenu: they download straight away.
+
+**Fixed along the way:** at 9pt with Geist's default line height, react-pdf silently left out every name in an 11pt row. The page now uses a 1.1 line height (comment in `sheet-parts.tsx`).
+
+**Follow-ups:**
+- **T37:** the production Docker image must include `public/fonts` (the PDFs read them from disk at `public/fonts`).
+
+**Questions for the product owner:**
+- **Please approve the sheets** (images in chat) before merging.

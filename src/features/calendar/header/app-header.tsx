@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Wordmark } from "@/components/brand/wordmark";
 import type { CalendarDate, View } from "@/domain/dates";
 import type { FilterOption } from "@/domain/filter-options";
+import { ExportMenu } from "@/features/export/export-menu";
 import type { UserMenuDetails } from "@/server/queries/user-menu";
 import { CalendarFilters } from "../filters/calendar-filters";
 import { KeyPopover } from "../key/key-popover";
@@ -17,12 +18,13 @@ type Props = {
   today: CalendarDate;
   teamOptions: FilterOption[];
   personOptions: FilterOption[];
+  exportSlug: string | null; // the BU on screen, when the viewer may export it
 };
 
 // The header bar (spec §2.1), left to right. It wraps onto more lines on narrow screens.
-// It's also a CSS container: below 720px of header width (45rem), the filters and the
-// Key move into the More menu.
-export function AppHeader({ user, teamOptions, personOptions, ...controls }: Props) {
+// It's also a CSS container: below 720px of header width (45rem), the filters, the Key
+// and Export PDF move into the More menu.
+export function AppHeader({ user, teamOptions, personOptions, exportSlug, ...controls }: Props) {
   return (
     <header className="@container relative z-30 flex flex-wrap items-center gap-x-3 gap-y-2.5 border-b bg-surface px-5 py-2.5">
       {/* The logo goes back to today's period in your own BU, with no filters. */}
@@ -32,13 +34,17 @@ export function AppHeader({ user, teamOptions, personOptions, ...controls }: Pro
       <CalendarControls {...controls} />
       <div className="flex-1" />
       <div className="flex flex-wrap items-center gap-2">
-        {/* Still to come: Export PDF (T33) after the Key. */}
         <div className="@min-[45rem]:flex hidden gap-2">
           <CalendarFilters teamOptions={teamOptions} personOptions={personOptions} />
           <KeyPopover />
+          {exportSlug && <ExportMenu businessUnitSlug={exportSlug} />}
         </div>
         <div className="@min-[45rem]:hidden">
-          <MoreMenu teamOptions={teamOptions} personOptions={personOptions} />
+          <MoreMenu
+            teamOptions={teamOptions}
+            personOptions={personOptions}
+            exportSlug={exportSlug}
+          />
         </div>
         {/* Always in the header, never moved into More. */}
         <UserMenu user={user} />
