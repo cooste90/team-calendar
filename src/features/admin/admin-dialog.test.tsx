@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import axe from "axe-core";
 import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Actor } from "@/domain/permissions";
 import { NavigationTransitionProvider } from "@/features/calendar/header/navigation-transition";
 import { createTeamAction } from "@/server/actions/create-team";
 import { deleteTeamAction } from "@/server/actions/delete-team";
@@ -32,10 +33,19 @@ beforeEach(() => {
   vi.mocked(deleteTeamAction).mockReset().mockResolvedValue(ok);
 });
 
+const tom: Actor = { id: "tom", role: "ADMIN", businessUnitId: "west", teamId: "finance" };
+
+// The Users tab has its own tests (users-tab.test.tsx), so it has nobody here.
 function dialogFor(teams: AdminTeams, businessUnits = [west]) {
   return (
     <NavigationTransitionProvider>
-      <AdminDialog businessUnit={west} businessUnits={businessUnits} teams={teams} />
+      <AdminDialog
+        viewer={tom}
+        businessUnit={west}
+        businessUnits={businessUnits}
+        teams={teams}
+        users={[]}
+      />
     </NavigationTransitionProvider>
   );
 }
@@ -63,6 +73,13 @@ describe("the admin dialog", () => {
   it("is for the BU on screen, with the Teams tab", () => {
     open(threeTeams);
     expect(screen.getByRole("tab", { name: "Teams" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("choosing the Users tab puts it in the URL, replacing the history entry", async () => {
+    const { events, urlUpdates } = open(threeTeams);
+    await events.click(screen.getByRole("tab", { name: "Users" }));
+    expect(urlUpdates.at(-1)?.queryString).toBe("?admin=users&view=week");
+    expect(urlUpdates.at(-1)?.options.history).toBe("replace");
   });
 
   it("closing it takes admin out of the URL", async () => {

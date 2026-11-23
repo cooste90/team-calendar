@@ -4,6 +4,12 @@
 
 **From T29:** `AdminDialog` (`src/features/admin/admin-dialog.tsx`) shows only the Teams tab, and any `admin` value opens it. Add the Users tab trigger, a `tab` prop from the `admin` param, and `onValueChange` that sets `admin` (as the profile dialog does with `tab`). The dialog's full-screen-on-phones classes are in their third copy (profile, booking form, admin); share them if a fourth appears.
 
+**Decided with the product owner (2026-11-23):**
+- **Row layout:** the Team select stays in the row; Open profile, Move to business unit… and Delete go in a "⋯" menu per person. On your own row, Delete is disabled and says "You can't delete yourself" (instead of a tooltip, which keyboard users can't reach on a disabled button).
+- **Admins manage everyone in their BU,** other admins and super admins included. The only exception is deleting themselves.
+- **Choosing a team saves straight away** and is read out. There's no confirmation (choosing the old team undoes it).
+- **The surname check ignores case and spaces at the ends.**
+
 ## Goal
 Admins can see everyone in the BU, grouped by team, move people between teams, open profiles and delete users. Super admins can also move people between BUs.
 

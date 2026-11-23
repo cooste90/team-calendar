@@ -18,6 +18,7 @@ import { getCalendarData } from "@/server/queries/calendar";
 import { getProfile, getProfileLeave } from "@/server/queries/profile";
 import { getAdminTeams } from "@/server/queries/teams";
 import { getUserMenuDetails } from "@/server/queries/user-menu";
+import { getAdminUsers } from "@/server/queries/users";
 import { requireUser } from "@/server/session";
 import { serverToday } from "@/server/today";
 
@@ -65,6 +66,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
   const profileRequested = params.profile !== null || params.person !== null;
   // ?admin= manages the BU on screen. Someone who can't manage it gets no dialog (null).
   const adminTeams = params.admin && (await getAdminTeams(actor, businessUnit.id));
+  const adminUsers = adminTeams && (await getAdminUsers(actor, businessUnit.id));
 
   return (
     <>
@@ -94,12 +96,14 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
       {profile && leave && <ProfileDialog key={profile.id} profile={profile} leave={leave} />}
       {profileRequested && !profile && <ProfileNotAllowed />}
       {/* key: another BU's teams start with fresh forms. */}
-      {adminTeams && (
+      {adminTeams && adminUsers && (
         <AdminDialog
           key={businessUnit.id}
+          viewer={actor}
           businessUnit={businessUnit}
           businessUnits={businessUnits.filter((unit) => canManageBusinessUnit(actor, unit.id))}
           teams={adminTeams}
+          users={adminUsers}
         />
       )}
     </>

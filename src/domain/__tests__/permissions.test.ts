@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   type Actor,
+  canDeleteUser,
   canEditBookingsFor,
   canEditProfileOf,
   canExport,
@@ -89,6 +90,24 @@ describe("admin powers", () => {
     expect(canManagePublicHolidays(superAdmin)).toBe(true);
     expect(canManageBusinessUnits(westAdmin)).toBe(false);
     expect(canManageBusinessUnits(superAdmin)).toBe(true);
+  });
+});
+
+describe("canDeleteUser (spec §9)", () => {
+  it.each([
+    ["an ADMIN deletes anyone in their BU", westAdmin, "teammate", true],
+    ["an ADMIN deletes an unassigned person", westAdmin, "unassigned", true],
+    ["an ADMIN can't delete someone in another BU", westAdmin, "otherBusinessUnit", false],
+    ["a SUPER_ADMIN deletes anyone", superAdmin, "otherBusinessUnit", true],
+    ["a USER can't delete anyone", priya, "teammate", false],
+  ] as const)("%s", (_, actor, subject, expected) => {
+    expect(canDeleteUser(actor, people[subject])).toBe(expected);
+  });
+
+  it("nobody can delete themselves, not even an admin", () => {
+    expect(
+      canDeleteUser(westAdmin, { id: "wadmin", businessUnitId: "west", teamId: "finance" }),
+    ).toBe(false);
   });
 });
 

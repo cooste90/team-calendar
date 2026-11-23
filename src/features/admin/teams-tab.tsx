@@ -106,19 +106,22 @@ export function TeamsTab({ businessUnitId, data, onAnnounce }: Props) {
         </div>
       </section>
 
-      <DeleteTeamDialog
-        team={deleting}
-        onCancel={() => setDeleting(null)}
-        onDeleted={handleDeleted}
-        onCloseAutoFocus={(event) => {
-          // The deleted team's row has gone, Delete button and all, so focus goes to the
-          // New team box. After Cancel, it goes back to the Delete button as usual.
-          if (!focusNewTeamOnClose.current) return;
-          focusNewTeamOnClose.current = false;
-          event.preventDefault();
-          newTeamInput.current?.focus();
-        }}
-      />
+      {/* Only there while it's open, so it starts fresh every time. */}
+      {deleting && (
+        <DeleteTeamDialog
+          team={deleting}
+          onCancel={() => setDeleting(null)}
+          onDeleted={handleDeleted}
+          onCloseAutoFocus={(event) => {
+            // The deleted team's row has gone, Delete button and all, so focus goes to the
+            // New team box. After Cancel, it goes back to the Delete button as usual.
+            if (!focusNewTeamOnClose.current) return;
+            focusNewTeamOnClose.current = false;
+            event.preventDefault();
+            newTeamInput.current?.focus();
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -11,6 +11,18 @@ export async function signInAs(page: Page, name: string) {
   });
 }
 
+// Signs in on the dev page as someone who has never signed in before, with a unique SSO
+// id, so tests running side by side never meet the same person.
+export async function signInAsNewPerson(page: Page, surname = "Starter") {
+  const id = `e2e-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  await page.getByLabel("SSO ID").fill(id);
+  await page.getByLabel("Employee number").fill(id);
+  await page.getByLabel("First name").fill("New");
+  await page.getByLabel("Surname").fill(surname);
+  await page.getByLabel("Email").fill(`${id}@example.com`);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+}
+
 // Signs out through the user menu.
 export async function signOut(page: Page) {
   await page.getByRole("button", { name: /^User menu for / }).click();

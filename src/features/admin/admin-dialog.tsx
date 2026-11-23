@@ -9,25 +9,32 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Actor } from "@/domain/permissions";
 import { BusinessUnitSwitcher } from "@/features/calendar/header/business-unit-switcher";
 import { useCalendarParams } from "@/features/calendar/use-calendar-params";
+import { calendarSearchParams } from "@/lib/search-params";
 import type { AdminTeams } from "@/server/queries/teams";
+import type { AdminUser } from "@/server/queries/users";
 import { TeamsTab } from "./teams-tab";
+import { UsersTab } from "./users-tab";
 
-type BusinessUnitOption = { id: string; slug: string; name: string; hidden: boolean };
+export type BusinessUnitOption = { id: string; slug: string; name: string; hidden: boolean };
 
 type Props = {
+  viewer: Actor;
   businessUnit: BusinessUnitOption; // the BU in the URL, the one being managed
   businessUnits: BusinessUnitOption[]; // every BU the viewer may manage
   teams: AdminTeams;
+  users: AdminUser[];
 };
 
-// The admin dialog (spec §9): a modal over the grid with its own URL (?admin=teams), so
-// Back closes it. It manages the BU the calendar is showing. Only the Teams tab so far:
-// Users, Public holidays and Business units come in T30–T32.
-export function AdminDialog({ businessUnit, businessUnits, teams }: Props) {
+// The admin dialog (spec §9): a modal over the grid with its own URL (?admin=teams or
+// ?admin=users), so Back closes it. It manages the BU the calendar is showing. Public
+// holidays and Business units come in T31–T32; until then those URLs open Teams.
+export function AdminDialog({ viewer, businessUnit, businessUnits, teams, users }: Props) {
   const [params, setParams] = useCalendarParams();
   const [announcement, setAnnouncement] = useState("");
+  const tab = params.admin === "users" ? "users" : "teams";
 
   function close() {
     // Replace, not push, so Back doesn't reopen it.
@@ -42,7 +49,7 @@ export function AdminDialog({ businessUnit, businessUnits, teams }: Props) {
       }}
     >
       <DialogContent
-        className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 p-0 max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none sm:max-w-[37.5rem]"
+        className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 p-0 max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none sm:h-[min(46rem,calc(100dvh-2rem))] sm:max-w-[37.5rem]"
         onEscapeKeyDown={(event) => {
           // Esc while renaming a team cancels the rename, not the whole dialog.
           if (event.target instanceof Element && event.target.closest("[data-renaming]")) {
@@ -65,14 +72,38 @@ export function AdminDialog({ businessUnit, businessUnits, teams }: Props) {
           </div>
           <DialogDescription>Changes show on everyone's calendar straight away.</DialogDescription>
         </DialogHeader>
-        <Tabs value="teams" className="min-h-0 flex-1 gap-0">
+        <Tabs
+          value={tab}
+          // Both tabs' data is already here, so switching only changes the URL (shallow).
+          // parse turns the plain string Radix hands back into one of the tab names.
+          onValueChange={(value) =>
+            setParams(
+              { admin: calendarSearchParams.admin.parse(value) },
+              { history: "replace", shallow: true },
+            )
+          }
+          className="min-h-0 flex-1 gap-0"
+        >
           <TabsList variant="line" className="mx-6 w-auto justify-start border-b">
             <TabsTrigger value="teams" className="px-2.5">
               Teams
             </TabsTrigger>
+            <TabsTrigger value="users" className="px-2.5">
+              Users
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="teams" className="overflow-y-auto px-6 pt-5 pb-6">
             <TeamsTab businessUnitId={businessUnit.id} data={teams} onAnnounce={setAnnouncement} />
+          </TabsContent>
+          <TabsContent value="users" className="overflow-y-auto px-6 pt-5 pb-6">
+            <UsersTab
+              viewer={viewer}
+              businessUnitId={businessUnit.id}
+              otherBusinessUnits={businessUnits.filter((unit) => unit.id !== businessUnit.id)}
+              teams={teams.teams}
+              users={users}
+              onAnnounce={setAnnouncement}
+            />
           </TabsContent>
         </Tabs>
         {/* <output> is a polite live region. While the dialog is open, screen readers

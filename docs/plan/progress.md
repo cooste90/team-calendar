@@ -1457,3 +1457,51 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 - **Should a team be allowed to be called "Unassigned"?** The spec doesn't say. Today it's allowed and would sit above the real Unassigned group.
   - No. The spec (§1.4) now says so, and `teamNameSchema` rejects it in any case ("\"Unassigned\" is built in, so a team can't use that name."), so the forms and the server actions both check it. Two new schema tests. `pnpm check` passes (676).
   - Merged.
+
+## T30 — Admin Users tab: move team, delete user, move BU — 2026-11-23
+**Status:** done, waiting for the product owner to approve the screenshots before merging. No new dependencies.
+**Decided with the product owner first** (also in the task file): the Team select stays in the row and the other actions go in a "⋯" menu; admins manage everyone in their BU (other admins and super admins too), except deleting themselves; choosing a team saves straight away; the surname check ignores case and spaces at the ends.
+**What I built:**
+- **Users tab** (`users-tab.tsx`, `user-row.tsx`): a search box (name, SSO name, email or employee number, filtered in the browser); a section per team in admin order, then Unassigned, each with a count (sections with nobody showing are left out); and "No one matches …" when the search finds nobody.
+  - Each row: initials, display name with "(First Surname)" when a preferred name is set, an Admin / Super admin badge, the employee number and email on one line, a **Team** select (the BU's teams only; someone unassigned shows "Choose team…", which can't be chosen) and a "⋯" menu: **Open profile** (a link to `?person=`, so Back returns to the tab), **Move to business unit…** (super admins only) and **Delete…** (on your own row: disabled, "You can't delete yourself").
+  - After a team change, focus stays on that person's select (their row moves to another section). After a delete or BU move it goes to the search box; after Cancel, back to the "⋯" button.
+- **Delete** (`delete-user-dialog.tsx`): "Delete Priya Shah? This permanently removes them and all their bookings (past and future). If they sign in again, they'll start as a new user." The button stays disabled until their surname is typed.
+- **Move to business unit** (`move-business-unit-dialog.tsx`): a BU select and "They'll keep their bookings and start in Unassigned."
+- **The admin dialog** now has Teams and Users tabs from `?admin=`. Both tabs' data loads when it opens, so switching tab only changes the URL (shallow). On larger screens the dialog keeps one height and scrolls inside, so it doesn't jump while searching or switching tabs.
+- **Server:** `getAdminUsers` (query; null unless `canManageBusinessUnit`), `moveUserToTeam`, `deleteUser` and `moveUserToBusinessUnit` (`src/server/services/users.ts`), and three thin actions. **`canDeleteUser`** (domain) is "an admin of their BU, but never yourself". Moving people between BUs uses `canManageBusinessUnits` (super admin), whose comment now says so.
+- **Deleting is one `db.user.delete`:** the database cascades bookings, patterns, day swaps, exclusions and sessions in that one statement (proven since T10 in `schema-rules.test.ts`). With no cookie cache, the person's next request finds no session and goes to `/sign-in`.
+
+**Tests:**
+- **Unit:** `canDeleteUser` table. `src/domain` is still at 100%.
+- **Integration** (`tests/integration/users.test.ts`, 12): moving into a team; a team in another BU is rejected; another BU's admin and a regular user can't move people; delete removes the person, bookings and sessions; an admin can delete another admin; self-delete, another BU and a regular user are refused; a BU move keeps bookings and sets the team to null; a non-super-admin BU move is forbidden; the query's permission, order and SSO name.
+- **Component** (`users-tab.test.tsx`, 17, plus 1 in `admin-dialog.test.tsx`): sections and counts; who each person is; the Team select never offers Unassigned; "Choose team…"; a team change saves, announces and keeps focus; search by name, SSO name, email and employee number; no matches; the Open profile link; you can't delete yourself; only super admins can move BU; type-to-confirm gating and focus; Cancel; the BU move; axe; choosing the Users tab puts it in the URL.
+- **E2E** (`tests/e2e/admin-users.spec.ts`, 4): a brand-new person signs in to North Finance → Grace puts them in Treasury → they show in Treasury on the grid → she deletes them (typing the surname) → the new person's own window goes to `/sign-in` on reload; a super admin moves a new person to West Operations and they show in its Unassigned group; axe on the tab and the delete confirmation in both themes. `signInAsNewPerson` moved from `onboarding.spec.ts` to the shared `sign-in.ts` (it now has two users).
+- **All passing:** `pnpm check` (700), integration (147) and the whole Chromium suite (75, twice in a row).
+- **Screenshots** at 1280 (light, dark, your own row's menu, delete confirmation, move BU), 375 and 320px.
+
+**Key files:** `src/features/admin/{users-tab,user-row,delete-user-dialog,move-business-unit-dialog,admin-dialog}.tsx`, `src/server/services/users.ts`, `src/server/queries/users.ts`, `src/server/actions/{move-user-to-team,delete-user,move-user-to-business-unit}.ts`, `src/domain/permissions.ts`, `src/app/(app)/page.tsx`, `tests/integration/users.test.ts`, `tests/e2e/admin-users.spec.ts`, `playwright.config.ts`.
+**Simplicity pass** (my own re-read, then `/simplify` with four reviewers):
+- **Confirmation dialogs are only rendered while open,** so each one starts fresh. This removed two `reset()` functions and the "null when closed" checks. The Teams tab's delete dialog got the same change, as the fourth copy of the pattern.
+- **Focus after Cancel stays explicit:** I tried leaving it to Radix, as the Teams tab does, but a dialog opened from a menu item sends focus back to that item, which has gone. So the tab remembers the "⋯" button's id. The two handlers are inline, not a helper that took a state setter.
+- **Smaller fixes:** the standalone `startTransition` instead of an unused `useTransition` value; one `teamId` per section instead of `id` and `teamId`; `canManageBusinessUnits(viewer)` worked out once; the search uses `toLocaleLowerCase("en-GB")` like the filters; a duplicate comment removed.
+- **Skipped:**
+  - **Dropping the "is the person still listed" check** in the focus effect: Biome requires the effect to use `users`, and the check is that use.
+  - **Sharing "teams in order, then Unassigned"** with the grid model and the filters: each builds a different shape (third copy).
+  - **Working out team counts from the users list** to save one small query: it would tie the Teams tab to the Users query.
+  - **Sharing the confirmation dialog shell or `FieldLabel`** across the admin and profile forms: a wider decision than this task.
+
+**Deviations from plan:**
+- **The ⋯ menu and the disabled "You can't delete yourself" item** replace separate buttons and a tooltip (decided with the product owner).
+- **The admin dialog has a fixed height on larger screens** (`min(46rem, viewport − 2rem)`), which also applies to the Teams tab.
+- **The employee number comes first on each row's details line,** and a very long email is cut short with "…" (the full address shows on hover and is read out in full) rather than breaking mid-word.
+
+**Fixed along the way:**
+- **Playwright's test timeout is now 60s** (`playwright.config.ts`). `signInAs` alone allows 30s for the dev server's first compile, so the default 30s per test could be used up by one slow first page. The two longest admin flows failed with 4 workers on a cold dev server; with 60s the whole suite passes twice in a row.
+- **My first draft of the Users e2e test signed in as Fatima Rahman,** whom the profile tests rename while they run. It uses Grace Adeyemi, the super admin, instead.
+
+**Follow-ups:**
+- **Audit trail:** deleting someone removes all their bookings without the per-booking audit lines (`audit.ts` only covers booking changes). T36 could add a "user.deleted" line if wanted.
+- **T31/T32:** add their tabs to `AdminDialog` (the `tab` line and a trigger each).
+
+**Questions for the product owner:**
+- **Please approve the look** (screenshots in chat) before merging.

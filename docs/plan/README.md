@@ -95,7 +95,7 @@ Size key: **S** ≈ small, under 300 lines changed · **M** ≈ 300–800 · **L
 
 ### Phase 6 — Admin
 - [x] [T29](tasks/T29-admin-teams.md) Admin dialog shell and Teams tab · **M**
-- [ ] [T30](tasks/T30-admin-users.md) Users tab: move team, delete user, move BU · **M**
+- [x] [T30](tasks/T30-admin-users.md) Users tab: move team, delete user, move BU · **M**
 - [ ] [T31](tasks/T31-admin-public-holidays.md) Public holidays tab and bulk services · **L**
 - [ ] [T32](tasks/T32-admin-business-units.md) Business units tab (super admin) · **S**
 

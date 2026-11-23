@@ -14,6 +14,10 @@ export default defineConfig({
   // The dev server compiles each page the first time a test opens it, which can take
   // several seconds, so wait longer than Playwright's default 5s.
   expect: { timeout: 15_000 },
+  // signInAs alone allows 30s for that first compile, so a whole test gets 60s, not
+  // Playwright's default 30s. The longer admin flows need it when 4 workers share a cold
+  // dev server.
+  timeout: 60_000,
   reporter: isCI ? [["list"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL: `http://localhost:${port}`,

@@ -1,18 +1,8 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { expectNoA11yViolations } from "./a11y";
+import { signInAsNewPerson } from "./sign-in";
 
 // The seed has three BUs, so a first-time user has to choose one (spec §1.3).
-
-// Signs in on the dev page as someone who has never signed in before.
-async function signInAsNewPerson(page: Page) {
-  const id = `e2e-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-  await page.getByLabel("SSO ID").fill(id);
-  await page.getByLabel("Employee number").fill(id);
-  await page.getByLabel("First name").fill("New");
-  await page.getByLabel("Surname").fill("Starter");
-  await page.getByLabel("Email").fill(`${id}@example.com`);
-  await page.getByRole("button", { name: "Sign in", exact: true }).click();
-}
 
 test("a new person who didn't choose a BU picks one on the welcome page", async ({ page }) => {
   await page.goto("/dev-sign-in");

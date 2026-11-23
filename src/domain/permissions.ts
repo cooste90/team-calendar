@@ -42,9 +42,15 @@ export function canManagePublicHolidays(actor: Actor): boolean {
   return actor.role !== "USER";
 }
 
-// Creating, renaming, hiding and deleting BUs.
+// Creating, renaming, hiding and deleting BUs, and moving people between them (spec §1.3).
 export function canManageBusinessUnits(actor: Actor): boolean {
   return actor.role === "SUPER_ADMIN";
+}
+
+// Deleting someone completely (spec §9): an admin of their BU, but never yourself, so an
+// admin can't lock themselves out by mistake. Other admins can be deleted.
+export function canDeleteUser(actor: Actor, subject: Subject): boolean {
+  return actor.id !== subject.id && canManageBusinessUnit(actor, subject.businessUnitId);
 }
 
 // PDF export: admins of that BU only.
