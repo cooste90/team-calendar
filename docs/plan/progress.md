@@ -1508,7 +1508,7 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
   - Approved ("all good, I like it"), and merged.
 
 ## T31 — Admin Public holidays tab and bulk services — 2026-11-23
-**Status:** done, waiting for the product owner to approve the screenshots before merging. No new dependencies.
+**Status:** done. The product owner approved the look. No new dependencies.
 **Decided with the product owner first** (also in the task file): the preview shows two totals (people affected, bookings replaced), with no per-BU list or split count; a rename still asks first, without numbers; a rename relabels only copies still showing the old name; any date from today is allowed, weekends included.
 **What I built:**
 - **Public holidays tab** (`holidays-tab.tsx`): "Public holidays apply to every business unit." and **Add public holiday**; **Upcoming** (name, `formatLong` date, Edit and Delete); **Past public holidays (N)** in a closed `<details>`, by year, newest year first, with nothing to change.
@@ -1559,3 +1559,4 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 
 **Questions for the product owner:**
 - **Please approve the look** (screenshots in chat) before merging.
+  - Approved ("yes all good"), and merged.
