@@ -25,7 +25,8 @@ Every edge state is designed, and the app feels finished and smooth.
    - Smooth scrolling to today when it's off-screen ("Today" in the header scrolls horizontally in month view).
    - The favicon (logo) and `app/icon.svg`, theme-colour meta for light and dark, and `manifest` basics.
 5. **Copy review:** go through all UI text against design system §8 (sentence case, en-GB dates, plain words).
-6. **Final simplicity sweep** of the whole codebase against `04-code-style.md`: remove unused files, exports and dependencies (`pnpm dlx knip` is a quick way to find them), merge duplicated logic, and make sure every `src/domain` and `src/server/services` file starts with a one-line purpose comment. Record what changed in `progress.md`.
+6. **From T32:** ask the product owner again whether the four delete confirmations (`delete-team-dialog`, `delete-user-dialog`, `delete-holiday-dialog`, `delete-business-unit-dialog` in `src/features/admin/`) should share one dialog. They have the same outer shape (~30 lines each) but different bodies; a shared shell would need about six props. They chose to leave them separate in T32.
+7. **Final simplicity sweep** of the whole codebase against `04-code-style.md`: remove unused files, exports and dependencies (`pnpm dlx knip` is a quick way to find them), merge duplicated logic, and make sure every `src/domain` and `src/server/services` file starts with a one-line purpose comment. Record what changed in `progress.md`.
 
 ## Tests
 - E2E: a failing action shows the error toast; expired session → the sign-in-again dialog; 404 and 403 pages render with axe passing.

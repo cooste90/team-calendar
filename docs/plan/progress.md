@@ -1562,7 +1562,7 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
   - Approved ("yes all good"), and merged.
 
 ## T32 — Business units tab (super admin) — 2026-11-23
-**Status:** done, waiting for the product owner to approve the screenshots before merging. No new dependencies. This completes Phase 6 (Admin).
+**Status:** done. The product owner approved the look. No new dependencies. This completes Phase 6 (Admin).
 **Decided with the product owner first** (also in the task file, and the spec §1.3 and architecture §3.3 now say so): a BU can be deleted once it has no people, and its empty teams go with it; Hidden is a plain checkbox saved as soon as it's ticked; any `?bu=` the person can't see (hidden from them, deleted or mistyped) says "This business unit is no longer available" and shows their own BU; deleting asks first; the slug never changes on rename.
 **What I built:**
 - **Business units tab** (`business-units-tab.tsx`, `business-unit-row.tsx`, `new-business-unit-form.tsx`, `rename-business-unit-form.tsx`, `delete-business-unit-dialog.tsx`), only for super admins (an admin asking for `?admin=units` gets Teams): a New business unit form; every BU with "70 people · 8 teams", a **Hidden** checkbox (described by "Hidden units are only visible to their own members."), Rename (inline) and Delete.
@@ -1604,4 +1604,6 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 
 **Questions for the product owner:**
 - **Please approve the look** (screenshots in chat) before merging.
+  - Approved, and merged.
 - **The four delete confirmations** (team, user, holiday, BU) share their outer shape. Merge them into one shared dialog in T34's simplicity sweep, or leave them as four readable copies?
+  - Leave them separate for now, and decide again during T34 (note added to its task file).
