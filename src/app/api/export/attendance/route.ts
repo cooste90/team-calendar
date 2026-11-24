@@ -11,7 +11,7 @@ import { serverToday } from "@/server/today";
 export const runtime = "nodejs";
 
 const querySchema = z.object({
-  bu: z.string().min(1),
+  bu: z.string().min(1).max(64), // a business unit's slug
   range: z.enum(["today", "this-week", "next-week"]),
 });
 

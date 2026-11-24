@@ -5,13 +5,14 @@ import type { BetterAuthPlugin } from "better-auth";
 import { APIError, createAuthEndpoint } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
 import { z } from "zod";
+import { idSchema } from "@/domain/ids";
 import { devSignInEnabled } from "@/lib/env";
 import { ssoProfileSchema } from "@/lib/schemas/sso-profile";
 import { syncSsoProfile } from "./services/auth-sync";
 
 const bodySchema = z.object({
   profile: ssoProfileSchema,
-  requestedBusinessUnitId: z.string().optional(),
+  requestedBusinessUnitId: idSchema.optional(),
 });
 
 export function devSignInPlugin() {
@@ -22,7 +23,7 @@ export function devSignInPlugin() {
         "/dev-sign-in",
         { method: "POST", body: bodySchema },
         async (ctx) => {
-          // Answer as if the endpoint didn't exist, so production gives nothing away.
+          // auth.ts only adds this plugin when dev sign-in is on; this is a second guard.
           if (!devSignInEnabled) {
             throw new APIError("NOT_FOUND");
           }

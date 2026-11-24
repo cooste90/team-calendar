@@ -4,3 +4,10 @@ ignoredBuiltDependencies:
   - prisma
   - sharp
   - unrs-resolver
+
+# Advisories accepted after checking them (T36). Remove one once the fix ships.
+# GHSA-7589-6fvf-x4pw: a slow regular expression in `effect`, which Prisma uses only to
+# read prisma.config.ts at build and migrate time. Nothing a user sends reaches it.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-7589-6fvf-x4pw

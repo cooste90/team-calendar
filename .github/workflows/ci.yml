@@ -33,6 +33,12 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test:coverage
       - run: pnpm build
+      # The production build: dev-only pages are 404, the headers are right (T36).
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:production
+      # Known vulnerabilities in the packages the app ships: a high or critical one fails
+      # the build. Advisories checked and accepted are listed in pnpm-workspace.yaml.
+      - run: pnpm audit --prod --audit-level high
 
   integration:
     runs-on: ubuntu-latest

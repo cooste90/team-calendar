@@ -5,7 +5,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { genericOAuth } from "better-auth/plugins";
-import { env, ssoConfigured } from "@/lib/env";
+import { devSignInEnabled, env, ssoConfigured } from "@/lib/env";
 import { takeBusinessUnitChoice } from "./business-unit-choice";
 import { db } from "./db";
 import { devSignInPlugin } from "./dev-sign-in-plugin";
@@ -38,7 +38,8 @@ export const auth = betterAuth({
   },
   plugins: [
     ...(ssoConfigured ? [ssoPlugin()] : []),
-    devSignInPlugin(),
+    // Not there at all in production, so its endpoint is a plain 404 (T36).
+    ...(devSignInEnabled ? [devSignInPlugin()] : []),
     nextCookies(), // must be the last plugin
   ],
 });

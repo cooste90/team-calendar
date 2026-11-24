@@ -3,6 +3,7 @@
 // sending, and the preview and save actions check the whole change again.
 import { z } from "zod";
 import { calendarDateSchema } from "@/domain/dates";
+import { idSchema } from "@/domain/ids";
 
 const NAME_MAX_LENGTH = 60;
 
@@ -16,11 +17,11 @@ export const holidayChangeSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("create"), name: holidayNameSchema, date: calendarDateSchema }),
   z.object({
     kind: z.literal("update"),
-    id: z.string().min(1),
+    id: idSchema,
     name: holidayNameSchema,
     date: calendarDateSchema,
   }),
-  z.object({ kind: z.literal("delete"), id: z.string().min(1) }),
+  z.object({ kind: z.literal("delete"), id: idSchema }),
 ]);
 
 export type HolidayChange = z.output<typeof holidayChangeSchema>;

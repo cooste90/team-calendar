@@ -14,7 +14,7 @@ A team availability calendar showing who's in and who's off. The full plan is in
 | 5 · Profile and user menu | T26–T28: user menu and theme, profile dialog, leave history | Done |
 | 6 · Admin | T29–T32: teams, users, public holidays, business units | Done |
 | 7 · Export | T33: PDF attendance sheets | Done |
-| 8 · Hardening | T34–T37: states and polish, accessibility audit, security, release | T34–T35 done (the manual screen-reader pass is still to run). Next: T36 |
+| 8 · Hardening | T34–T37: states and polish, accessibility audit, security, release | T34–T36 done (the manual screen-reader pass is still to run). Next: T37 |
 
 What you can open today:
 - http://localhost:3000/sign-in: the sign-in page. With more than one business unit it asks first-time users which one they belong to. "Developer sign-in" takes you to the fake sign-in (dev only).
@@ -94,6 +94,7 @@ Sign in as these on http://localhost:3000/dev-sign-in (the list lives in `prisma
 | `pnpm test:int` | Integration tests against the test database (run `pnpm db:up` first) |
 | `pnpm test:e2e` | Browser tests with accessibility checks (first time: `pnpm exec playwright install chromium`) |
 | `pnpm test:perf` | Performance checks with the large seed: the grid, and adding a public holiday for 1,000 people (replaces the test database's data; see the grid test file for measuring a production build) |
+| `pnpm test:production` | Checks a production build (run `pnpm build` first): the dev-only pages are gone and the security headers are sent |
 | `pnpm check` | Lint, type-check and test: run before pushing |
 | `pnpm db:up` / `pnpm db:down` | Start or stop the local databases |
 | `pnpm db:migrate` | Apply schema changes (creates a migration if `schema.prisma` changed) |

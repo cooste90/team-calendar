@@ -1761,3 +1761,53 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
   - Under the label. The grid model now gives each bar its `offSlots` (the non-working half-days inside it, counted from its first visible one) and the bar draws their stripes inside itself, behind the label. That replaced the separate `offOverlays` layer laid over the row. The stripes also move with the bar on hover and grow in with it. Domain test updated (still 100%); architecture §9 updated; `pnpm check` (790) and the Chromium suite (109) pass.
 - **Undo lasting 8 seconds** (a possible Ctrl+Z follow-up, report part 3).
   - Fine as it is: no follow-up.
+
+## T36 — Security headers and permission-matrix tests — 2026-11-24
+**Status:** done, waiting for the product owner to approve before merging. No questions were needed: the spec and earlier decisions covered every rule.
+**No new dependencies.**
+
+**The permission matrix** (`tests/integration/permission-matrix.test.ts`, 645 cases):
+- **Every server action and route, by every kind of person, on every kind of target.** The people: a user in a team (Priya), an unassigned user (Newbie), an admin of the target's BU (Tom, West), an admin of another BU (Nadia, North), a super admin (Grace) and nobody. The targets: themselves, a teammate, someone in another team, someone Unassigned, someone in another BU, someone in a hidden BU; or a BU (West, North, hidden Corporate); or none.
+- **The real actions run**, with only the session (`requireUser`), Next's `refresh` and cookies faked. So each case proves the action itself checks permission, not just the domain function.
+- **Read like the spec:** one small table per rule (bookings §5.3; profiles and day swaps §1.4/§4/§7; deleting people, moving them to a team, to another BU; teams; BUs; printing §10; public holidays §6.1; your own settings; health). One line per person, one column per target, lined up by hand (`biome-ignore format` keeps them that way).
+- **Coverage checks:** a test fails if an action exported from `src/server/actions`, or a route under `src/app/api`, isn't in the matrix. Sign-in itself (SSO, dev sign-in, sign-out, the welcome page's Continue) and Better Auth's own routes are listed separately: they run before there's a session, and the browser and production tests cover them.
+- **It catches mistakes:** with the "never delete yourself" check removed from `canDeleteUser`, exactly the three self-delete cases failed (put back straight after).
+- **Every case passed first time:** no permission bugs found.
+- Helpers: `permission-matrix/world.ts` builds on `helpers/people.ts` and adds North's admin, Audit, the hidden Corporate BU and an empty BU; `permission-matrix/run-action.ts` has one small function per action.
+
+**Input hardening:**
+- **`idSchema`** (`src/domain/ids.ts`, 1–64 characters) for every id an action takes (they were "at least one character" with no limit), the booking schema's person, the public holiday change, and the dev sign-in plugin. The print route's BU slug is capped at 64. Names, notes and the pattern already had limits.
+- **`tests/integration/input-validation.test.ts`** (15): huge ids, notes and names, 31 February, a made-up leave type, an eight-day week, an unknown public holiday change, non-objects and nothing at all all come back as VALIDATION; a huge BU in the print link is a 400.
+
+**HTTP headers** (`next.config.ts`): one static Content-Security-Policy (`default-src 'self'`; inline scripts and styles allowed, with the reason in a comment; `'unsafe-eval'` in development only, which React needs; `img-src 'self' data:`; `object-src 'none'`; `base-uri 'self'`; `frame-ancestors 'none'`), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`, `X-Frame-Options: DENY`, and `Strict-Transport-Security` in production builds only.
+- `tests/e2e/security-headers.spec.ts`: the headers are sent, and a walk through the calendar, Key, booking form, a PDF export, the profile, Admin and the statement reports no CSP violations.
+
+**Production check** (`playwright.production.config.ts`, `tests/production/`, `pnpm test:production` after `pnpm build`): against `next start`, `/dev-sign-in`, `/dev/design-system` and the dev sign-in endpoint are 404; production pages carry HSTS and a policy without `unsafe-eval`; and a page loads in a real browser without CSP violations. None of it needs the database. In CI it runs in the `checks` job after the build.
+- **The dev sign-in plugin isn't registered at all in production** (`auth.ts`), so its endpoint is a plain 404 whatever is sent. Before, a malformed body got a 400 from validation, which showed the endpoint existed.
+
+**Dependency audit:** `pnpm audit --prod --audit-level high` in CI. One high advisory is accepted in `pnpm-workspace.yaml` (`auditConfig.ignoreGhsas`) with the reason: GHSA-7589-6fvf-x4pw, a slow regular expression in `effect`, which Prisma uses only to read `prisma.config.ts` at build and migrate time; nothing a user sends reaches it. Remove the exception when Prisma updates it.
+
+**Server-only:** every file in `src/server` starts with `import "server-only"` except the server actions, whose `"use server"` already keeps their code out of the browser (the browser only gets a reference to call). Architecture §13 says so.
+
+**Tests:** `pnpm check` (790), integration (831, including the matrix's 645 and the 15 inputs), the Chromium suite (111) and the production check (5) all pass. The matrix takes 20–45 seconds, depending on how busy the machine is.
+
+**Key files:** `next.config.ts`, `src/domain/ids.ts`, `src/server/auth.ts`, `src/server/dev-sign-in-plugin.ts`, `src/server/actions/*`, `tests/integration/permission-matrix.test.ts`, `tests/integration/permission-matrix/`, `tests/integration/input-validation.test.ts`, `tests/e2e/security-headers.spec.ts`, `playwright.production.config.ts`, `tests/production/production-build.spec.ts`, `.github/workflows/ci.yml`, `pnpm-workspace.yaml`.
+**Simplicity pass** (`/simplify` with four reviewers):
+- **Fixed:** the dev plugin left out of production instead of checking its body by hand; `idSchema` moved into `src/domain` (the domain doesn't import from `src/lib`); the audit fails on high, with the one accepted advisory written down, instead of only on critical; the world builder reuses `createPeople`; the runners take `{ world, actorId, target }` with no placeholder parameters or casts; the no-target rules are ordinary tables; the cases are built with plain loops; the input test uses one cast and no database; `scriptSrc` is a plain `if`; the production test reads its address from the config.
+- **Skipped:**
+  - **Batching the world's inserts** (`createMany`): about 10 seconds faster, but the world would no longer reuse the shared `createPeople`. Worth doing if the matrix gets slow.
+  - **Sharing the CSP console listener** between the dev and production specs: 4 lines, in two different Playwright setups.
+  - **Running the production check in the e2e job** (which has browsers already): it would need a build on every run there, making the slowest job slower.
+  - **Listing the SSO origin in `connect-src`** (the task asked for it): signing in reaches the identity provider by a page navigation, which `connect-src` doesn't govern, and these headers are fixed at build time, before SSO is configured. Check once against the real identity provider (T37).
+
+**Deviations from plan:**
+- **No SSO origin in `connect-src`** (above).
+- **`/api/dev/*` doesn't exist in this app;** the dev sign-in endpoint is `/api/auth/dev-sign-in`, which is what the production check tests.
+- **Sign-in actions aren't run in the matrix,** only listed, with where they're tested.
+
+**Follow-ups:**
+- **T37:** try SSO sign-in against the real identity provider with the CSP on; if the company's proxy already sends HSTS, ours is a harmless duplicate.
+- **Prisma upgrade:** drop the accepted `effect` advisory once it's fixed upstream.
+
+**Questions for the product owner:**
+- **Please approve** before merging (no screens changed).

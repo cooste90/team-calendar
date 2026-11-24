@@ -465,7 +465,7 @@ Commands: `pnpm test` (unit + component), `pnpm test:int`, `pnpm test:e2e`, `pnp
   - `pre-push`: `pnpm test`.
 - **CI is a thin wrapper around `pnpm` scripts.** Every check is a script in `package.json`, and the CI file only installs and calls them. The same commands work locally, and moving CI means rewriting one small file.
 - **GitHub Actions** (`.github/workflows/ci.yml`) during development: Node 24, pnpm store cached by lockfile. Three jobs, so the setup steps aren't repeated six times:
-  1. `checks`: `pnpm lint`, `pnpm typecheck`, `pnpm test:coverage` (domain coverage gate) and `pnpm build`, each a separate step
+  1. `checks`: `pnpm lint`, `pnpm typecheck`, `pnpm test:coverage` (domain coverage gate), `pnpm build`, `pnpm test:production` (T36) and `pnpm audit --prod --audit-level high` (accepted advisories are listed, with the reason, in `pnpm-workspace.yaml`), each a separate step
   2. `integration`: `pnpm test:int` with a `postgres:17` service
   3. `e2e`: Playwright container + `postgres:17` service; `pnpm test:e2e` (nightly adds `--project=firefox`); uploads the report on failure. E2E always runs against `next dev`, because dev-only pages (dev sign-in, the design gallery) are off in production builds. The `checks` job covers the production build, and T36 adds a separate check that dev-only routes return 404 under `next start`.
 
@@ -492,5 +492,5 @@ APP_TIME_ZONE=Europe/London
 
 ## 13. Production readiness (scope of the final tasks)
 - `output: "standalone"`, a multi-stage `Dockerfile`, `GET /api/health` (checks the DB), and `prisma migrate deploy` as an init step.
-- Security headers in `next.config.ts` (`X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `frame-ancestors 'none'`, HSTS when served over HTTPS).
+- Security headers in `next.config.ts` (`X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `frame-ancestors 'none'`, HSTS when served over HTTPS). **As built (T36):** one static CSP (inline scripts and styles allowed; `'unsafe-eval'` in development only), `X-Frame-Options: DENY`, and HSTS in production builds. They're read when the app is built. `pnpm test:production` checks a production build: the dev-only pages answer 404 and the headers are right. Server actions are the one exception to `import "server-only"` in `src/server`: their `"use server"` line already keeps their code out of the browser.
 - `docs/PORTING-SSO.md`: step-by-step guide to switching to the corporate IdP with Better Auth `genericOAuth`, the claim mapping, and how to verify the role sync.

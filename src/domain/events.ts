@@ -2,6 +2,7 @@
 // and BookingChanges, the one plain object every booking planner returns.
 import { z } from "zod";
 import { type CalendarDate, calendarDateSchema, diffDays } from "./dates";
+import { idSchema } from "./ids";
 import { type LeaveType, leaveTypes } from "./leave-types";
 import {
   datesOfRange,
@@ -77,7 +78,7 @@ const halfDaySchema = z.enum(["AM", "PM"]);
 // Any half-day combination is fine as long as the end isn't before the start.
 export const bookingInputSchema = z
   .object({
-    userId: z.string().min(1),
+    userId: idSchema,
     // Object.keys gives the leave type names; the cast tells zod they're all LeaveTypes.
     type: z.enum(Object.keys(leaveTypes) as [LeaveType, ...LeaveType[]], "Choose a leave type"),
     startDate: calendarDateSchema,
