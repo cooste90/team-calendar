@@ -56,8 +56,8 @@ Tokens are named `--leave-al-bg`, `--leave-al-fg` and so on. The metadata lives 
 ### 2.2 Forced colours (Windows High Contrast)
 Under `@media (forced-colors: active)`:
 - bars get a `1px solid CanvasText` border;
-- the today column gets an outline;
-- hatching becomes a `GrayText` pattern;
+- today's date in the header gets a `CanvasText` ring (the pill's colour is dropped);
+- hatching becomes a `GrayText` pattern. Chrome drops gradient backgrounds in this mode, so hatched cells, the Key's sample and the day-off stripes on bars use `forced-color-adjust: none` (they have no text) and draw their borders in `CanvasText` (T35);
 - the focus ring uses `Highlight`.
 Never rely on `background-color` alone in this mode.
 

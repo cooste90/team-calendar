@@ -24,6 +24,6 @@ export function proxy(request: NextRequest) {
 // Pages and endpoints that work without signing in, plus Next's own files.
 export const config = {
   matcher: [
-    "/((?!sign-in|dev-sign-in|dev/|api/auth|api/health|_next/static|_next/image|icon.svg|manifest.webmanifest).*)",
+    "/((?!sign-in|dev-sign-in|dev/|accessibility|api/auth|api/health|_next/static|_next/image|icon.svg|manifest.webmanifest).*)",
   ],
 };

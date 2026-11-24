@@ -278,7 +278,7 @@ describe("deleting", () => {
     await user.click(screen.getByRole("button", { name: "Delete" }));
 
     expect(deleteBookingAction).toHaveBeenCalledWith({ id: "p-wfh" });
-    expect(useCalendarStore.getState().announcement).toBe("Booking deleted. Undo available.");
+    expect(useCalendarStore.getState().announcement).toBe("Booking deleted. Press Alt+N to undo.");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     const [message, options] = toast.mock.calls[0];
     expect(message).toBe("Booking deleted");

@@ -1,14 +1,22 @@
 import type { WorkDay } from "@/domain/availability";
 import type { GridCell as GridCellModel } from "@/domain/grid-model-types";
 
+// In Windows High Contrast, Chrome drops gradient backgrounds, which would lose the
+// hatching. So hatched boxes keep their own colours there (the stripes are already the
+// system's GrayText, see globals.css) and draw their border in the system text colour
+// (T35). Only use it on empty boxes: forced-color-adjust is inherited, so any text
+// inside would keep its normal colours too. (The date picker's hatched days have
+// numbers in them, so they don't use it.)
+export const KEEP_IN_HIGH_CONTRAST = "forced-color-adjust-none forced-colors:border-[CanvasText]";
+
 // Hatching shows the hours someone doesn't work: the whole day, or the afternoon
 // (morning-only day) or the morning (afternoon-only day). The profile's working pattern
 // preview uses it too.
 export const HATCH: Record<WorkDay, string> = {
   FULL: "",
-  OFF: "bg-hatch",
-  AM: "bg-hatch-right",
-  PM: "bg-hatch-left",
+  OFF: `bg-hatch ${KEEP_IN_HIGH_CONTRAST}`,
+  AM: `bg-hatch-right ${KEEP_IN_HIGH_CONTRAST}`,
+  PM: `bg-hatch-left ${KEEP_IN_HIGH_CONTRAST}`,
 };
 
 // The element id of the grid cell (or name) that's in the Tab order. The layout's

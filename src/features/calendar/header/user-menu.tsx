@@ -112,6 +112,10 @@ export function UserMenu({ user }: { user: UserMenuDetails }) {
           <LogOutIcon aria-hidden="true" />
           Sign out
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild className="px-2.5 text-muted-foreground text-xs">
+          <Link href="/accessibility">Accessibility statement</Link>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

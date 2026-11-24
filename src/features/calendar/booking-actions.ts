@@ -38,7 +38,8 @@ export async function deleteWithUndo(bookingId: string) {
     toast.error(result.error.message);
     return;
   }
-  finish("Booking deleted. Undo available.");
+  // The Undo button is in a toast, out of the Tab order; Alt+N goes to it (T35).
+  finish("Booking deleted. Press Alt+N to undo.");
   toast("Booking deleted", {
     duration: 8000,
     action: { label: "Undo", onClick: () => undoDelete(result.data) },

@@ -16,6 +16,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       theme={theme as ToasterProps["theme"]}
+      // WestCal: Alt+N moves focus to the toasts (e.g. to reach Undo). Sonner's own Alt+T
+      // is the calendar's "Today" shortcut (T35).
+      hotkey={["altKey", "KeyN"]}
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,

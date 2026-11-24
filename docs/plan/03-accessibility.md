@@ -17,7 +17,7 @@ Accessibility is a requirement for **every** task, not just a final audit. Each 
 - **No dragging anywhere (2.5.7):** team reordering uses Move up / Move down buttons.
 - **Consistent help:** the Key is always in the same place in the header (3.2.6).
 - **Forms:** visible labels, `aria-describedby` for hints and errors, errors in text next to the field plus a summary on submit (3.3.1, 3.3.3). No redundant re-entry: the form remembers its values after a conflict (3.3.7). Authentication is SSO, with no cognitive test (3.3.8).
-- **Status messages:** toasts (sonner) use `role="status"`, and a persistent polite live region (`<LiveRegion>`) announces "Annual leave added for Tom Okafor, Mon 9 to Wed 11 November", "Booking deleted. Undo available" and similar (4.1.3).
+- **Status messages:** toasts (sonner) use `role="status"`, and a persistent polite live region (`<LiveRegion>`) announces "Annual leave added for Tom Okafor, Mon 9 to Wed 11 November", "Booking deleted. Press Alt+N to undo" and similar (4.1.3). Toasts are outside the Tab order; **Alt+N** moves focus to them, e.g. to reach Undo (T35; sonner's default Alt+T is the "Today" shortcut).
 - **Motion:** honour `prefers-reduced-motion`. Nothing flashes (2.3.1).
 - **Language:** `<html lang="en-GB">`.
 - **Forced colours:** see design system §2.2.

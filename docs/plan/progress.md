@@ -1714,3 +1714,47 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 **Questions for the product owner:**
 - **Please approve the look** (screenshots in chat) before merging.
   - Approved, and merged.
+
+## T35 — Accessibility audit and fixes — 2026-11-24
+**Status:** automated audit done, waiting for the product owner to approve and to run the manual screen-reader pass (see below).
+**No new dependencies.**
+**Product owner's decisions** (asked first; task file updated):
+1. **Screen readers:** the agent can't run one, so it wrote the script and the report (`docs/a11y-report.md`) with an empty results table, plus automated checks of what a screen reader is told at each step. The product owner, or a colleague, runs the script with NVDA + Chrome, NVDA + Firefox and Narrator + Edge; anything found is fixed afterwards.
+2. **The accessibility statement is public**, linked from the user menu and the sign-in page, with a clearly marked placeholder contact.
+3. **Tooltips keep opening on focus** (Esc closes them first, as WCAG 1.4.13 asks).
+
+**Found and fixed:**
+- **The Undo toast couldn't be reached reliably from the keyboard** (2.1.1, 2.2.1). The toast library moves focus to its notifications on Alt+T, the calendar's "Today" shortcut. Now **Alt+N** (`src/components/ui/sonner.tsx`). It's in the keyboard shortcuts dialog, and a screen reader hears "Booking deleted. Press Alt+N to undo."
+- **High Contrast lost the hatching for days off** (1.4.1, 1.4.11): Chrome drops gradient backgrounds in forced colours. Hatched grid cells, the profile's pattern preview, the Key's sample and the day-off stripes on bars now keep their own colours there (`KEEP_IN_HIGH_CONTRAST` in `grid-cell.tsx`, `--bar-hatch: GrayText`). Only on empty boxes, because `forced-color-adjust` is inherited.
+- **High Contrast didn't mark today** (1.4.1): today's date pill gets a ring in that mode. Design system §2.2 updated (it asked for an outline that was never built).
+- **The accessibility statement** at `/accessibility`: what you should be able to do, the conformance target, known limitations (two-way scrolling grid, the PDF isn't tagged, manual screen-reader testing still to do), how to report a problem, and how it was tested.
+
+**The automated suite** (`tests/e2e/a11y/`, 20 tests):
+- `screens.spec.ts`: axe in light and dark on the screens no feature test covered: the accessibility statement (signed out), welcome, month view, the booking form showing a clash, keyboard shortcuts.
+- `keyboard-journeys.spec.ts`: no mouse at all. Book several days, edit, delete and Undo (through Alt+N); filter teams; change theme and open the profile; reorder a team with the Move buttons. At each step it checks dialog names and descriptions, where focus is, and the polite messages ("Annual leave added for Priya Shah, Tuesday …", "Booking restored.").
+- `display.spec.ts`: reduced motion (no animations still running after the view change, booking, Key and details); forced-colours screenshots attached to the report; 640×400 and 320×256 (no sideways page scroll, every header control fits, Key and Export in More); WCAG 1.4.12 text spacing (no clipped labels, buttons or headings on the calendar, booking form, profile and admin); target size (2.5.8, with its spacing rule) on week, month, booking form, filters and admin Users.
+- **Every screen in accessibility §5 is now covered**; the report maps each one to its test (most were already in the feature specs, so they weren't copied).
+
+**Tests:** `pnpm check` (790), and the whole Chromium suite (109). Integration not re-run: no server code changed beyond the proxy's public paths.
+
+**Key files:** `src/app/accessibility/page.tsx`, `src/components/ui/sonner.tsx`, `src/features/calendar/grid/{grid-cell,person-row,day-header}.tsx`, `src/features/calendar/key/key-content.tsx`, `src/features/calendar/shortcuts-help-dialog.tsx`, `tests/e2e/a11y/`, `docs/a11y-report.md`.
+**Simplicity pass** (`/simplify` with four reviewers):
+- **Fixed:** the target-size check split into small named steps; the reduced-motion test uses `emulateMedia` like the forced-colours one; the text-spacing and target-size tests loop over a plain table of screens; clearer assertions; unused `tabTo` option and a duplicate assertion removed; the statement page's styles on its elements instead of nested selectors, and its link styled like the other pages'; the bar overlay uses `KEEP_IN_HIGH_CONTRAST` instead of repeating it; the comment says it's only for empty boxes; the report notes the date picker in High Contrast.
+- **Skipped:**
+  - **One CSS rule in the hatch utilities instead of `KEEP_IN_HIGH_CONTRAST`** (one reviewer, to save bytes): the date picker uses the same utility on buttons with numbers in them, and `forced-color-adjust` is inherited, so those numbers would keep their normal colours. The class string costs a few KB of compressed HTML in month view.
+  - **Merging the 320px check with `header.spec.ts`'s:** this one also checks 640px, every header control and Export; the overlap is one assertion.
+  - **Signing in once per user with saved storage state:** a change to the whole suite, not this task.
+  - **A shared `focused` helper:** this is its third copy; the code style extracts on the fourth.
+
+**Deviations from plan:**
+- **The automated suite only adds what was missing** instead of one spec per screen: the feature specs already ran axe on most screens in both themes, so copying them would only have duplicated them. `docs/a11y-report.md` part 2 maps every §5 item to its test.
+- **The manual screen-reader pass isn't done** (decision 1).
+
+**Follow-ups:**
+- **Product owner:** run the screen-reader script in `docs/a11y-report.md` part 4 and fill in the results; fill in the statement's contact.
+- **Possible spec change:** an Undo shortcut that doesn't need the toast (e.g. Ctrl+Z), which would remove the 8-second limit question (report part 3).
+- **Still open from T25:** a stale booking-form target after a delete in another tab (rare).
+
+**Questions for the product owner:**
+- **Please approve** (screenshots in chat) before merging.
+- **The stripes over a bar's label** when a booking starts on a day off (the approved T16 design): keep, or move the stripes under the label? See report part 3.

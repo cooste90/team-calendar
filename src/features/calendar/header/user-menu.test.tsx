@@ -56,8 +56,16 @@ describe("the user menu", () => {
   });
 
   it.each([
-    { who: "a USER", user: priya, items: ["My profile", "Sign out"] },
-    { who: "an ADMIN", user: tom, items: ["My profile", "Admin", "Sign out"] },
+    {
+      who: "a USER",
+      user: priya,
+      items: ["My profile", "Sign out", "Accessibility statement"],
+    },
+    {
+      who: "an ADMIN",
+      user: tom,
+      items: ["My profile", "Admin", "Sign out", "Accessibility statement"],
+    },
   ])("Admin is only offered to admins ($who)", async ({ user, items }) => {
     await openMenu(user);
     const names = screen.getAllByRole("menuitem").map((item) => item.textContent);

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { connection } from "next/server";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
@@ -75,6 +76,9 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
           </Button>
         )}
       </form>
+      <Link href="/accessibility" className="text-muted-foreground text-sm underline">
+        Accessibility statement
+      </Link>
     </main>
   );
 }

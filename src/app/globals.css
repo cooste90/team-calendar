@@ -290,6 +290,7 @@
   .light,
   .dark {
     --hatch: GrayText;
+    --bar-hatch: GrayText;
   }
   :focus-visible {
     outline-color: Highlight;

@@ -6,7 +6,7 @@ import type { GridRow } from "@/domain/grid-model-types";
 import { NAME_COLUMN } from "@/domain/grid-navigation";
 import { serializeCalendarParams } from "@/lib/search-params";
 import { GridBar } from "./grid-bar";
-import { CALENDAR_FOCUS_ID, GridCell } from "./grid-cell";
+import { CALENDAR_FOCUS_ID, GridCell, KEEP_IN_HIGH_CONTRAST } from "./grid-cell";
 
 type Props = {
   row: GridRow;
@@ -72,6 +72,7 @@ export function PersonRow({ row, template, compact, canOpenProfile, tabStopColum
           style={{ gridColumn: overlay.gridColumn }}
           className={cn(
             "pointer-events-none z-[3] row-start-1 self-center bg-bar-hatch",
+            KEEP_IN_HIGH_CONTRAST,
             compact ? "h-7" : "h-[1.875rem]",
           )}
         />

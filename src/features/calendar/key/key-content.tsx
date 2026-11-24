@@ -1,6 +1,7 @@
 import { LabelledLeaveChip } from "@/components/leave-chip";
 import { Button } from "@/components/ui/button";
 import { leaveTypes } from "@/domain/leave-types";
+import { HATCH } from "../grid/grid-cell";
 
 // What the Key shows (spec §2.1, §3): the leave types, the hatching for days off and how
 // half days are drawn. The header popover and the narrow header's dialog both use it.
@@ -17,7 +18,7 @@ export function KeyContent({ onShowShortcuts }: { onShowShortcuts: () => void })
       <p className="flex items-center gap-2.5 text-muted-foreground text-xs">
         <span
           aria-hidden="true"
-          className="h-6 w-10 flex-none rounded-chip bg-hatch bg-surface-2 forced-colors:border forced-colors:border-[CanvasText]"
+          className={`h-6 w-10 flex-none rounded-chip bg-surface-2 forced-colors:border ${HATCH.OFF}`}
         />
         Not a working day
       </p>

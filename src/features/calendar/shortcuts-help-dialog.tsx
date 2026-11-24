@@ -32,6 +32,7 @@ const SECTIONS = [
       ["Alt+T", "Go to today"],
       ["Alt+W / Alt+M", "Week or month view"],
       ["Alt+[ / Alt+]", "Previous or next week or month"],
+      ["Alt+N", "Go to the notifications, e.g. to Undo"],
     ],
   },
 ];

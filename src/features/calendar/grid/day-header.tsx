@@ -54,7 +54,9 @@ function DayHeader({ column, compact }: { column: GridColumn; compact: boolean }
         className={cn(
           "grid place-items-center rounded-full font-semibold text-foreground",
           compact ? "size-6 text-[0.8125rem]" : "size-7 text-[0.9375rem]",
-          column.isToday && "bg-sunset text-on-sunset",
+          // High Contrast drops the pill's colour, so today's date gets a ring instead.
+          column.isToday &&
+            "bg-sunset text-on-sunset forced-colors:outline-2 forced-colors:outline-[CanvasText]",
         )}
       >
         {header.dayNumber}

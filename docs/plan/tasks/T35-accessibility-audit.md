@@ -17,9 +17,10 @@ Independently verify WCAG 2.2 AA across the whole app and fix whatever falls sho
    - a text spacing test (inject the WCAG 1.4.12 CSS and assert no clipped text in key components, using `scrollWidth > clientWidth` checks on labels);
    - a target size check: a script finds interactive elements under 24×24 px that aren't exempt.
 2. **Keyboard journeys** (e2e, no mouse): the full list in `03-accessibility.md` §5.
-3. **Manual screen-reader pass:** NVDA + Chrome, NVDA + Firefox, and Narrator + Edge, following a written script (sign in, navigate the grid, book, handle a conflict, undo, open the profile, admin reorder). Record the results in `docs/a11y-report.md` (issues, fixes, and residual notes).
+3. **Manual screen-reader pass:** NVDA + Chrome, NVDA + Firefox, and Narrator + Edge, following a written script (sign in, navigate the grid, book, handle a conflict, undo, open the profile, admin reorder). Record the results in `docs/a11y-report.md` (issues, fixes, and residual notes). **Product owner, T35:** the agent can't run a screen reader, so it writes the script and the report with an empty results table, and adds automated checks of what the accessibility tree gives a screen reader at each step. The product owner (or a colleague) runs the script and fills in the results; anything found is fixed afterwards.
 4. **Fix everything found**, or log anything genuinely out of scope as a follow-up in `progress.md` with its WCAG reference and reasoning.
-5. **Accessibility statement page** `/accessibility`, linked from the user menu footer: conformance target, known limitations, and how to report issues (a placeholder contact for the product owner to fill in).
+5. **Accessibility statement page** `/accessibility`, linked from the user menu footer **and the sign-in page, and readable without signing in** (product owner, T35): conformance target, known limitations, and how to report issues (a clearly marked placeholder contact for the product owner to fill in).
+6. **Tooltips** keep opening on focus, including focus returned after a menu closes; Esc dismisses the tooltip first (WCAG 1.4.13). Product owner, T35.
 
 ## Acceptance criteria
 - Zero axe violations across the suite; all keyboard journeys pass; `docs/a11y-report.md` is complete with no open AA failures.
