@@ -1653,7 +1653,7 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
   - Approved, and merged. T34 waits for the product owner to say go.
 
 ## T34 — States and polish — 2026-11-24
-**Status:** done, waiting for the product owner to approve the look before merging.
+**Status:** done. The product owner approved the look.
 **No new dependencies.** Removed `cmdk` and `date-fns` (unused; react-day-picker brings its own date-fns).
 **Product owner's decisions** (asked before starting; spec, architecture and the task file updated first):
 1. **Session expiry is a page, not a dialog:** "Your session has ended" in place of the calendar, and signing in again comes back to the same URL. One change in `requireUser`, instead of a line in each of ~20 places that save.
@@ -1713,3 +1713,4 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 
 **Questions for the product owner:**
 - **Please approve the look** (screenshots in chat) before merging.
+  - Approved, and merged.
