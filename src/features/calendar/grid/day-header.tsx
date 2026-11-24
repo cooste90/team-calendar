@@ -11,7 +11,7 @@ export function DayHeaderRow({ columns, template, compact }: RowProps) {
     <div
       role="row"
       style={{ gridTemplateColumns: template }}
-      className="sticky top-0 z-10 grid min-h-[3.375rem] border-b bg-surface"
+      className="sticky top-0 z-10 grid min-h-13.5 border-b bg-surface"
     >
       <div
         role="columnheader"

@@ -181,7 +181,7 @@ export function Gallery() {
           <PatternBox className="bg-hatch-right" label="AM only" />
           <PatternBox className="bg-hatch-left" label="PM only" />
           <span className="flex h-11 items-center gap-2 rounded-lg bg-today px-3">
-            <span className="grid size-[26px] place-items-center rounded-full bg-sunset font-semibold text-on-sunset">
+            <span className="grid size-6.5 place-items-center rounded-full bg-sunset font-semibold text-on-sunset">
               22
             </span>
             Today
@@ -190,7 +190,7 @@ export function Gallery() {
         <div className="flex items-center gap-4">
           <span
             key={growKey}
-            className="flex h-[30px] w-64 animate-grow items-center rounded-bar bg-leave-al px-2.5 font-semibold text-leave-al-fg text-xs"
+            className="flex h-7.5 w-64 animate-grow items-center rounded-bar bg-leave-al px-2.5 font-semibold text-leave-al-fg text-xs"
           >
             AL · 3 days
           </span>

@@ -33,7 +33,7 @@ export function BookingDetails({ item, date, personName, onOpenForm }: Props) {
           {personName} · {summary}
         </p>
       </div>
-      {booking.notes && <p className="whitespace-pre-wrap break-words">{booking.notes}</p>}
+      {booking.notes && <p className="wrap-break-word whitespace-pre-wrap">{booking.notes}</p>}
       <BookingHistory audit={booking.audit} />
       <div className="flex flex-wrap gap-2">
         {actions.edit && (

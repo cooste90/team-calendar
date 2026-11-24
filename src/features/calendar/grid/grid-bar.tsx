@@ -26,12 +26,10 @@ export function GridBar({ bar, compact }: { bar: GridBarModel; compact: boolean 
       onAnimationEnd={grows ? stopGrowing : undefined}
       className={cn(
         leaveTypes[bar.type].className,
-        "relative z-[2] row-start-1 flex min-w-0 cursor-pointer items-center self-center overflow-hidden whitespace-nowrap font-[650] tracking-[0.01em] shadow-[inset_0_0_0_1px_rgb(0_0_0/0.05)] transition hover:-translate-y-px hover:saturate-[1.15]",
+        "relative z-2 row-start-1 flex min-w-0 cursor-pointer items-center self-center overflow-hidden whitespace-nowrap font-[650] tracking-[0.01em] shadow-[inset_0_0_0_1px_rgb(0_0_0/0.05)] transition hover:-translate-y-px hover:saturate-[1.15]",
         "forced-colors:border forced-colors:border-[CanvasText]",
-        compact
-          ? "h-7 rounded-lg px-1.5 text-[0.6875rem]"
-          : "h-[1.875rem] rounded-bar px-[9px] text-xs",
-        bar.isHalf ? "mx-0.5 justify-center px-[3px]" : "mx-[3px]",
+        compact ? "h-7 rounded-lg px-1.5 text-[0.6875rem]" : "h-7.5 rounded-bar px-2.25 text-xs",
+        bar.isHalf ? "mx-0.5 justify-center px-0.75" : "mx-0.75",
         bar.isHalf && compact && "mx-px rounded-md px-0 text-[0.59375rem] tracking-[-0.02em]",
         // A booking that carries on past the visible dates has a square, flush edge.
         bar.clippedStart && "ml-0 rounded-l-none",

@@ -157,7 +157,7 @@ export function CalendarGrid({ data, view, period }: Props) {
         // never scrolled underneath them (WCAG 2.4.11).
         <section
           aria-label="Calendar"
-          className="mx-5 mb-6 max-h-[calc(100dvh-9.5rem)] scroll-pt-[3.375rem] scroll-pl-[var(--name-col)] overflow-auto rounded-2xl border bg-surface shadow-[0_1px_2px_rgb(0_0_0/0.03)]"
+          className="mx-5 mb-6 max-h-[calc(100dvh-9.5rem)] scroll-pt-13.5 scroll-pl-(--name-col) overflow-auto rounded-2xl border bg-surface shadow-[0_1px_2px_rgb(0_0_0/0.03)]"
         >
           <div
             role="grid"
@@ -167,7 +167,7 @@ export function CalendarGrid({ data, view, period }: Props) {
             onClick={onClick}
             // A new key on each view change restarts the 150ms fade-in (design system §6).
             key={view}
-            className="fade-in min-w-[56.25rem] animate-in duration-150"
+            className="fade-in min-w-225 animate-in duration-150"
           >
             <DayHeaderRow columns={model.columns} template={template} compact={compact} />
             {model.groups.map((group) => (

@@ -68,7 +68,7 @@ export function AdminDialog({
       }}
     >
       <DialogContent
-        className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 p-0 max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none sm:h-[min(46rem,calc(100dvh-2rem))] sm:max-w-[37.5rem]"
+        className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 p-0 max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none sm:h-[min(46rem,calc(100dvh-2rem))] sm:max-w-150"
         onEscapeKeyDown={(event) => {
           // Esc while renaming a team cancels the rename, not the whole dialog.
           if (event.target instanceof Element && event.target.closest("[data-renaming]")) {

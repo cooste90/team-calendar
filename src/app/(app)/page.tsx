@@ -98,7 +98,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
       <NavigationProgress />
       <main id="main" className="flex flex-1 flex-col">
         <PendingArea>
-          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 px-5 pt-[1.125rem] pb-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 px-5 pt-4.5 pb-3">
             <h1 className="font-[650] text-[1.3125rem] tracking-[-0.015em]">
               {formatPeriodTitle(view, period)}
             </h1>

@@ -9,11 +9,11 @@ export default function Loading() {
       <div className="h-14 border-b bg-surface" />
       <main id="main">
         <p className="sr-only">Loading the calendar…</p>
-        <div className="px-5 pt-[1.125rem] pb-3">
+        <div className="px-5 pt-4.5 pb-3">
           <Skeleton className="h-7 w-64" />
         </div>
         <div className="mx-5 mb-6 overflow-hidden rounded-2xl border bg-surface">
-          <Skeleton className="h-[3.375rem] rounded-none" />
+          <Skeleton className="h-13.5 rounded-none" />
           {Array.from({ length: 10 }, (_, index) => (
             <div
               // biome-ignore lint/suspicious/noArrayIndexKey: identical placeholder rows that never reorder.

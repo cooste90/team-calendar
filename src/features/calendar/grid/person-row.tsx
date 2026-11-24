@@ -34,7 +34,7 @@ export function PersonRow({ row, template, compact, canOpenProfile, tabStopColum
       <div
         role="rowheader"
         className={cn(
-          "sticky left-0 z-[5] col-start-1 row-start-1 flex min-w-0 items-center gap-2 overflow-hidden whitespace-nowrap border-r px-3.5 font-medium",
+          "sticky left-0 z-5 col-start-1 row-start-1 flex min-w-0 items-center gap-2 overflow-hidden whitespace-nowrap border-r px-3.5 font-medium",
           row.isViewer ? "bg-me font-[650]" : "bg-surface",
         )}
       >
