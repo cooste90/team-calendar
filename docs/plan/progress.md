@@ -1763,7 +1763,7 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
   - Fine as it is: no follow-up.
 
 ## T36 — Security headers and permission-matrix tests — 2026-11-24
-**Status:** done, waiting for the product owner to approve before merging. No questions were needed: the spec and earlier decisions covered every rule.
+**Status:** done. The product owner approved it. No questions were needed: the spec and earlier decisions covered every rule.
 **No new dependencies.**
 
 **The permission matrix** (`tests/integration/permission-matrix.test.ts`, 645 cases):
@@ -1811,3 +1811,4 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 
 **Questions for the product owner:**
 - **Please approve** before merging (no screens changed).
+  - Approved, and merged.
