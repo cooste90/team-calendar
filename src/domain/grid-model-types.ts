@@ -66,6 +66,10 @@ export type GridBar = {
   isHalf: boolean;
   isNarrow: boolean; // half-day bars in month view are too thin to click (see architecture §9)
   title: string;
+  slotCount: number; // how many half-days the bar shows
+  // The half-days inside the bar the person doesn't work, hatched under the label:
+  // 0 is the bar's first visible half-day. Empty for a booking of a day or less.
+  offSlots: number[];
 };
 export type GridRow = {
   personId: string;
@@ -74,7 +78,6 @@ export type GridRow = {
   canEdit: boolean;
   cells: GridCell[];
   bars: GridBar[];
-  offOverlays: { gridColumn: string }[];
 };
 export type GridGroup = {
   id: string;

@@ -435,8 +435,7 @@ planReconcileForPerson(person, futureHolidays, fromDate): BookingChanges   // af
 - **Rows:** team groups in their order (own team pinned first, Unassigned last if visible). Members sorted by surname. Collapsed groups have no member rows.
 - **Per person:**
   - `cells[]` (one per day) with `{ date, gridColumn, availability, isToday, accessibleLabel, bookings: { bookingId, type, portion }[] }`.
-  - `bars[]` with `{ bookingId, type, code, gridColumn: "start / span n", label, clippedStart, clippedEnd, isHalf, isNarrow, title }`.
-  - `offOverlays[]`: one `{ gridColumn }` per non-working half-day inside a multi-day bar.
+  - `bars[]` with `{ bookingId, type, code, gridColumn: "start / span n", label, clippedStart, clippedEnd, isHalf, isNarrow, title, slotCount, offSlots }`. `offSlots` are the non-working half-days inside a multi-day bar, counted from its first visible half-day; the bar draws their stripes inside itself, under its label (T35, product owner).
 - **Accessible names** come from the model, for example: `"Tuesday 10 November, Tom Okafor. Annual leave, Monday 9 to Wednesday 11 November, 3 days."`, plus ", not a working day" / ", morning only" and " View only." where they apply. T18 may append a short key hint.
 - **Bars are presentational** (`aria-hidden`) pointer targets layered over the cells. **Keyboard and screen-reader users work through the cells** (`role="gridcell"`, roving tabindex). See `03-accessibility.md §3`.
 - Any bar narrower than 24 CSS px, such as month-view half days, gets `pointer-events: none`, so the click lands on the cell (WCAG 2.5.8).

@@ -1716,7 +1716,7 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
   - Approved, and merged.
 
 ## T35 — Accessibility audit and fixes — 2026-11-24
-**Status:** automated audit done, waiting for the product owner to approve and to run the manual screen-reader pass (see below).
+**Status:** done. The product owner approved it, and runs the manual screen-reader pass (see below).
 **No new dependencies.**
 **Product owner's decisions** (asked first; task file updated):
 1. **Screen readers:** the agent can't run one, so it wrote the script and the report (`docs/a11y-report.md`) with an empty results table, plus automated checks of what a screen reader is told at each step. The product owner, or a colleague, runs the script with NVDA + Chrome, NVDA + Firefox and Narrator + Edge; anything found is fixed afterwards.
@@ -1752,9 +1752,12 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 
 **Follow-ups:**
 - **Product owner:** run the screen-reader script in `docs/a11y-report.md` part 4 and fill in the results; fill in the statement's contact.
-- **Possible spec change:** an Undo shortcut that doesn't need the toast (e.g. Ctrl+Z), which would remove the 8-second limit question (report part 3).
 - **Still open from T25:** a stale booking-form target after a delete in another tab (rare).
 
 **Questions for the product owner:**
 - **Please approve** (screenshots in chat) before merging.
+  - Approved, and merged.
 - **The stripes over a bar's label** when a booking starts on a day off (the approved T16 design): keep, or move the stripes under the label? See report part 3.
+  - Under the label. The grid model now gives each bar its `offSlots` (the non-working half-days inside it, counted from its first visible one) and the bar draws their stripes inside itself, behind the label. That replaced the separate `offOverlays` layer laid over the row. The stripes also move with the bar on hover and grow in with it. Domain test updated (still 100%); architecture §9 updated; `pnpm check` (790) and the Chromium suite (109) pass.
+- **Undo lasting 8 seconds** (a possible Ctrl+Z follow-up, report part 3).
+  - Fine as it is: no follow-up.

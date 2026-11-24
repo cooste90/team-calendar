@@ -131,25 +131,27 @@ export function buildGridModel(input: GridInput): GridModel {
       const shown = intersect(range, visible) as SlotRange; // every booking here overlaps the period
       const code = leaveTypes[booking.type].code;
       const isHalf = range.start === range.end;
+      const slotCount = shown.end - shown.start + 1;
+      // Days off inside a booking of more than a day are hatched (counted from the bar's
+      // first visible half-day).
+      const offSlots = isSingleDay(range)
+        ? []
+        : nonWorkingSlots(shown, lookup).map((slot) => slot - shown.start);
       return {
         bookingId: booking.id,
         type: booking.type,
         code,
-        gridColumn: `${column(shown.start)} / span ${shown.end - shown.start + 1}`,
+        gridColumn: `${column(shown.start)} / span ${slotCount}`,
         label: isSingleDay(range) ? code : `${code} · ${formatCount(count)}`,
         clippedStart: range.start < visible.start,
         clippedEnd: range.end > visible.end,
         isHalf,
         isNarrow: isHalf && input.view === "month",
         title: description,
+        slotCount,
+        offSlots,
       };
     });
-
-    // Hatching for days off inside bars that cover more than one day.
-    const offOverlays = items
-      .filter((item) => !isSingleDay(item.range))
-      .flatMap((item) => nonWorkingSlots(intersect(item.range, visible) as SlotRange, lookup))
-      .map((slot) => ({ gridColumn: `${column(slot)} / span 1` }));
 
     return {
       personId: person.id,
@@ -158,7 +160,6 @@ export function buildGridModel(input: GridInput): GridModel {
       canEdit,
       cells,
       bars,
-      offOverlays,
     };
   }
 

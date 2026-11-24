@@ -35,7 +35,6 @@ describe("findCell", () => {
     canEdit: true,
     cells: [cell],
     bars: [],
-    offOverlays: [],
   };
   const group = {
     id: "ops",

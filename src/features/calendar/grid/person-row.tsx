@@ -6,7 +6,7 @@ import type { GridRow } from "@/domain/grid-model-types";
 import { NAME_COLUMN } from "@/domain/grid-navigation";
 import { serializeCalendarParams } from "@/lib/search-params";
 import { GridBar } from "./grid-bar";
-import { CALENDAR_FOCUS_ID, GridCell, KEEP_IN_HIGH_CONTRAST } from "./grid-cell";
+import { CALENDAR_FOCUS_ID, GridCell } from "./grid-cell";
 
 type Props = {
   row: GridRow;
@@ -18,8 +18,8 @@ type Props = {
   tabStopColumn: string | null;
 };
 
-// One person: their sticky name, a cell per day, and the bars and day-off stripes laid
-// over the cells. Everything sits in the same grid row, placed by grid-column.
+// One person: their sticky name, a cell per day, and the bars laid over the cells.
+// Everything sits in the same grid row, placed by grid-column.
 export function PersonRow({ row, template, compact, canOpenProfile, tabStopColumn }: Props) {
   return (
     <div
@@ -64,18 +64,6 @@ export function PersonRow({ row, template, compact, canOpenProfile, tabStopColum
       ))}
       {row.bars.map((bar) => (
         <GridBar key={bar.bookingId} bar={bar} compact={compact} />
-      ))}
-      {row.offOverlays.map((overlay) => (
-        <span
-          key={overlay.gridColumn}
-          aria-hidden="true"
-          style={{ gridColumn: overlay.gridColumn }}
-          className={cn(
-            "pointer-events-none z-[3] row-start-1 self-center bg-bar-hatch",
-            KEEP_IN_HIGH_CONTRAST,
-            compact ? "h-7" : "h-[1.875rem]",
-          )}
-        />
       ))}
     </div>
   );

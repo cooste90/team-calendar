@@ -100,6 +100,8 @@ describe("bars", () => {
         isHalf: false,
         isNarrow: false,
         title: "Annual leave, Monday 2 to Monday 30 November, 21 days",
+        slotCount: 14,
+        offSlots: [0, 1, 12, 13], // Sunday and Saturday
       },
     ]);
   });
@@ -128,11 +130,13 @@ describe("bars", () => {
   it("days off inside a multi-day bar are hatched, half-day by half-day", () => {
     const friToTue = makeBooking("al", "tom", "ANNUAL", "2026-11-13", "AM", "2026-11-17", "PM");
     const saturdayOnly = makeBooking("wfh", "tom", "WFH", "2026-11-14", "AM", "2026-11-14", "PM");
-    expect(tomsRow({ bookings: [friToTue] }).offOverlays).toEqual([
-      { gridColumn: "14 / span 1" },
-      { gridColumn: "15 / span 1" },
-    ]);
-    expect(tomsRow({ bookings: [saturdayOnly] }).offOverlays).toEqual([]);
+    // The week ends on Saturday, so the bar shows Friday (half-days 0 and 1) and
+    // Saturday (2 and 3), which Tom doesn't work.
+    const [bar] = tomsRow({ bookings: [friToTue] }).bars;
+    expect(bar.slotCount).toBe(4);
+    expect(bar.offSlots).toEqual([2, 3]);
+    // A booking of a single day off is just a bar, with nothing to hatch.
+    expect(tomsRow({ bookings: [saturdayOnly] }).bars[0].offSlots).toEqual([]);
   });
 
   it("ignores bookings outside the period", () => {

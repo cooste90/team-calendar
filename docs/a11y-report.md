@@ -52,10 +52,9 @@ Every item in `03-accessibility.md` §5, and the test that checks it. Unless it 
 
 ## 3. Residual notes (not AA failures, for the product owner to judge)
 
-- **Undo lasts 8 seconds** (spec §5.6). Hovering over the toast, or moving focus to it with Alt+N, pauses the timer. A screen reader announces how to reach it. Undo is a convenience on top of a confirmed action, and a deleted booking can be added again, so this isn't treated as a 2.2.1 failure. Making the time longer would be a spec change.
-- **Stripes over a bar's label.** When a booking starts on a day off, that day's stripes are drawn over the start of the bar's label (the approved T16 design). The text stays readable, and the full description is in the cell's name and the bar's tooltip. Worth a look during the manual pass.
+- **Undo lasts 8 seconds** (spec §5.6). Hovering over the toast, or moving focus to it with Alt+N, pauses the timer. A screen reader announces how to reach it. Undo is a convenience on top of a confirmed action, and a deleted booking can be added again, so this isn't treated as a 2.2.1 failure. The product owner is happy with 8 seconds (T35).
+- **Stripes and bar labels** (fixed in T35, product owner's choice): the stripes for days off inside a bar used to be drawn over the start of its label. They're now drawn inside the bar, under the label.
 - **The date picker's days off aren't hatched in High Contrast.** Its day buttons have numbers in them, so they can't opt out of the system colours the way the grid's empty cells do. The form's working-day count and the grid still show which days are off.
-- **A possible follow-up: an Undo shortcut that doesn't need the toast** (for example Ctrl+Z straight after a delete). That would remove the time limit question altogether. It would be a spec change, so it's for the product owner to decide.
 - **Tooltips open on focus**, including when focus returns to an icon button after a menu closes, so the next Esc closes the tooltip first. This is what WCAG 1.4.13 asks of tooltips, and the product owner chose to keep it (T35).
 - **The grid scrolls in two directions** on narrow screens, with the names and dates sticky. This is the data-table exception to 1.4.10.
 - **The PDF attendance sheet isn't a tagged PDF** (react-pdf can't make one). It's made for printing, and the same information is on the calendar. The statement says so.

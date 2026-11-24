@@ -2,6 +2,7 @@ import { cn } from "cn";
 import type { GridBar as GridBarModel } from "@/domain/grid-model-types";
 import { leaveTypes } from "@/domain/leave-types";
 import { useCalendarStore } from "../calendar-store";
+import { KEEP_IN_HIGH_CONTRAST } from "./grid-cell";
 
 // A coloured booking bar laid over the day cells. It's hidden from screen readers:
 // the cells underneath already describe every booking (accessibility §3). Clicking it
@@ -25,7 +26,7 @@ export function GridBar({ bar, compact }: { bar: GridBarModel; compact: boolean 
       onAnimationEnd={grows ? stopGrowing : undefined}
       className={cn(
         leaveTypes[bar.type].className,
-        "z-[2] row-start-1 flex min-w-0 cursor-pointer items-center self-center overflow-hidden whitespace-nowrap font-[650] tracking-[0.01em] shadow-[inset_0_0_0_1px_rgb(0_0_0/0.05)] transition hover:-translate-y-px hover:saturate-[1.15]",
+        "relative z-[2] row-start-1 flex min-w-0 cursor-pointer items-center self-center overflow-hidden whitespace-nowrap font-[650] tracking-[0.01em] shadow-[inset_0_0_0_1px_rgb(0_0_0/0.05)] transition hover:-translate-y-px hover:saturate-[1.15]",
         "forced-colors:border forced-colors:border-[CanvasText]",
         compact
           ? "h-7 rounded-lg px-1.5 text-[0.6875rem]"
@@ -40,7 +41,15 @@ export function GridBar({ bar, compact }: { bar: GridBarModel; compact: boolean 
         grows && "animate-grow",
       )}
     >
-      <span className="truncate">{bar.label}</span>
+      {/* Stripes on the days off inside the bar, drawn first so the label sits on top. */}
+      {bar.offSlots.map((slot) => (
+        <span
+          key={slot}
+          className={cn("absolute inset-y-0 bg-bar-hatch", KEEP_IN_HIGH_CONTRAST)}
+          style={{ left: `${(slot / bar.slotCount) * 100}%`, width: `${100 / bar.slotCount}%` }}
+        />
+      ))}
+      <span className="relative truncate">{bar.label}</span>
     </div>
   );
 }
