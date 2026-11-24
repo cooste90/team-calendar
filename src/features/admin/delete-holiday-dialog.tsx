@@ -1,20 +1,11 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 import { formatHolidayImpact } from "@/domain/format";
 import type { PublicHoliday } from "@/domain/public-holidays";
 import { previewPublicHolidayChangeAction } from "@/server/actions/preview-public-holiday-change";
 import { savePublicHolidayChangeAction } from "@/server/actions/save-public-holiday-change";
+import { ConfirmDeleteDialog } from "./confirm-delete-dialog";
 
 type Props = {
   holiday: PublicHoliday;
@@ -27,56 +18,34 @@ type Props = {
 // The numbers load as it opens; Delete waits for them.
 export function DeleteHolidayDialog({ holiday, onCancel, onDeleted, onCloseAutoFocus }: Props) {
   const [warning, setWarning] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
   useEffect(() => {
     previewPublicHolidayChangeAction({ kind: "delete", id: holiday.id }).then((result) => {
       if (result.ok) {
         setWarning(formatHolidayImpact("delete", result.data));
       } else {
-        setError(result.error.message);
+        setPreviewError(result.error.message);
       }
     });
   }, [holiday.id]);
 
-  function confirm() {
-    startTransition(async () => {
-      const result = await savePublicHolidayChangeAction({ kind: "delete", id: holiday.id });
-      if (!result.ok) {
-        setError(result.error.message);
-        return;
-      }
-      onDeleted(`${holiday.name} deleted.`);
-    });
-  }
-
   return (
-    <AlertDialog
-      open
-      onOpenChange={(open) => {
-        if (!open) onCancel();
-      }}
+    <ConfirmDeleteDialog
+      title={`Delete ${holiday.name}?`}
+      description={warning ?? "Working out who's affected…"}
+      confirmLabel="Delete holiday"
+      canConfirm={warning !== null}
+      onConfirm={() => savePublicHolidayChangeAction({ kind: "delete", id: holiday.id })}
+      onDeleted={() => onDeleted(`${holiday.name} deleted.`)}
+      onCancel={onCancel}
+      onCloseAutoFocus={onCloseAutoFocus}
     >
-      <AlertDialogContent onCloseAutoFocus={onCloseAutoFocus}>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete {holiday.name}?</AlertDialogTitle>
-          <AlertDialogDescription>
-            {warning ?? "Working out who's affected…"}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        {error && (
-          <p role="alert" className="text-destructive text-sm">
-            {error}
-          </p>
-        )}
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <Button variant="destructive" disabled={!warning || pending} onClick={confirm}>
-            Delete holiday
-          </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      {previewError && (
+        <p role="alert" className="text-destructive text-sm">
+          {previewError}
+        </p>
+      )}
+    </ConfirmDeleteDialog>
   );
 }

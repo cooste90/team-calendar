@@ -1,5 +1,5 @@
 import { XIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/icon-button";
 import type { FilterOption } from "@/domain/filter-options";
 
 type Props = { label: string; chosen: FilterOption[]; onRemove: (id: string) => void };
@@ -15,15 +15,14 @@ export function ChosenChips({ label, chosen, onRemove }: Props) {
           className="flex items-center gap-0.5 rounded-full bg-surface-2 py-0.5 pr-0.5 pl-2.5 text-xs"
         >
           {option.name}
-          <Button
-            variant="ghost"
+          <IconButton
             size="icon-xs"
             className="rounded-full"
-            aria-label={`Remove ${option.name}`}
+            label={`Remove ${option.name}`}
             onClick={() => onRemove(option.id)}
           >
             <XIcon aria-hidden="true" />
-          </Button>
+          </IconButton>
         </li>
       ))}
     </ul>

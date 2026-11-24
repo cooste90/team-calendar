@@ -3,6 +3,7 @@
 import type { Route } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { safeCallbackUrl, signInPageUrl } from "@/lib/callback-url";
 import { type SsoProfile, ssoProfileSchema } from "@/lib/schemas/sso-profile";
 import { auth, SSO_PROVIDER_ID } from "@/server/auth";
 import { rememberBusinessUnitChoice, takeBusinessUnitChoice } from "@/server/business-unit-choice";
@@ -14,7 +15,7 @@ import { devSsoProfiles } from "../../../prisma/seed/dev-sso-profiles";
 export async function signInWithSso(formData: FormData) {
   await rememberChoiceFrom(formData);
   const result = await auth.api.signInSocial({
-    body: { provider: SSO_PROVIDER_ID, callbackURL: "/" },
+    body: { provider: SSO_PROVIDER_ID, callbackURL: safeCallbackUrl(formData.get("callbackURL")) },
     headers: await headers(),
   });
   if (!result.url) {
@@ -24,10 +25,13 @@ export async function signInWithSso(formData: FormData) {
   redirect(result.url as Route);
 }
 
-// The sign-in page's "Developer sign-in" button: same BU choice, then the dev page.
+// The sign-in page's "Developer sign-in" button: same BU choice, then the dev page,
+// which passes the callbackURL on in the same way.
 export async function goToDevSignIn(formData: FormData) {
   await rememberChoiceFrom(formData);
-  redirect("/dev-sign-in");
+  const callbackUrl = safeCallbackUrl(formData.get("callbackURL"));
+  // `as Route`: typed routes can't check a link built at runtime.
+  redirect(signInPageUrl("/dev-sign-in", callbackUrl) as Route);
 }
 
 async function rememberChoiceFrom(formData: FormData) {
@@ -48,7 +52,7 @@ export async function signInAsDevProfile(formData: FormData) {
   if (devProfile.businessUnit) {
     businessUnitId = await findBusinessUnitIdByName(devProfile.businessUnit);
   }
-  await devSignIn(devProfile.profile, businessUnitId);
+  await devSignIn(devProfile.profile, formData.get("callbackURL"), businessUnitId);
 }
 
 // Dev sign-in as a profile typed into the form. Groups are comma-separated.
@@ -62,15 +66,21 @@ export async function signInAsCustomProfile(formData: FormData) {
     email: formData.get("email"),
     formalGroups: groups.map((group) => group.trim()).filter(Boolean),
   });
-  await devSignIn(profile);
+  await devSignIn(profile, formData.get("callbackURL"));
 }
 
 // The endpoint refuses (404) unless dev sign-in is enabled, so this can't work in production.
-async function devSignIn(profile: SsoProfile, profileBusinessUnitId?: string) {
+// Afterwards it goes to the page the form asked for (callbackURL), if it's on this site.
+async function devSignIn(
+  profile: SsoProfile,
+  callbackUrl: FormDataEntryValue | null,
+  profileBusinessUnitId?: string,
+) {
   const chosenOnSignInPage = await takeBusinessUnitChoice();
   await auth.api.devSignIn({
     body: { profile, requestedBusinessUnitId: chosenOnSignInPage ?? profileBusinessUnitId },
     headers: await headers(),
   });
-  redirect("/");
+  // `as Route`: typed routes can't check a path that came from the form.
+  redirect(safeCallbackUrl(callbackUrl) as Route);
 }

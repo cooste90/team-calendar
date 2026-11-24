@@ -18,7 +18,7 @@ import {
 } from "./slots";
 
 // A clashing booking and the exact half-days that clash.
-export type Conflict = { booking: Booking; overlap: SlotRange };
+type Conflict = { booking: Booking; overlap: SlotRange };
 
 // `ignoreId` skips the booking being edited, so it doesn't clash with itself.
 export function findConflicts(

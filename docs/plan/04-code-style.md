@@ -14,6 +14,7 @@ The product owner is a junior developer who will **read, maintain and extend thi
    3. a library already in the stack;
    4. a new library, only when it saves a lot of code. Write down why in `progress.md`.
 6. **Simple data flow.** Server components load data. Server actions change data and then call `refresh()`. There is no client-side data cache, and data isn't copied into client state.
+   - **A form that shows it's busy** (`useTransition`'s `pending`) runs its action inside `startTransition(async () => …)`. State updates *after* the `await` go in a second `startTransition(() => …)`. React 19 doesn't count updates after an `await` as part of the first transition, so without it the result (an error, a clash) shows while the buttons still look busy. Updates that don't touch a busy form, like a screen-reader announcement or a toast, don't need it.
 7. **Plain names, plain types.** Use full words (`booking`, `startDate`), not abbreviations. Types are plain object types and string unions. Avoid generics, branded types, overloads, conditional types and type gymnastics unless there's no simpler way.
 8. **Small files, one job each.** A file does one thing and is named after it. Aim for under ~200 lines per file, and under ~40 lines per function. Split by feature, not by technical layer.
 9. **Comments say *why*, not *what*.** Add a short comment wherever the reason isn't obvious (a business rule, a workaround). Each file in `src/domain` and `src/server/services` starts with one or two lines saying what it's for. Don't write comments that repeat the code.

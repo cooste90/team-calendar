@@ -26,12 +26,15 @@ export function DetailsTab({ profile, onSaved }: Props) {
     }
     startTransition(async () => {
       const result = await updatePreferredNameAction({ userId: profile.id, preferredName: name });
-      if (!result.ok) {
-        setError(result.error.message);
-        return;
-      }
-      setError(null);
-      onSaved(checked.data ? "Preferred first name saved." : "Preferred first name cleared.");
+      // Updates after an await go in their own startTransition (see 04-code-style.md).
+      startTransition(() => {
+        if (!result.ok) {
+          setError(result.error.message);
+          return;
+        }
+        setError(null);
+        onSaved(checked.data ? "Preferred first name saved." : "Preferred first name cleared.");
+      });
     });
   }
 

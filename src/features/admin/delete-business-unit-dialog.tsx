@@ -1,19 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import { formatPeople } from "@/domain/format";
 import { deleteBusinessUnitAction } from "@/server/actions/delete-business-unit";
 import type { AdminBusinessUnit } from "@/server/queries/business-units";
+import { ConfirmDeleteDialog } from "./confirm-delete-dialog";
 
 type Props = {
   unit: AdminBusinessUnit;
@@ -25,50 +15,18 @@ type Props = {
 // Deleting a business unit (spec §1.3): only once nobody is in it. While people are, it
 // says so instead of offering Delete. Its empty teams go with it.
 export function DeleteBusinessUnitDialog({ unit, onCancel, onDeleted, onCloseAutoFocus }: Props) {
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
   const empty = unit.peopleCount === 0;
 
-  function confirm() {
-    startTransition(async () => {
-      const result = await deleteBusinessUnitAction({ id: unit.id });
-      if (!result.ok) {
-        setError(result.error.message);
-        return;
-      }
-      onDeleted(`${unit.name} deleted.`);
-    });
-  }
-
   return (
-    <AlertDialog
-      open
-      onOpenChange={(open) => {
-        if (!open) onCancel();
-      }}
-    >
-      <AlertDialogContent onCloseAutoFocus={onCloseAutoFocus}>
-        <AlertDialogHeader>
-          <AlertDialogTitle>
-            {empty ? `Delete ${unit.name}?` : `${unit.name} can't be deleted yet`}
-          </AlertDialogTitle>
-          <AlertDialogDescription>{whatHappens(unit)}</AlertDialogDescription>
-        </AlertDialogHeader>
-        {error && (
-          <p role="alert" className="text-destructive text-sm">
-            {error}
-          </p>
-        )}
-        <AlertDialogFooter>
-          <AlertDialogCancel>{empty ? "Cancel" : "OK"}</AlertDialogCancel>
-          {empty && (
-            <Button variant="destructive" disabled={pending} onClick={confirm}>
-              Delete business unit
-            </Button>
-          )}
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <ConfirmDeleteDialog
+      title={empty ? `Delete ${unit.name}?` : `${unit.name} can't be deleted yet`}
+      description={whatHappens(unit)}
+      confirmLabel={empty ? "Delete business unit" : undefined}
+      onConfirm={() => deleteBusinessUnitAction({ id: unit.id })}
+      onDeleted={() => onDeleted(`${unit.name} deleted.`)}
+      onCancel={onCancel}
+      onCloseAutoFocus={onCloseAutoFocus}
+    />
   );
 }
 

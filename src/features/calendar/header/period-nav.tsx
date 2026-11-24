@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { IconButton } from "@/components/icon-button";
 import { NativeSelect } from "@/components/native-select";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,14 +31,13 @@ export function PeriodNav({
 
   return (
     <>
-      <Button
+      <IconButton
         variant="outline"
-        size="icon"
-        aria-label={`Previous ${view}`}
+        label={`Previous ${view}`}
         onClick={() => onNavigate(shiftPeriod(view, anchor, -1))}
       >
         <ChevronLeftIcon aria-hidden="true" />
-      </Button>
+      </IconButton>
       <NativeSelect
         aria-label="Month"
         value={month}
@@ -64,14 +64,13 @@ export function PeriodNav({
           </option>
         ))}
       </NativeSelect>
-      <Button
+      <IconButton
         variant="outline"
-        size="icon"
-        aria-label={`Next ${view}`}
+        label={`Next ${view}`}
         onClick={() => onNavigate(shiftPeriod(view, anchor, 1))}
       >
         <ChevronRightIcon aria-hidden="true" />
-      </Button>
+      </IconButton>
       <Button variant="outline" onClick={() => onNavigate(null)}>
         Today
       </Button>

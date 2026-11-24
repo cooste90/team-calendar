@@ -10,7 +10,7 @@ export type EventDialogTarget =
   | { mode: "edit"; bookingId: string };
 
 // The popover on a grid cell: the cell menu (bookingId null) or one booking's details.
-export type GridPopoverTarget = { personId: string; date: CalendarDate; bookingId: string | null };
+type GridPopoverTarget = { personId: string; date: CalendarDate; bookingId: string | null };
 
 // The calendar's one client-side store (architecture §1) for UI state that several
 // components share. Data from the server never goes in here, only ids.

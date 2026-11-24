@@ -70,7 +70,7 @@ test("an admin puts a new person in a team, then deletes them, which signs them 
 
   // Their session went with them.
   await newPerson.reload();
-  await expect(newPerson).toHaveURL("/sign-in");
+  await expect(newPerson.getByRole("heading", { name: "Your session has ended" })).toBeVisible();
 });
 
 test("a super admin moves someone to another BU, where they start in Unassigned", async ({

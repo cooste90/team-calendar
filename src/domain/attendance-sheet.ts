@@ -76,7 +76,7 @@ export function sheetRows(
   return rows;
 }
 
-export type RowHeights = { team: number; person: number };
+type RowHeights = { team: number; person: number };
 
 // Splits the rows into pages (or columns) of a given height. A team's header never ends a
 // page on its own: it moves to the next page unless at least 2 of its people fit after it.

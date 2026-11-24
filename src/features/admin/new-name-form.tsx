@@ -1,19 +1,23 @@
 "use client";
 
 import { type FormEvent, type Ref, useId, useState, useTransition } from "react";
+import type { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { teamNameSchema } from "@/lib/schemas/team";
-import { createTeamAction } from "@/server/actions/create-team";
+import type { ActionResult } from "@/server/authed-action";
 
 type Props = {
-  businessUnitId: string;
-  inputRef: Ref<HTMLInputElement>; // the Teams tab focuses it after a delete
-  onAnnounce: (message: string) => void;
+  label: string; // "New team"
+  buttonLabel: string; // "Add team"
+  schema: z.ZodType<string>; // the name rules, shared with the server action
+  inputRef: Ref<HTMLInputElement>; // the tab focuses it after a delete
+  onSave: (name: string) => Promise<ActionResult<unknown>>; // runs the create action
+  onAdded: (name: string) => void; // e.g. to read out "Legal added."
 };
 
-// The New team form (spec §9). The new team goes at the end of the list.
-export function NewTeamForm({ businessUnitId, inputRef, onAnnounce }: Props) {
+// The "New team" and "New business unit" forms at the top of their admin tabs (spec §9).
+// The box empties once the new one is saved.
+export function NewNameForm({ label, buttonLabel, schema, inputRef, onSave, onAdded }: Props) {
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -21,27 +25,30 @@ export function NewTeamForm({ businessUnitId, inputRef, onAnnounce }: Props) {
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const checked = teamNameSchema.safeParse(name);
+    const checked = schema.safeParse(name);
     if (!checked.success) {
       setError(checked.error.issues[0].message);
       return;
     }
     startTransition(async () => {
-      const result = await createTeamAction({ businessUnitId, name: checked.data });
-      if (!result.ok) {
-        setError(result.error.message);
-        return;
-      }
-      setError(null);
-      setName("");
-      onAnnounce(`${checked.data} added at the end of the list.`);
+      const result = await onSave(checked.data);
+      // Updates after an await go in their own startTransition (see 04-code-style.md).
+      startTransition(() => {
+        if (!result.ok) {
+          setError(result.error.message);
+          return;
+        }
+        setError(null);
+        setName("");
+        onAdded(checked.data);
+      });
     });
   }
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-2">
       <label htmlFor={id} className="font-semibold text-[0.8125rem]">
-        New team
+        {label}
       </label>
       <div className="flex gap-2">
         <Input
@@ -55,7 +62,7 @@ export function NewTeamForm({ businessUnitId, inputRef, onAnnounce }: Props) {
           className="h-9"
         />
         <Button type="submit" disabled={pending} className="h-9">
-          {pending ? "Adding…" : "Add team"}
+          {pending ? "Adding…" : buttonLabel}
         </Button>
       </div>
       {error && (

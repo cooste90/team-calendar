@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import axe from "axe-core";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
@@ -117,8 +117,10 @@ describe("adding a public holiday", () => {
       name: "Founders' Day",
       date: "2027-01-19",
     });
-    expect(add).toHaveAccessibleDescription(
-      "This applies to every business unit: 214 people will get this holiday. 37 existing bookings will be replaced (parental leave is kept).",
+    await waitFor(() =>
+      expect(add).toHaveAccessibleDescription(
+        "This applies to every business unit: 214 people will get this holiday. 37 existing bookings will be replaced (parental leave is kept).",
+      ),
     );
     expect(savePublicHolidayChangeAction).not.toHaveBeenCalled();
 
@@ -128,8 +130,10 @@ describe("adding a public holiday", () => {
       name: "Founders' Day",
       date: "2027-01-19",
     });
-    expect(within(dialog).getByRole("status")).toHaveTextContent(
-      "Founders' Day added for 214 people.",
+    await waitFor(() =>
+      expect(within(dialog).getByRole("status")).toHaveTextContent(
+        "Founders' Day added for 214 people.",
+      ),
     );
   });
 
@@ -160,7 +164,9 @@ describe("adding a public holiday", () => {
     await typeName(events, "Another");
     await typeDate(events, "25/12/2026");
     await events.click(screen.getByRole("button", { name: "Continue" }));
-    expect(screen.getByRole("alert")).toHaveTextContent("There's already a public holiday on");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "There's already a public holiday on",
+    );
   });
 });
 
@@ -176,8 +182,10 @@ describe("editing a public holiday", () => {
       name: "Boxing Day",
       date: "2026-12-29",
     });
-    expect(screen.getByRole("dialog", { name: "Edit Boxing Day" })).toHaveAccessibleDescription(
-      /214 people will have it moved to the new date/,
+    await waitFor(() =>
+      expect(screen.getByRole("dialog", { name: "Edit Boxing Day" })).toHaveAccessibleDescription(
+        /214 people will have it moved to the new date/,
+      ),
     );
   });
 
@@ -187,11 +195,17 @@ describe("editing a public holiday", () => {
     await typeName(events, "Boxing Day (substitute)");
     await events.click(screen.getByRole("button", { name: "Continue" }));
     const edit = screen.getByRole("dialog", { name: "Edit Boxing Day" });
-    expect(edit).toHaveAccessibleDescription(
-      "This applies to every business unit: the holiday is renamed on everyone's calendar.",
+    await waitFor(() =>
+      expect(edit).toHaveAccessibleDescription(
+        "This applies to every business unit: the holiday is renamed on everyone's calendar.",
+      ),
     );
     await events.click(within(edit).getByRole("button", { name: "Save changes" }));
-    expect(within(dialog).getByRole("status")).toHaveTextContent("Boxing Day (substitute) saved.");
+    await waitFor(() =>
+      expect(within(dialog).getByRole("status")).toHaveTextContent(
+        "Boxing Day (substitute) saved.",
+      ),
+    );
   });
 
   it("Back returns to the form without saving", async () => {
@@ -218,7 +232,9 @@ describe("deleting a public holiday", () => {
 
     await events.click(within(confirm).getByRole("button", { name: "Delete holiday" }));
     expect(savePublicHolidayChangeAction).toHaveBeenCalledWith({ kind: "delete", id: "christmas" });
-    expect(within(dialog).getByRole("status")).toHaveTextContent("Christmas Day deleted.");
+    await waitFor(() =>
+      expect(within(dialog).getByRole("status")).toHaveTextContent("Christmas Day deleted."),
+    );
     expect(screen.getByRole("button", { name: "Add public holiday" })).toHaveFocus();
   });
 });

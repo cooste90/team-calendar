@@ -2,7 +2,7 @@
 // sending, and the server action checks again.
 import { z } from "zod";
 
-export const PREFERRED_NAME_MAX_LENGTH = 40;
+const PREFERRED_NAME_MAX_LENGTH = 40;
 
 // Optional. Letters in any alphabet (with accents), spaces, hyphens and apostrophes.
 // An empty value clears it, so the SSO first name shows again.

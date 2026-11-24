@@ -59,7 +59,7 @@ Read this together with `00-product-spec.md`. This file says **how** the app is 
 │  │  ├─ api/export/attendance/route.ts       # GET PDF
 │  │  ├─ api/health/route.ts
 │  │  ├─ dev/design-system/page.tsx           # dev-only component gallery (and the booking form demo until T25)
-│  │  ├─ layout.tsx, globals.css, error.tsx, not-found.tsx, forbidden.tsx
+│  │  ├─ layout.tsx, globals.css, error.tsx, not-found.tsx, unauthorized.tsx
 │  ├─ components/ui/                          # shadcn
 │  ├─ components/                             # shared app components (brand/, leave-chip, segmented-control, live-region…)
 │  ├─ features/
@@ -321,13 +321,14 @@ It is called from the Better Auth sign-in hook (OAuth path) **and** from the dev
 - Lifetime 12 hours (`expiresIn`), with no sliding refresh beyond one working day (`updateAge` 1 hour, capped at 12 hours). Each new sign-in recomputes the role.
 - `proxy.ts` only does an **optimistic** redirect to `/sign-in` when there is no session cookie. Real checks happen in `requireUser()`, which every page, query and action calls, following `node_modules/next/dist/docs/01-app/02-guides/authentication.md`.
 - `requireUser()` also redirects users with no BU to `/welcome`.
+- **When a session has ended** (T34), `requireUser()` calls Next's `unauthorized()` (the `authInterrupts` config). A page load or a server action then shows `app/unauthorized.tsx`, "Your session has ended", whose "Sign in again" button carries the current URL as `callbackURL`. The proxy's redirect for a request with no cookie carries it too, and both sign-in paths (SSO and dev) return there afterwards. Only local paths are accepted (`src/lib/callback-url.ts`).
 
 ### 5.5 As built (T11)
 - **SSO sync happens before the session exists.** `genericOAuth`'s `mapProfileToUser` calls `mapSsoClaims` and then `syncSsoProfile`, so the user row (with every required column) exists before Better Auth looks for it. Better Auth then links the SSO account to that user (`trustedProviders: ["sso"]`). An after-sign-in hook can't work here: Better Auth would first try to create the user itself without `ssoId`, `employeeNumber` and so on.
 - **Sessions are never extended.** `expiresIn` is 12 hours with `disableSessionRefresh: true`. There is no `updateAge`, because a refreshing session could outlive a working day and keep an old role.
 - **Dev sign-in is a Better Auth plugin endpoint**, `POST /api/auth/dev-sign-in` (`src/server/dev-sign-in-plugin.ts`). It uses Better Auth's `internalAdapter.createSession` and `setSessionCookie`, and throws a 404 unless `devSignInEnabled` (`src/lib/env.ts`). The `/dev-sign-in` page calls it through server actions in `src/server/actions/sign-in.ts`, and `nextCookies()` sets the cookie.
-- **`proxy.ts` answers API calls with 401** (pages get a redirect to `/sign-in`) when there's no session cookie. Public paths: `/sign-in`, `/dev-sign-in`, `/dev/*` (the gallery), `/api/auth`, `/api/health`, and Next's static files.
-- `getCurrentUser()` reads `role`, `businessUnitId` and `teamId` from the Better Auth session (`user.additionalFields`), so there's no extra query. `requireRole()` throws `ForbiddenError`.
+- **`proxy.ts` answers API calls with 401** (pages get a redirect to `/sign-in?callbackURL=…`; server actions go through, so `requireUser()` can show "Your session has ended") when there's no session cookie. Public paths: `/sign-in`, `/dev-sign-in`, `/dev/*` (the gallery), `/api/auth`, `/api/health`, and Next's static files.
+- `getCurrentUser()` reads `role`, `businessUnitId` and `teamId` from the Better Auth session (`user.additionalFields`), so there's no extra query. Permission checks use `src/domain/permissions.ts` (T34 removed the unused `requireRole()`).
 
 ---
 

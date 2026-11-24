@@ -1,10 +1,12 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
+import { businessUnitNameSchema } from "@/lib/schemas/business-unit";
+import { createBusinessUnitAction } from "@/server/actions/create-business-unit";
 import type { AdminBusinessUnit } from "@/server/queries/business-units";
 import { BusinessUnitRow } from "./business-unit-row";
 import { DeleteBusinessUnitDialog } from "./delete-business-unit-dialog";
-import { NewBusinessUnitForm } from "./new-business-unit-form";
+import { NewNameForm } from "./new-name-form";
 
 type Props = {
   units: AdminBusinessUnit[]; // by name, hidden ones included
@@ -27,7 +29,15 @@ export function BusinessUnitsTab({ units, onAnnounce }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      <NewBusinessUnitForm inputRef={newInput} onAnnounce={onAnnounce} />
+      {/* A new BU starts with no teams and nobody in it. */}
+      <NewNameForm
+        label="New business unit"
+        buttonLabel="Add business unit"
+        schema={businessUnitNameSchema}
+        inputRef={newInput}
+        onSave={(name) => createBusinessUnitAction({ name })}
+        onAdded={(name) => onAnnounce(`${name} added.`)}
+      />
 
       <section aria-labelledby={`${id}-heading`} className="flex flex-col gap-2">
         <div>

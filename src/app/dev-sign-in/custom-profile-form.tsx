@@ -12,11 +12,12 @@ const fields = [
 ];
 
 // Sign in as any profile you type in, e.g. to test a new admin group.
-export function CustomProfileForm() {
+export function CustomProfileForm({ callbackUrl }: { callbackUrl: string }) {
   return (
     <section className="flex flex-col gap-3">
       <h2 className="font-semibold text-lg">Custom profile</h2>
       <form action={signInAsCustomProfile} className="flex flex-col gap-3">
+        <input type="hidden" name="callbackURL" value={callbackUrl} />
         {fields.map((field) => (
           <Field key={field.name}>
             <FieldLabel htmlFor={field.name}>{field.label}</FieldLabel>

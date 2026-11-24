@@ -1,11 +1,11 @@
-// Who is signed in. Every page, query and action calls requireUser (or requireRole)
-// first; the proxy's cookie check is only a shortcut (architecture §5.4).
+// Who is signed in. Every page, query and action calls requireUser first, and checks
+// permissions with src/domain/permissions.ts; the proxy's cookie check is only a
+// shortcut (architecture §5.4).
 import "server-only";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { redirect, unauthorized } from "next/navigation";
 import { cache } from "react";
-import { ForbiddenError } from "@/domain/errors";
-import type { Actor, Role } from "@/domain/permissions";
+import type { Actor } from "@/domain/permissions";
 import { auth } from "./auth";
 
 // The signed-in user, or null. businessUnitId is null until they choose a BU.
@@ -20,21 +20,16 @@ export const getCurrentUser = cache(async () => {
 
 // cache() also means every caller in a request gets the same Actor object, so queries
 // cached by their arguments (getBusinessUnitBySlug, getProfile) are found again.
+// No session (it has ended, or the person was deleted) shows "Your session has ended"
+// in place of the page, or of a server action's result (app/unauthorized.tsx). Opening a
+// page with no session cookie at all goes to /sign-in instead (the proxy does that).
 export const requireUser = cache(async (): Promise<Actor> => {
   const user = await getCurrentUser();
   if (!user) {
-    redirect("/sign-in");
+    unauthorized();
   }
   if (!user.businessUnitId) {
     redirect("/welcome");
   }
   return { id: user.id, role: user.role, businessUnitId: user.businessUnitId, teamId: user.teamId };
 });
-
-export async function requireRole(...roles: Role[]): Promise<Actor> {
-  const actor = await requireUser();
-  if (!roles.includes(actor.role)) {
-    throw new ForbiddenError("You don't have permission to do that.");
-  }
-  return actor;
-}

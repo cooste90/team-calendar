@@ -4,11 +4,13 @@ import { PencilIcon, Trash2Icon } from "lucide-react";
 import { startTransition, useOptimistic, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/icon-button";
 import { formatPeople, formatTeams } from "@/domain/format";
+import { businessUnitNameSchema } from "@/lib/schemas/business-unit";
+import { renameBusinessUnitAction } from "@/server/actions/rename-business-unit";
 import { setBusinessUnitHiddenAction } from "@/server/actions/set-business-unit-hidden";
 import type { AdminBusinessUnit } from "@/server/queries/business-units";
-import { RenameBusinessUnitForm } from "./rename-business-unit-form";
+import { RenameForm } from "./rename-form";
 
 type Props = {
   unit: AdminBusinessUnit;
@@ -48,7 +50,12 @@ export function BusinessUnitRow({ unit, hiddenHintId, onDelete, onAnnounce }: Pr
   if (renaming) {
     return (
       <li className="flex border-b py-2.5 last:border-b-0">
-        <RenameBusinessUnitForm unit={unit} onDone={finishRenaming} />
+        <RenameForm
+          currentName={unit.name}
+          schema={businessUnitNameSchema}
+          onSave={(name) => renameBusinessUnitAction({ id: unit.id, name })}
+          onDone={finishRenaming}
+        />
       </li>
     );
   }
@@ -71,24 +78,20 @@ export function BusinessUnitRow({ unit, hiddenHintId, onDelete, onAnnounce }: Pr
         Hidden<span className="sr-only"> ({unit.name})</span>
       </label>
       <div className="flex gap-1">
-        <Button
+        <IconButton
           ref={renameButton}
-          variant="ghost"
-          size="icon"
-          aria-label={`Rename ${unit.name}`}
+          label={`Rename ${unit.name}`}
           onClick={() => setRenaming(true)}
         >
           <PencilIcon aria-hidden="true" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={`Delete ${unit.name}`}
+        </IconButton>
+        <IconButton
+          label={`Delete ${unit.name}`}
           onClick={() => onDelete(unit)}
           className="text-destructive hover:text-destructive"
         >
           <Trash2Icon aria-hidden="true" />
-        </Button>
+        </IconButton>
       </div>
     </li>
   );

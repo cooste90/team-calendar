@@ -1,43 +1,47 @@
 "use client";
 
 import { type FormEvent, useId, useState, useTransition } from "react";
+import type { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { businessUnitNameSchema } from "@/lib/schemas/business-unit";
-import { renameBusinessUnitAction } from "@/server/actions/rename-business-unit";
-import type { AdminBusinessUnit } from "@/server/queries/business-units";
+import type { ActionResult } from "@/server/authed-action";
 
 type Props = {
-  unit: AdminBusinessUnit;
+  currentName: string;
+  schema: z.ZodType<string>; // the name rules, shared with the server action
+  onSave: (name: string) => Promise<ActionResult<unknown>>; // runs the rename action
   onDone: (message: string | null) => void; // the message to read out, or null if cancelled
 };
 
-// A business unit's row while it's being renamed. Enter saves; Esc or Cancel keeps the old name.
-// data-renaming tells the admin dialog not to close on that Esc.
-export function RenameBusinessUnitForm({ unit, onDone }: Props) {
-  const [name, setName] = useState(unit.name);
+// A team's or business unit's row while it's being renamed. Enter saves; Esc or Cancel
+// keeps the old name. data-renaming tells the admin dialog not to close on that Esc.
+export function RenameForm({ currentName, schema, onSave, onDone }: Props) {
+  const [name, setName] = useState(currentName);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const id = useId();
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const checked = businessUnitNameSchema.safeParse(name);
+    const checked = schema.safeParse(name);
     if (!checked.success) {
       setError(checked.error.issues[0].message);
       return;
     }
-    if (checked.data === unit.name) {
+    if (checked.data === currentName) {
       onDone(null);
       return;
     }
     startTransition(async () => {
-      const result = await renameBusinessUnitAction({ id: unit.id, name: checked.data });
-      if (!result.ok) {
-        setError(result.error.message);
-        return;
-      }
-      onDone(`${unit.name} renamed to ${checked.data}.`);
+      const result = await onSave(checked.data);
+      // Updates after an await go in their own startTransition (see 04-code-style.md).
+      startTransition(() => {
+        if (result.ok) {
+          onDone(`${currentName} renamed to ${checked.data}.`);
+        } else {
+          setError(result.error.message);
+        }
+      });
     });
   }
 
@@ -50,7 +54,7 @@ export function RenameBusinessUnitForm({ unit, onDone }: Props) {
         <Input
           autoFocus
           onFocus={(event) => event.target.select()}
-          aria-label={`New name for ${unit.name}`}
+          aria-label={`New name for ${currentName}`}
           value={name}
           onChange={(event) => setName(event.target.value)}
           onKeyDown={(event) => {

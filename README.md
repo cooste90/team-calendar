@@ -14,7 +14,7 @@ A team availability calendar showing who's in and who's off. The full plan is in
 | 5 · Profile and user menu | T26–T28: user menu and theme, profile dialog, leave history | Done |
 | 6 · Admin | T29–T32: teams, users, public holidays, business units | Done |
 | 7 · Export | T33: PDF attendance sheets | Done |
-| 8 · Hardening | T34–T37: states and polish, accessibility audit, security, release | Not started. Next: T34 |
+| 8 · Hardening | T34–T37: states and polish, accessibility audit, security, release | T34 done. Next: T35 |
 
 What you can open today:
 - http://localhost:3000/sign-in: the sign-in page. With more than one business unit it asks first-time users which one they belong to. "Developer sign-in" takes you to the fake sign-in (dev only).
@@ -23,6 +23,7 @@ What you can open today:
 - http://localhost:3000/dev/design-system: every colour, leave chip and component, in light and dark (dev only)
 - **Export PDF** in the calendar header (admins; in More on a narrow screen): a printable attendance sheet for today, this week or next week, for the business unit on screen. It comes from http://localhost:3000/api/export/attendance?bu=west-operations&range=this-week.
 - http://localhost:3000/api/health: checks the app can reach the database
+- Any address that doesn't exist (e.g. http://localhost:3000/sign-in/nothing) shows "Page not found". When a session ends (after 12 hours), the next page load or save shows "Your session has ended", and "Sign in again" comes back to the same page. Opening a link while signed out also comes back to it after signing in. If a page fails to load, "Something went wrong" offers Try again and a reference for support. Icon-only buttons show what they do in a tooltip.
 
 ## Where the code lives
 

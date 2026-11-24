@@ -215,9 +215,12 @@
   --shadow-popover: var(--popover-shadow);
 }
 
-/* Motion (design system §6): one easing curve, and the booking "grow" animation. */
+/* Motion (design system §6): one easing curve, and the booking "grow" animation. Every
+   `transition` class (button hovers and presses, chevrons…) runs 150ms on that curve. */
 @theme {
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: var(--ease-out);
   --animate-grow: grow 700ms var(--ease-out) both;
 
   @keyframes grow {

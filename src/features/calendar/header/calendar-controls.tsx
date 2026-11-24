@@ -3,6 +3,7 @@
 import { SegmentedControl } from "@/components/segmented-control";
 import { type CalendarDate, shiftPeriod, type View } from "@/domain/dates";
 import { setViewPreference } from "@/server/actions/set-view-preference";
+import { scrollToToday } from "../grid/cell-elements";
 import { useCalendarParams } from "../use-calendar-params";
 import { BusinessUnitSwitcher } from "./business-unit-switcher";
 import { useNavigationTransition } from "./navigation-transition";
@@ -36,6 +37,8 @@ export function CalendarControls({
 
   function goTo(date: CalendarDate | null) {
     setParams({ date });
+    // Already showing today's period? Nothing reloads, so scroll back to today here.
+    if (date === null) scrollToToday();
   }
 
   // The view is also remembered in a cookie, so the next visit opens in it (spec §2.2).

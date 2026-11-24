@@ -39,25 +39,30 @@ export function PatternTab({ profile, onSaved }: Props) {
     event.preventDefault();
     startTransition(async () => {
       const result = await updateWorkingPatternAction({ userId: profile.id, pattern: draft });
-      if (!result.ok) {
-        setProblem(result.error.message);
-        return;
-      }
-      setProblem(null);
-      onSaved(`Working pattern saved. It applies from ${startDate}.`);
+      // Updates after an await go in their own startTransition (see 04-code-style.md).
+      startTransition(() => {
+        if (!result.ok) {
+          setProblem(result.error.message);
+          return;
+        }
+        setProblem(null);
+        onSaved(`Working pattern saved. It applies from ${startDate}.`);
+      });
     });
   }
 
   function cancelPendingChange() {
     startTransition(async () => {
       const result = await cancelPendingPatternAction({ userId: profile.id });
-      if (!result.ok) {
-        setProblem(result.error.message);
-        return;
-      }
-      setProblem(null);
-      setDraft(profile.currentPattern);
-      onSaved("Pending change cancelled.");
+      startTransition(() => {
+        if (!result.ok) {
+          setProblem(result.error.message);
+          return;
+        }
+        setProblem(null);
+        setDraft(profile.currentPattern);
+        onSaved("Pending change cancelled.");
+      });
     });
   }
 

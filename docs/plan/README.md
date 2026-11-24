@@ -103,7 +103,7 @@ Size key: **S** ≈ small, under 300 lines changed · **M** ≈ 300–800 · **L
 - [x] [T33](tasks/T33-pdf-export.md) PDF attendance sheets · **L**
 
 ### Phase 8 — Hardening and release
-- [ ] [T34](tasks/T34-states-polish.md) Loading, empty, error and forbidden states; polish · **M**
+- [x] [T34](tasks/T34-states-polish.md) Loading, empty, error and forbidden states; polish · **M**
 - [ ] [T35](tasks/T35-accessibility-audit.md) Accessibility audit and fixes · **M**
 - [ ] [T36](tasks/T36-security-permissions.md) Security headers and permission-matrix tests · **M**
 - [ ] [T37](tasks/T37-release-readiness.md) Production build, Dockerfile, SSO porting guide, final QA · **M**

@@ -69,27 +69,30 @@ export function HolidayFormDialog({ holiday, today, onClose, onSaved }: Props) {
     }
     startTransition(async () => {
       const result = await previewPublicHolidayChangeAction(change);
-      if (!result.ok) {
-        setError(result.error.message);
-        return;
-      }
-      setError(null);
-      setReview({ change, name: checked.data, text: formatHolidayImpact(kind, result.data) });
+      // Updates after an await go in their own startTransition (see 04-code-style.md).
+      startTransition(() => {
+        if (!result.ok) {
+          setError(result.error.message);
+          return;
+        }
+        setError(null);
+        setReview({ change, name: checked.data, text: formatHolidayImpact(kind, result.data) });
+      });
     });
   }
 
   function handleConfirm(confirmed: Review) {
     startTransition(async () => {
       const result = await savePublicHolidayChangeAction(confirmed.change);
-      if (!result.ok) {
-        setError(result.error.message);
-        return;
-      }
-      if (holiday) {
-        onSaved(`${confirmed.name} saved.`);
-      } else {
-        onSaved(`${confirmed.name} added for ${formatPeople(result.data.people)}.`);
-      }
+      startTransition(() => {
+        if (!result.ok) {
+          setError(result.error.message);
+        } else if (holiday) {
+          onSaved(`${confirmed.name} saved.`);
+        } else {
+          onSaved(`${confirmed.name} added for ${formatPeople(result.data.people)}.`);
+        }
+      });
     });
   }
 

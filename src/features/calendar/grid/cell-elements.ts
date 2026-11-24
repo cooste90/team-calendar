@@ -26,6 +26,20 @@ export function focusGridCell(cell: CellPosition) {
   element.scrollIntoView({ block: "nearest", inline: "nearest" });
 }
 
+// Scrolls today's column into view, in the middle with the days around it, when a month
+// is wider than the window. Smoothly, unless motion is turned down. Called when today's
+// header appears and when "Today" is chosen.
+export function scrollToToday() {
+  const header = document.querySelector('[role="grid"] [role="columnheader"][data-today]');
+  if (!header) return;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  header.scrollIntoView({
+    block: "nearest",
+    inline: "center",
+    behavior: reduceMotion ? "auto" : "smooth",
+  });
+}
+
 // Puts focus back on the cell the person was last on, when a popup over the grid closes
 // (accessibility §1).
 export function focusLastCell() {

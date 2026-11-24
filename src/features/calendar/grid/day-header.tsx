@@ -1,6 +1,7 @@
 import { cn } from "cn";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { GridColumn } from "@/domain/grid-model-types";
+import { scrollToToday } from "./cell-elements";
 
 type RowProps = { columns: GridColumn[]; template: string; compact: boolean };
 
@@ -25,6 +26,12 @@ export function DayHeaderRow({ columns, template, compact }: RowProps) {
   );
 }
 
+// Today's header scrolls into view as it appears, so a month wider than the window
+// opens on today, and so does going back to today's month.
+function scrollIntoViewWhenShown(element: HTMLElement | null) {
+  if (element) scrollToToday();
+}
+
 // One day at the top of the grid: "Thu" over "12", with today's date in a pill and a
 // public holiday's name in a small chip. Its aria-label gives screen readers the full
 // date instead ("Thursday 12 November, today").
@@ -32,6 +39,7 @@ function DayHeader({ column, compact }: { column: GridColumn; compact: boolean }
   const { header } = column;
   return (
     <div
+      ref={column.isToday ? scrollIntoViewWhenShown : undefined}
       role="columnheader"
       aria-label={header.accessibleLabel}
       data-today={column.isToday || undefined}

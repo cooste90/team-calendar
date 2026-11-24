@@ -17,8 +17,14 @@ function TooltipProvider({
   );
 }
 
+// WestCal: each tooltip brings its own provider (as newer shadcn versions do), so a
+// tooltip works wherever it's rendered, tests included.
 function Tooltip({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
-  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />;
+  return (
+    <TooltipProvider>
+      <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+    </TooltipProvider>
+  );
 }
 
 function TooltipTrigger({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
@@ -49,4 +55,4 @@ function TooltipContent({
   );
 }
 
-export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };
+export { Tooltip, TooltipContent, TooltipTrigger };

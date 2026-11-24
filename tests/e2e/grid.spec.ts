@@ -26,3 +26,29 @@ test("the grid shows this week with today highlighted, then the month with bars"
     await testInfo.attach(`month-${theme}`, { body: screenshot, contentType: "image/png" });
   }
 });
+
+test("a month wider than the window opens on today, and Today scrolls back to it", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 600, height: 800 });
+  await signInAs(page, "Priya Shah");
+  await page.goto("/?view=month");
+  const today = page.getByRole("grid").locator("[role=columnheader][data-today]");
+  await expect(today).toBeInViewport();
+
+  // Scrolled to the far end of the same month, Today scrolls back.
+  await page.getByRole("region", { name: "Calendar" }).evaluate((box) => {
+    const header = box.querySelector<HTMLElement>("[data-today]");
+    const todayInFirstHalf = (header?.offsetLeft ?? 0) < box.scrollWidth / 2;
+    box.scrollLeft = todayInFirstHalf ? box.scrollWidth : 0;
+  });
+  await expect(today).not.toBeInViewport();
+  await page.getByRole("button", { name: "Today" }).click();
+  await expect(today).toBeInViewport();
+
+  // From another month, Today comes back to it too.
+  await page.getByRole("button", { name: "Next month" }).click();
+  await expect(today).toHaveCount(0);
+  await page.getByRole("button", { name: "Today" }).click();
+  await expect(today).toBeInViewport();
+});

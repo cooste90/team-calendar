@@ -15,9 +15,9 @@ export type LeaveType =
   | "PUBLIC_HOLIDAY";
 
 // How a type is counted in a person's leave history. null means it isn't counted.
-export type TallyWindow = "calendarYear" | "rolling12Months" | null;
+type TallyWindow = "calendarYear" | "rolling12Months" | null;
 
-export type LeaveTypeInfo = {
+type LeaveTypeInfo = {
   type: LeaveType;
   code: string;
   label: string;

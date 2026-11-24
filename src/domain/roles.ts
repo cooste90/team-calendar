@@ -2,7 +2,7 @@
 // There is no in-app way to grant roles: SSO groups and the env allowlist decide.
 import type { Role } from "./permissions";
 
-export type RoleSettings = {
+type RoleSettings = {
   ADMIN_GROUP_NAME: string;
   SUPER_ADMIN_EMPLOYEE_NUMBERS: string[];
 };

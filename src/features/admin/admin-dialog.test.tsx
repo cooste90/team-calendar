@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import axe from "axe-core";
 import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
@@ -157,8 +157,10 @@ describe("the Teams tab", () => {
     await events.type(input, "Commercial");
     await events.click(screen.getByRole("button", { name: "Add team" }));
     expect(createTeamAction).toHaveBeenCalledWith({ businessUnitId: "west", name: "Commercial" });
-    expect(within(dialog).getByRole("status")).toHaveTextContent(
-      "Commercial added at the end of the list.",
+    await waitFor(() =>
+      expect(within(dialog).getByRole("status")).toHaveTextContent(
+        "Commercial added at the end of the list.",
+      ),
     );
     expect(input).toHaveValue("");
 
@@ -167,7 +169,9 @@ describe("the Teams tab", () => {
       error: { code: "VALIDATION", message: "There's already a team called Legal." },
     });
     await events.type(input, "legal{Enter}");
-    expect(screen.getByRole("alert")).toHaveTextContent("There's already a team called Legal.");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "There's already a team called Legal.",
+    );
     expect(input).toHaveAccessibleDescription("There's already a team called Legal.");
   });
 
@@ -187,8 +191,10 @@ describe("the Teams tab", () => {
     await events.clear(input);
     await events.type(input, "Legal & Compliance{Enter}");
     expect(renameTeamAction).toHaveBeenCalledWith({ teamId: "legal", name: "Legal & Compliance" });
-    expect(within(dialog).getByRole("status")).toHaveTextContent(
-      "Legal renamed to Legal & Compliance.",
+    await waitFor(() =>
+      expect(within(dialog).getByRole("status")).toHaveTextContent(
+        "Legal renamed to Legal & Compliance.",
+      ),
     );
     expect(screen.getByRole("button", { name: "Rename Legal" })).toHaveFocus();
   });
@@ -234,8 +240,10 @@ describe("deleting a team", () => {
     await events.click(screen.getByRole("button", { name: "Delete Finance Operations" }));
     await events.click(screen.getByRole("button", { name: "Delete team" }));
     expect(deleteTeamAction).toHaveBeenCalledWith({ teamId: "finance" });
-    expect(within(dialog).getByRole("status")).toHaveTextContent(
-      "Finance Operations deleted. 4 people moved to Unassigned.",
+    await waitFor(() =>
+      expect(within(dialog).getByRole("status")).toHaveTextContent(
+        "Finance Operations deleted. 4 people moved to Unassigned.",
+      ),
     );
     expect(screen.queryByRole("alertdialog")).toBeNull();
   });

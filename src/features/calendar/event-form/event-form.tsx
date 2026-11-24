@@ -92,13 +92,16 @@ export function EventForm({
         replace,
         swap: swapDate && swapChanged ? { date: swapDate, value: swap } : null,
       });
-      setConflicts(outcome.conflicts);
-      setProblem(outcome.problem);
-      if (!outcome.saved) return;
-      const store = useCalendarStore.getState();
-      store.announce(savedMessage(bookingInput, booking !== null, subject.name, lookup));
-      store.setLastCreatedId(outcome.createdId);
-      onDone();
+      // Updates after an await go in their own startTransition (see 04-code-style.md).
+      startTransition(() => {
+        setConflicts(outcome.conflicts);
+        setProblem(outcome.problem);
+        if (!outcome.saved) return;
+        const store = useCalendarStore.getState();
+        store.announce(savedMessage(bookingInput, booking !== null, subject.name, lookup));
+        store.setLastCreatedId(outcome.createdId);
+        onDone();
+      });
     });
   }
 

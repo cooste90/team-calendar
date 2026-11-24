@@ -3,6 +3,7 @@
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
+import { IconButton } from "@/components/icon-button";
 import { Button } from "@/components/ui/button";
 import type { CalendarDate } from "@/domain/dates";
 import { formatLong } from "@/domain/format";
@@ -74,23 +75,16 @@ export function HolidaysTab({ holidays, today, onAnnounce }: Props) {
                   <span className="text-muted-foreground text-xs">{formatLong(holiday.date)}</span>
                 </div>
                 <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Edit ${holiday.name}`}
-                    onClick={() => setEditing(holiday)}
-                  >
+                  <IconButton label={`Edit ${holiday.name}`} onClick={() => setEditing(holiday)}>
                     <PencilIcon aria-hidden="true" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Delete ${holiday.name}`}
+                  </IconButton>
+                  <IconButton
+                    label={`Delete ${holiday.name}`}
                     onClick={() => setDeleting(holiday)}
                     className="text-destructive hover:text-destructive"
                   >
                     <Trash2Icon aria-hidden="true" />
-                  </Button>
+                  </IconButton>
                 </div>
               </li>
             ))}

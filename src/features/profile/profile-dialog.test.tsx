@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import axe from "axe-core";
 import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
@@ -105,7 +105,9 @@ describe("the Details tab", () => {
       userId: "tom",
       preferredName: "Tommy",
     });
-    expect(within(dialog).getByRole("status")).toHaveTextContent("Preferred first name saved.");
+    await waitFor(() =>
+      expect(within(dialog).getByRole("status")).toHaveTextContent("Preferred first name saved."),
+    );
   });
 
   it("an empty name clears it", async () => {
@@ -113,7 +115,9 @@ describe("the Details tab", () => {
     await events.clear(screen.getByRole("textbox", { name: /Preferred first name/ }));
     await events.click(screen.getByRole("button", { name: "Save" }));
     expect(updatePreferredNameAction).toHaveBeenCalledWith({ userId: "tom", preferredName: "" });
-    expect(within(dialog).getByRole("status")).toHaveTextContent("Preferred first name cleared.");
+    await waitFor(() =>
+      expect(within(dialog).getByRole("status")).toHaveTextContent("Preferred first name cleared."),
+    );
   });
 
   it.each([
@@ -161,8 +165,10 @@ describe("the Working pattern tab", () => {
       userId: "tom",
       pattern: FRIDAYS_OFF,
     });
-    expect(within(dialog).getByRole("status")).toHaveTextContent(
-      "Working pattern saved. It applies from Sunday 22 November.",
+    await waitFor(() =>
+      expect(within(dialog).getByRole("status")).toHaveTextContent(
+        "Working pattern saved. It applies from Sunday 22 November.",
+      ),
     );
   });
 
@@ -187,8 +193,10 @@ describe("the Working pattern tab", () => {
     );
     await events.click(screen.getByRole("button", { name: "Cancel pending change" }));
     expect(cancelPendingPatternAction).toHaveBeenCalledWith({ userId: "tom" });
+    await waitFor(() =>
+      expect(within(dialog).getByRole("status")).toHaveTextContent("Pending change cancelled."),
+    );
     expect(within(day("Friday")).getByRole("radio", { name: "Full day" })).toBeChecked();
-    expect(within(dialog).getByRole("status")).toHaveTextContent("Pending change cancelled.");
   });
 
   it("shows the server's message when saving fails", async () => {
@@ -199,7 +207,7 @@ describe("the Working pattern tab", () => {
     const { events } = open(tom, { profile: "me", tab: "pattern" });
     await events.click(within(day("Saturday")).getByRole("radio", { name: "Morning" }));
     await events.click(screen.getByRole("button", { name: /^Save/ }));
-    expect(screen.getByRole("alert")).toHaveTextContent(
+    expect(await screen.findByRole("alert")).toHaveTextContent(
       "You can't change this person's working days.",
     );
   });

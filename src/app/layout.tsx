@@ -1,8 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -20,6 +19,14 @@ export const metadata: Metadata = {
   description: "See who's in and who's off across your team.",
 };
 
+// The browser's own bar (on phones) matches the page background in each theme.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f6fa" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d0d13" },
+  ],
+};
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     // suppressHydrationWarning: next-themes sets the theme class on <html> before React loads.
@@ -35,9 +42,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           enableSystem
           disableTransitionOnChange
         >
-          <TooltipProvider>
-            <NuqsAdapter>{children}</NuqsAdapter>
-          </TooltipProvider>
+          <NuqsAdapter>{children}</NuqsAdapter>
         </ThemeProvider>
       </body>
     </html>

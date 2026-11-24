@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { computeRole } from "@/domain/roles";
+import { safeCallbackUrl } from "@/lib/callback-url";
 import { devSignInEnabled, env } from "@/lib/env";
 import { signInAsDevProfile } from "@/server/actions/sign-in";
 import { type DevSsoProfile, devSsoProfiles } from "../../../prisma/seed/dev-sso-profiles";
@@ -11,11 +12,13 @@ import { CustomProfileForm } from "./custom-profile-form";
 export const metadata: Metadata = { title: "Developer sign-in · WestCal" };
 
 // Sign in as a fake SSO profile (architecture §5.3). Hidden unless dev sign-in is enabled.
-export default function DevSignInPage() {
+export default async function DevSignInPage({ searchParams }: PageProps<"/dev-sign-in">) {
   if (!devSignInEnabled) {
     notFound();
   }
   const businessUnits = [...new Set(devSsoProfiles.map((item) => item.businessUnit))];
+  // Where to go afterwards, passed on from the sign-in page.
+  const callbackUrl = safeCallbackUrl((await searchParams).callbackURL);
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
@@ -39,6 +42,7 @@ export default function DevSignInPage() {
                 <li key={item.profile.ssoId}>
                   <form action={signInAsDevProfile} className="flex items-center gap-3">
                     <input type="hidden" name="ssoId" value={item.profile.ssoId} />
+                    <input type="hidden" name="callbackURL" value={callbackUrl} />
                     <Button type="submit" variant="outline">
                       Sign in as {item.profile.firstName} {item.profile.surname}
                     </Button>
@@ -51,7 +55,7 @@ export default function DevSignInPage() {
         </section>
       ))}
 
-      <CustomProfileForm />
+      <CustomProfileForm callbackUrl={callbackUrl} />
     </main>
   );
 }

@@ -257,10 +257,9 @@ describe("a clash", () => {
     expect(alert).toHaveFocus();
     expect(screen.getByRole("textbox", { name: /Notes/ })).toHaveValue("Dentist");
 
-    // The alert can show while the first save is still finishing, with its buttons
-    // disabled. A click then would do nothing, so wait for them.
+    // The alert and its buttons arrive together, ready to use.
     const replace = screen.getByRole("button", { name: "Replace it" });
-    await waitFor(() => expect(replace).toBeEnabled());
+    expect(replace).toBeEnabled();
     await user.click(replace);
     await waitFor(() =>
       expect(createBookingAction).toHaveBeenLastCalledWith({
@@ -274,7 +273,6 @@ describe("a clash", () => {
     const { user } = open({ mode: "create", subjectId: "priya", date: "2026-11-13" });
     await user.click(screen.getByRole("button", { name: "Add event" }));
     const changeDates = await screen.findByRole("button", { name: "Change dates" });
-    await waitFor(() => expect(changeDates).toBeEnabled()); // as in the test above
     await user.click(changeDates);
     expect(field("Start date")).toHaveFocus();
   });

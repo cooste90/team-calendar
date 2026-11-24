@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import axe from "axe-core";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
@@ -222,7 +222,9 @@ describe("deleting someone", () => {
 
     await events.click(button);
     expect(deleteUserAction).toHaveBeenCalledWith({ userId: "priya" });
-    expect(within(dialog).getByRole("status")).toHaveTextContent("Priya Shah deleted.");
+    await waitFor(() =>
+      expect(within(dialog).getByRole("status")).toHaveTextContent("Priya Shah deleted."),
+    );
     expect(screen.getByRole("searchbox", { name: "Search people" })).toHaveFocus();
   });
 
@@ -258,8 +260,10 @@ describe("moving someone to another BU", () => {
       userId: "priya",
       businessUnitId: "north",
     });
-    expect(within(dialog).getByRole("status")).toHaveTextContent(
-      "Priya Shah moved to North Finance, in its Unassigned group.",
+    await waitFor(() =>
+      expect(within(dialog).getByRole("status")).toHaveTextContent(
+        "Priya Shah moved to North Finance, in its Unassigned group.",
+      ),
     );
   });
 });

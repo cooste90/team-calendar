@@ -78,8 +78,10 @@ function DialogContent({
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close data-slot="dialog-close" asChild>
+            {/* WestCal: no tooltip here, unlike other icon-only buttons. A dialog can open
+                with focus on its close button, and a tooltip would then take the first Esc. */}
             <Button variant="ghost" className="absolute top-2 right-2" size="icon-sm">
-              <XIcon />
+              <XIcon aria-hidden="true" />
               <span className="sr-only">Close</span>
             </Button>
           </DialogPrimitive.Close>

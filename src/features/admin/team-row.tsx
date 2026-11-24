@@ -3,10 +3,12 @@
 import { ArrowDownIcon, ArrowUpIcon, PencilIcon, Trash2Icon } from "lucide-react";
 import { useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/icon-button";
 import { formatPeople } from "@/domain/format";
+import { teamNameSchema } from "@/lib/schemas/team";
+import { renameTeamAction } from "@/server/actions/rename-team";
 import type { AdminTeam } from "@/server/queries/teams";
-import { RenameTeamForm } from "./rename-team-form";
+import { RenameForm } from "./rename-form";
 
 export type Direction = "up" | "down";
 
@@ -41,7 +43,12 @@ export function TeamRow({ team, isFirst, isLast, onMove, onDelete, onAnnounce }:
   if (renaming) {
     return (
       <li className="flex border-b py-2.5 last:border-b-0">
-        <RenameTeamForm team={team} onDone={finishRenaming} />
+        <RenameForm
+          currentName={team.name}
+          schema={teamNameSchema}
+          onSave={(name) => renameTeamAction({ teamId: team.id, name })}
+          onDone={finishRenaming}
+        />
       </li>
     );
   }
@@ -55,44 +62,36 @@ export function TeamRow({ team, isFirst, isLast, onMove, onDelete, onAnnounce }:
         <span className="text-muted-foreground text-xs">{formatPeople(team.memberCount)}</span>
       </div>
       <div className="flex gap-1">
-        <Button
+        <IconButton
           ref={renameButton}
-          variant="ghost"
-          size="icon"
-          aria-label={`Rename ${team.name}`}
+          label={`Rename ${team.name}`}
           onClick={() => setRenaming(true)}
         >
           <PencilIcon aria-hidden="true" />
-        </Button>
-        <Button
+        </IconButton>
+        <IconButton
           id={moveButtonId(team.id, "up")}
-          variant="ghost"
-          size="icon"
-          aria-label={`Move ${team.name} up`}
+          label={`Move ${team.name} up`}
           disabled={isFirst}
           onClick={() => onMove(team, "up")}
         >
           <ArrowUpIcon aria-hidden="true" />
-        </Button>
-        <Button
+        </IconButton>
+        <IconButton
           id={moveButtonId(team.id, "down")}
-          variant="ghost"
-          size="icon"
-          aria-label={`Move ${team.name} down`}
+          label={`Move ${team.name} down`}
           disabled={isLast}
           onClick={() => onMove(team, "down")}
         >
           <ArrowDownIcon aria-hidden="true" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={`Delete ${team.name}`}
+        </IconButton>
+        <IconButton
+          label={`Delete ${team.name}`}
           onClick={() => onDelete(team)}
           className="text-destructive hover:text-destructive"
         >
           <Trash2Icon aria-hidden="true" />
-        </Button>
+        </IconButton>
       </div>
     </li>
   );

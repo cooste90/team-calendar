@@ -17,7 +17,7 @@ export type ActionError = {
 
 export type ActionResult<Data> = { ok: true; data: Data } | { ok: false; error: ActionError };
 
-// Signed out? requireUser redirects to /sign-in, just as it does for pages.
+// Signed out? requireUser shows "Your session has ended", just as it does for pages.
 // Permission checks belong in each handler, using the functions in src/domain/permissions.ts.
 // readOnly is for the rare action that only reads, like a preview: nothing changed, so
 // the page isn't reloaded.

@@ -4,10 +4,12 @@ import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { formatPeople } from "@/domain/format";
 import { UNASSIGNED_GROUP_NAME } from "@/domain/teams";
+import { teamNameSchema } from "@/lib/schemas/team";
+import { createTeamAction } from "@/server/actions/create-team";
 import { moveTeamAction } from "@/server/actions/move-team";
 import type { AdminTeam, AdminTeams } from "@/server/queries/teams";
 import { DeleteTeamDialog } from "./delete-team-dialog";
-import { NewTeamForm } from "./new-team-form";
+import { NewNameForm } from "./new-name-form";
 import { type Direction, moveButtonId, TeamRow } from "./team-row";
 
 type Props = {
@@ -68,10 +70,14 @@ export function TeamsTab({ businessUnitId, data, onAnnounce }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      <NewTeamForm
-        businessUnitId={businessUnitId}
+      {/* A new team goes at the end of the list. */}
+      <NewNameForm
+        label="New team"
+        buttonLabel="Add team"
+        schema={teamNameSchema}
         inputRef={newTeamInput}
-        onAnnounce={onAnnounce}
+        onSave={(name) => createTeamAction({ businessUnitId, name })}
+        onAdded={(name) => onAnnounce(`${name} added at the end of the list.`)}
       />
 
       <section aria-labelledby={headingId} className="flex flex-col gap-2">

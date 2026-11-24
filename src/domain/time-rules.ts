@@ -7,7 +7,7 @@ import { type Booking, type BookingChanges, carveBooking, emptyChanges } from ".
 import type { Role } from "./permissions";
 import { toSlot } from "./slots";
 
-export type BookingTiming = "past" | "ongoing" | "future";
+type BookingTiming = "past" | "ongoing" | "future";
 
 // What can still be changed on a booking: everything, only its end and notes, or nothing.
 export type AllowedEdits = "all" | "end-and-notes" | "none";

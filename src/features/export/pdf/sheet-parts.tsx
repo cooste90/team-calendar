@@ -6,8 +6,8 @@ import { Path, StyleSheet, Svg, Text, View } from "@react-pdf/renderer";
 import type { SheetCell, SheetHalf } from "@/domain/attendance-sheet";
 import { leaveTypes } from "@/domain/leave-types";
 
-export const INK = "#17171f";
-export const MUTED = "#4a4a58"; // the lightest grey used for text (darker than #767676)
+const INK = "#17171f";
+const MUTED = "#4a4a58"; // the lightest grey used for text (darker than #767676)
 export const RULE = "#a8a8b6";
 
 // A4 portrait in points, and how it's shared out. The header and footer have fixed
@@ -124,7 +124,7 @@ export function SheetFooter({ page, pages }: { page: number; pages: number }) {
 }
 
 // Diagonal lines for a day off, drawn as one path. Strokes stay at 1pt so they print.
-export function Hatch({ width, height }: { width: number; height: number }) {
+function Hatch({ width, height }: { width: number; height: number }) {
   let path = "";
   for (let x = -height; x < width; x += 4.5) {
     path += `M ${x} ${height} L ${x + height} 0 `;

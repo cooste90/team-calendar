@@ -29,7 +29,7 @@ import { leaveTypes } from "./leave-types";
 import { intersect, isSingleDay, portionOf, rangeOf, type SlotRange, toSlot } from "./slots";
 import { byAdminOrder, UNASSIGNED_GROUP_NAME } from "./teams";
 
-export const UNASSIGNED_GROUP_ID = "unassigned";
+const UNASSIGNED_GROUP_ID = "unassigned";
 
 // The list of collapsed groups after collapsing or expanding one, with no duplicates.
 export function withGroupCollapsed(ids: string[], groupId: string, collapsed: boolean): string[] {

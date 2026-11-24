@@ -111,7 +111,7 @@ Button (default / secondary / ghost / destructive / icon), Dialog, AlertDialog, 
 - `GridCell`, `GridBar`.
 - `TeamGroupRow`.
 
-**Built so far (T04):** `Logo`, `Wordmark`, `LeaveChip` and `SegmentedControl` in `src/components/`, and all the shadcn components above in `src/components/ui/`. You can see them all at `/dev/design-system` (dev only). Notes on how they're wired:
+**Built so far (T04):** `Logo`, `Wordmark`, `LeaveChip` and `SegmentedControl` in `src/components/`, and the shadcn components above in `src/components/ui/`. T34 deleted the ones the app never used (Avatar, Command, HoverCard, InputGroup, RadioGroup, ScrollArea, Select); add them again with the shadcn CLI if a feature needs one. T34 also added `IconButton` (an icon-only button whose label is also its tooltip) and `StatusPage` (the frame for the not-found, error and session-ended pages). You can see them all at `/dev/design-system` (dev only). Notes on how they're wired:
 - **Focus:** one global `:focus-visible` rule in `globals.css` draws the 2px ring with a 2px gap. shadcn's per-component focus rings were removed, so change focus styling in that one place.
 - **Primary buttons** use `bg-primary-solid text-on-primary`. shadcn's `--primary` is the design's text/link colour, which is lighter in dark mode.
 - **Theme preview:** add the class `light` or `dark` to any element to show that part of the page in that theme (the gallery uses this to show leave chips in both themes side by side).

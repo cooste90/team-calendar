@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import axe from "axe-core";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
@@ -99,7 +99,9 @@ describe("the Business units tab", () => {
     );
     await events.click(screen.getByRole("button", { name: "Add business unit" }));
     expect(createBusinessUnitAction).toHaveBeenCalledWith({ name: "East Infrastructure" });
-    expect(within(dialog).getByRole("status")).toHaveTextContent("East Infrastructure added.");
+    await waitFor(() =>
+      expect(within(dialog).getByRole("status")).toHaveTextContent("East Infrastructure added."),
+    );
   });
 
   it("renames a BU in its row", async () => {
@@ -125,7 +127,9 @@ describe("deleting a business unit", () => {
     );
     await events.click(within(confirm).getByRole("button", { name: "Delete business unit" }));
     expect(deleteBusinessUnitAction).toHaveBeenCalledWith({ id: "south" });
-    expect(within(dialog).getByRole("status")).toHaveTextContent("South Health deleted.");
+    await waitFor(() =>
+      expect(within(dialog).getByRole("status")).toHaveTextContent("South Health deleted."),
+    );
     expect(screen.getByRole("textbox", { name: "New business unit" })).toHaveFocus();
   });
 

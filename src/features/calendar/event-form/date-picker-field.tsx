@@ -3,7 +3,7 @@
 import { CalendarIcon } from "lucide-react";
 import { type Ref, useId, useState } from "react";
 import { enGB } from "react-day-picker/locale";
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/icon-button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -67,15 +67,14 @@ export function DatePickerField(props: Props) {
         </span>
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
+            <IconButton
               size="icon-sm"
               disabled={disabled}
-              aria-label={`Choose the ${label.toLowerCase()} from a calendar`}
+              label={`Choose the ${label.toLowerCase()} from a calendar`}
               className="absolute top-1/2 right-1.5 -translate-y-1/2 text-muted-foreground"
             >
               <CalendarIcon aria-hidden="true" />
-            </Button>
+            </IconButton>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-auto p-0">
             <Calendar

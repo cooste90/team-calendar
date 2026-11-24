@@ -4,10 +4,10 @@ import { EllipsisIcon } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { IconButton } from "@/components/icon-button";
 import { InitialsAvatar } from "@/components/initials-avatar";
 import { NativeSelect } from "@/components/native-select";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -93,14 +93,9 @@ export function UserRow({
         </NativeSelect>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              id={actionsButtonId(user.id)}
-              variant="ghost"
-              size="icon"
-              aria-label={`More for ${user.name}`}
-            >
+            <IconButton id={actionsButtonId(user.id)} label={`More for ${user.name}`}>
               <EllipsisIcon aria-hidden="true" />
-            </Button>
+            </IconButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>

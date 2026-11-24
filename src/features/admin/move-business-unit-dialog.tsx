@@ -47,11 +47,14 @@ export function MoveBusinessUnitDialog({
         userId: user.id,
         businessUnitId: target.id,
       });
-      if (!result.ok) {
-        setError(result.error.message);
-        return;
-      }
-      onMoved(`${user.name} moved to ${target.name}, in its Unassigned group.`);
+      // Updates after an await go in their own startTransition (see 04-code-style.md).
+      startTransition(() => {
+        if (result.ok) {
+          onMoved(`${user.name} moved to ${target.name}, in its Unassigned group.`);
+        } else {
+          setError(result.error.message);
+        }
+      });
     });
   }
 

@@ -1651,3 +1651,65 @@ Everything in the key is reachable and usable by keyboard alone (2.1.1).
 **Questions for the product owner:**
 - **Please approve the sheets** (images in chat) before merging.
   - Approved, and merged. T34 waits for the product owner to say go.
+
+## T34 — States and polish — 2026-11-24
+**Status:** done, waiting for the product owner to approve the look before merging.
+**No new dependencies.** Removed `cmdk` and `date-fns` (unused; react-day-picker brings its own date-fns).
+**Product owner's decisions** (asked before starting; spec, architecture and the task file updated first):
+1. **Session expiry is a page, not a dialog:** "Your session has ended" in place of the calendar, and signing in again comes back to the same URL. One change in `requireUser`, instead of a line in each of ~20 places that save.
+2. **No 403 page:** nothing reaches one any more (a BU you can't see shows your own, a profile you can't see shows a toast, Admin is ignored, the PDF is refused with a toast).
+3. **The four delete confirmations share one shell** (`ConfirmDeleteDialog`).
+4. **Page wording** as proposed (plain and short).
+
+**What I built:**
+- **Route states** (`src/app/`), all in one branded frame (`src/components/status-page.tsx`, the logo and card like the sign-in page), light and dark:
+  - `not-found.tsx`: "Page not found" with "Go to the calendar" (any unknown address, and the dev pages in production).
+  - `error.tsx`: "Something went wrong · The calendar couldn't load…" with Try again (Next 16.3+ calls it `retry`) and Go to the calendar, plus "Reference for support: <digest>", the id in the server's log line. Seen for real: a production build pointed at a database that isn't there.
+  - `unauthorized.tsx` + `sign-in-again-button.tsx`: "Your session has ended" with "Sign in again", which carries the current URL.
+- **Session expiry:** `requireUser` calls Next's `unauthorized()` (`authInterrupts` in `next.config.ts`), so a page load or a save after the session has gone shows that page. The proxy lets saves (requests with a `next-action` header) through to it, and sends cookie-less page loads to `/sign-in?callbackURL=…`. `src/lib/callback-url.ts` only accepts paths on this site (`/…`, not `//…` or `/\…`) and builds the sign-in links; the SSO button, Developer sign-in and both dev sign-in forms pass it on. A deleted person's next load now shows the same page (was a redirect).
+- **Polish:**
+  - **Every icon-only button has a tooltip** through a new `IconButton` (its label is both its accessible name and its tooltip): Rename / Move / Delete in admin rows, the users' ⋯ menu, Previous / Next, the date picker's calendar button, filter chips' Remove, and the Unassigned banner's Dismiss. Each `Tooltip` now brings its own provider (as newer shadcn does), so the root provider and the test wrapper's went. **Not** the dialogs' close X: a dialog can open with focus on it, and the tooltip would then take the first Esc (found by a Key popover test).
+  - **Today scrolls into view** when a month is wider than the window: as the grid opens on today's month, and when "Today" (or Alt+T) is chosen, smoothly unless motion is turned down (`scrollToToday` in `cell-elements.ts`).
+  - **Motion:** every Tailwind `transition` now runs 150ms on the design's `--ease-out` curve (`--default-transition-*` in `globals.css`), so button hovers and presses match.
+  - **Favicon and app basics:** `app/icon.svg` (the logo; Next's default `favicon.ico` deleted), `manifest.ts`, and the browser bar colour for light and dark (`viewport.themeColor`).
+  - **Focus restoration:** checked in a real browser after closing each of: profile and Admin (from the user menu), a profile from a name link, the Export menu, the booking form (from a cell), More › Teams. Focus always went back where it came from. The Key, filters, cell menu, shortcuts and admin rows were already covered by tests.
+  - **Fonts:** no layout shift (next/font's fallback metrics); Lighthouse measures CLS 0.
+  - **Copy review** (design system §8): no Title Case, US spellings or hand-built dates found; all dates go through `src/domain/format.ts` (en-GB).
+- **From T29: updates after an `await` in a transition.** In every busy form (booking form, profile Details and Working pattern, the admin name forms, holiday form, move BU, delete confirmations) the updates after the action's `await` now go in their own `startTransition`, so the result and the end of "busy" arrive together. The rule is written once in `04-code-style.md` rule 6, and each place has the same one-line comment. `event-form.test.tsx` no longer waits for the buttons; the admin and profile component tests now `waitFor` results that used to land in the same tick.
+
+**Simplicity sweep (whole codebase):**
+- **knip:** deleted 7 shadcn components nobody used (Avatar, Command, HoverCard, InputGroup, RadioGroup, ScrollArea, Select) and the packages behind them; `requireRole` (unused since T14); `export` dropped from 5 constants and 7 types only used in their own file. Knip's `@tailwindcss/turbopack` is a false positive (`next.config.ts` names it as a loader). Unused sub-exports inside the remaining shadcn files (e.g. `DropdownMenuCheckboxItem`) are left: they're vendored as a set, and trimming them would make updating them harder.
+- **Merged duplicates:** the four delete dialogs → `ConfirmDeleteDialog` + four short files with their wording; the four name forms → `RenameForm` and `NewNameForm` (team and BU each pass their schema and action). About 400 lines fewer overall.
+- **Purpose comments:** every file in `src/domain` and `src/server/services` already starts with one.
+
+**Tests:**
+- **Unit / component:** `callback-url.test.ts` (which callbacks are allowed, and the sign-in links), `error.test.tsx` (Try again, the reference, no internal message). `pnpm check`: 790 passing.
+- **E2E** (`tests/e2e/route-states.spec.ts`, 5, and +1 in `grid.spec.ts`): an unknown address gives a 404 "Page not found" with axe passing in both themes; saving after the session has ended shows the sign-in-again page (axe passing), and signing in comes back to `/?profile=me` with nothing saved; a page loaded after it has ended links back to itself; a link opened while signed out comes back after sign-in; a 600px month opens on today and Today scrolls back to it (same month and from another). `admin-users.spec.ts` now expects the session-ended page for a deleted person. "A failing action shows the error toast" was already covered (T25's grid and T30's users tests).
+- **All passing:** integration (171) and the whole Chromium suite (89). The session-ended axe check failed once under load, axe seeing the calendar mid-swap; it now waits for the grid to be gone, and passed 15 runs since.
+- **Lighthouse** (production build, default seed, desktop, signed in as Priya, calendar page): **Performance 100, Accessibility 100, Best Practices 100** (LCP 0.8s). Target was ≥ 90 / 100 / ≥ 95.
+
+**Key files:** `src/app/{error,not-found,unauthorized,sign-in-again-button,manifest}.tsx`, `src/app/icon.svg`, `src/components/{status-page,icon-button}.tsx`, `src/lib/callback-url.ts`, `src/server/session.ts`, `src/proxy.ts`, `src/server/actions/sign-in.ts`, `src/features/admin/{confirm-delete-dialog,rename-form,new-name-form}.tsx`, `src/features/calendar/grid/{cell-elements.ts,day-header.tsx}`, `tests/e2e/route-states.spec.ts`.
+**Simplicity pass** (my own re-read, then `/simplify` with four reviewers):
+- **Fixed:** "Today" now also scrolls back when you're already on today's month (it only did when the grid re-rendered today's column); one `signInPageUrl(page, callbackUrl)` for both sign-in pages instead of the rule written twice; `devSignIn` takes the callback rather than the whole form; both sign-in pages read `callbackURL` the same way; the transition rule written once in the code style, with one identical comment at each use.
+- **Skipped:**
+  - **Dropping the second `startTransition` everywhere but the booking form** (one reviewer): the task asks for every form at once, and the rule is now written down.
+  - **One `error` prop on `ConfirmDeleteDialog` for the holiday preview's failure:** both can't show at once (Delete stays disabled while the preview has failed), so a prop would be extra code for nothing.
+  - **Making the sign-in and welcome pages use `StatusPage`:** they're bigger (tagline, form) and outside this task; the comment now says "same style", not "matches".
+  - **Tooltips reopening when focus returns** to the date picker's button or a ⋯ menu: Esc then closes the tooltip first, which is what WCAG 1.4.13 asks of tooltips. Worth a look in T35.
+  - **Efficiency:** a tooltip per row in the Users tab costs a fraction of each row's existing menu; the grid's cells have no new tooltips.
+
+**Deviations from plan:**
+- **One `app/error.tsx`, not also `(app)/error.tsx`:** the root one already catches errors from the `(app)` layout and page, and the `(app)` layout has nothing to keep on screen (the page draws its own header). No `global-error.tsx` either: the root layout only sets fonts and providers.
+- **Session expiry is a page, and no `forbidden.tsx`** (product owner's decisions above).
+- **The dialogs' close X has no tooltip** (see Polish).
+
+**Seen but not from this task:**
+- **The `pg` warning** "client.query() when the client is already executing a query" (T28 note) comes from inside Prisma's pg adapter during interactive transactions (stack trace: `PgTransaction.queryRaw`), not from our `Promise.all` (which isn't in a transaction). Harmless until pg 9; look again on the next Prisma upgrade.
+- **A browser warning, "Encountered a script tag while rendering React component",** appears when the root-level session-ended page renders in the browser: next-themes' inline theme script. The theme is already set by then, so nothing breaks.
+
+**Follow-ups:**
+- **T35:** tooltips that reopen on returned focus (above); a toast and a dialog's own message both announce an admin save (T32 note), which is on purpose: the open dialog hides the toaster from screen readers, so the dialog announces it too; the T25 note about a stale booking-form target is still open.
+- **T37:** `authInterrupts` is still marked experimental in Next 16.4; re-check after upgrades.
+
+**Questions for the product owner:**
+- **Please approve the look** (screenshots in chat) before merging.
